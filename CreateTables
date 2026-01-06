@@ -1,0 +1,136 @@
+Create Core Tables
+-- 1. PROFILES (The Managers)
+CREATE TABLE profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+    username TEXT UNIQUE NOT NULL,
+    full_name TEXT,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 2. CLIENTS (The Accounts)
+CREATE TABLE clients (
+    client_name TEXT PRIMARY KEY, -- Using name as PK as requested
+    trading_id TEXT UNIQUE NOT NULL,
+    client_id UUID UNIQUE DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 3. ASSETS (The Master Catalog)
+CREATE TABLE assets (
+    ticker TEXT PRIMARY KEY,
+    stock_name TEXT NOT NULL,
+    isin TEXT UNIQUE,
+    current_price NUMERIC DEFAULT 0,
+    last_updated TIMESTAMPTZ DEFAULT now()
+);
+
+-- 4. PURCHASES (The "In" Ledger)
+CREATE TABLE purchases (
+    trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) NOT NULL,
+    client_name TEXT REFERENCES clients(client_name) ON DELETE CASCADE,
+    ticker TEXT REFERENCES assets(ticker),
+    date DATE NOT NULL,
+    rate NUMERIC NOT NULL,
+    qty NUMERIC NOT NULL CHECK (qty > 0),
+    comments TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 5. SALES (The "Out" Ledger)
+CREATE TABLE sales (
+    trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) NOT NULL,
+    purchase_trx_id UUID REFERENCES purchases(trx_id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    rate NUMERIC NOT NULL,
+    qty NUMERIC NOT NULL CHECK (qty > 0),
+    comments TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+
+
+
+Create Holding Views
+CREATE OR REPLACE VIEW user_holdings AS
+SELECT 
+    p.trx_id,
+    c.client_id,
+    c.trading_id,
+    p.client_name,
+    p.ticker,
+    a.stock_name,
+    a.isin,
+    p.date AS purchase_date,
+    p.qty AS purchase_qty,
+    p.rate AS purchase_rate,
+    (p.qty * p.rate) AS purchase_value,
+    COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0) AS sold_qty,
+    (p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0)) AS balance_qty,
+    a.current_price AS market_rate,
+    ((p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0)) * a.current_price) AS market_value,
+    (a.current_price - p.rate) AS potential_profit_per_share,
+    ((a.current_price - p.rate) * (p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0))) AS potential_profit,
+    (CURRENT_DATE - p.date > 365) AS is_long_term,
+    p.comments,
+    p.user_id AS manager_id
+FROM purchases p
+JOIN clients c ON p.client_name = c.client_name
+JOIN assets a ON p.ticker = a.ticker
+WHERE (p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0)) > 0;
+
+Create Sales View
+CREATE OR REPLACE VIEW sales_view AS
+SELECT 
+    s.trx_id,
+    s.purchase_trx_id,
+    c.client_id,
+    c.trading_id,
+    s.client_name,
+    p.ticker,
+    a.stock_name,
+    a.isin,
+    p.date AS purchase_date,
+    p.qty AS purchase_qty,
+    p.rate AS purchase_rate,
+    (s.qty * p.rate) AS purchase_value, -- Value of the specific portion sold
+    s.date AS sale_date,
+    s.qty AS sale_qty,
+    s.rate AS sale_rate,
+    (s.qty * s.rate) AS sale_value,
+    ((s.rate - p.rate) * s.qty) AS profit,
+    (s.date - p.date > 365) AS long_term,
+    CASE 
+        WHEN (s.date - p.date > 365) THEN ((s.rate - p.rate) * s.qty * 0.125) -- 12.5% LTCG
+        ELSE ((s.rate - p.rate) * s.qty * 0.20) -- 20% STCG
+    END AS tax_payable,
+    s.comments,
+    s.user_id
+FROM sales s
+JOIN purchases p ON s.purchase_trx_id = p.trx_id
+JOIN clients c ON p.client_name = c.client_name
+JOIN assets a ON p.ticker = a.ticker;
+
+Key Safeguards
+CREATE OR REPLACE FUNCTION check_sale_qty() 
+RETURNS TRIGGER AS $$
+DECLARE
+    available_qty NUMERIC;
+BEGIN
+    SELECT balance_qty INTO available_qty 
+    FROM user_holdings 
+    WHERE trx_id = NEW.purchase_trx_id;
+
+    IF NEW.qty > available_qty THEN
+        RAISE EXCEPTION 'Cannot sell % units; only % available in this batch.', NEW.qty, available_qty;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER validate_sale_qty
+BEFORE INSERT ON sales
+FOR EACH ROW EXECUTE FUNCTION check_sale_qty();
