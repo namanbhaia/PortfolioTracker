@@ -1,66 +1,33 @@
-"use client"
+import { createClient } from '@/lib/supabase/server';
+import ConsolidatedManager from '@/components/dashboard/consolidated-manager';
 
-import React, { useState, useMemo } from 'react';
-import ConsolidatedTable from '@/components/dashboard/consolidated-table';
-import ClientMultiSelect from '@/components/dashboard/client-multi-select';
+export default async function ConsolidatedPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-export default function ConsolidatedPage({ allHoldings, clients }) {
-    // 1. State for selected client names
-    const [selectedClients, setSelectedClients] = useState(clients.map(c => c.client_name));
+    // 1. Fetch all clients managed by this user
+    const { data: clients } = await supabase
+        .from('clients')
+        .select('client_name, trading_id')
+        .eq('user_id', user?.id);
 
-    // 2. Logic: Aggregate holdings based on selection
-    const aggregatedData = useMemo(() => {
-        const filtered = allHoldings.filter(h => selectedClients.includes(h.client_name));
-
-        const totals = filtered.reduce((acc, curr) => {
-            const key = curr.ticker; // Grouping by Ticker
-            if (!acc[key]) {
-                acc[key] = {
-                    ticker: curr.ticker,
-                    stock_name: curr.stock_name,
-                    total_qty: 0,
-                    total_market_value: 0,
-                    avg_rate: 0,
-                    total_cost: 0,
-                    held_by: []
-                };
-            }
-
-            acc[key].total_qty += curr.balance_qty;
-            acc[key].total_market_value += (curr.balance_qty * curr.market_rate);
-            acc[key].total_cost += (curr.balance_qty * curr.purchase_rate);
-
-            if (!acc[key].held_by.includes(curr.client_name)) {
-                acc[key].held_by.push(curr.client_name);
-            }
-
-            return acc;
-        }, {});
-
-        return Object.values(totals).map((item: any) => ({
-            ...item,
-            avg_rate: item.total_cost / item.total_qty,
-            unrealized_pnl: item.total_market_value - item.total_cost
-        }));
-    }, [selectedClients, allHoldings]);
+    // 2. Fetch all active holdings across all clients
+    const { data: holdings } = await supabase
+        .from('user_holdings') // The view we created earlier
+        .select('*')
+        .eq('manager_id', user?.id);
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-6">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Consolidated View</h1>
-                    <p className="text-slate-500">Aggregated exposure across selected family members.</p>
-                </div>
-
-                {/* Client Multi-Select Dropdown */}
-                <ClientMultiSelect
-                    clients={clients}
-                    selected={selectedClients}
-                    onChange={setSelectedClients}
-                />
+        <div className="p-8 max-w-7xl mx-auto space-y-8">
+            <header>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Consolidated Portfolio</h1>
+                <p className="text-slate-500">Aggregate holdings across multiple family members to see total market exposure.</p>
             </header>
 
-            <ConsolidatedTable data={aggregatedData} />
+            <ConsolidatedManager
+                initialHoldings={holdings || []}
+                clients={clients || []}
+            />
         </div>
     );
 }
