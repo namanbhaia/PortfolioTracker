@@ -89,14 +89,14 @@ SELECT
     s.purchase_trx_id,
     c.client_id,
     c.trading_id,
-    s.client_name,
+    p.client_name, -- Pulled from the parent purchase record
     p.ticker,
     a.stock_name,
     a.isin,
     p.date AS purchase_date,
     p.qty AS purchase_qty,
     p.rate AS purchase_rate,
-    (s.qty * p.rate) AS purchase_value, -- Value of the specific portion sold
+    (s.qty * p.rate) AS purchase_value, 
     s.date AS sale_date,
     s.qty AS sale_qty,
     s.rate AS sale_rate,
