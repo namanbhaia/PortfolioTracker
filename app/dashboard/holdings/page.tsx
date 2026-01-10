@@ -2,7 +2,7 @@
 import { createClient } from '@/lib/supabase/client'; // Your Supabase server util
 import HoldingsTable from '@/components/dashboard/holdings-table';
 import { Suspense } from 'react';
-import { Skeleton } from '@/compone-nts/ui/skeleton'; // Assuming shadcn/ui
+import { Skeleton } from '@/components/ui/skeleton'; // Assuming shadcn/ui
 
 export const metadata = {
     title: 'Your Holdings | Portfolio Tracker',
@@ -65,11 +65,11 @@ export default function HoldingsPage() {
 // Simple Skeleton for better User Experience while loading
 function TableSkeleton() {
     return (
-        <div className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
+        <div className="space-y-3">
+            {/* If holdings is null or empty, render 5 skeletons as a placeholder */}
+            {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-xl" />
+            ))}
         </div>
     );
 }

@@ -11,7 +11,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "registry:build": "shadcn build"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.70.0",
+    "shadcdn": "^0.0.8",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
