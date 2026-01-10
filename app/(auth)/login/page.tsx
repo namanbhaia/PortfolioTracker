@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Lock, User, Loader2, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -27,10 +28,16 @@ export default function LoginPage() {
                 .from('profiles')
                 .select('email')
                 .eq('username', username)
-                .single();
+                .maybeSingle();
 
-            if (profileError || !profile) {
-                throw new Error("Invalid username or password.");
+            if (profileError) {
+                throw new Error("Database connection error. Please try again.");
+                console.log("Supabase Lookup Error:", profileError.message);
+                //throw profileError;
+            }
+            if (!profile) {
+                throw new Error("Username not found. Please sign up first.");
+                console.log("Supabase Auth Error: ", profileError.message);
             }
 
             // 2. Sign in with the resolved email
@@ -106,6 +113,18 @@ export default function LoginPage() {
                         {loading ? <Loader2 className="animate-spin" size={20} /> : "Access Dashboard"}
                     </button>
                 </form>
+
+                <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                    <p className="text-sm text-slate-500 font-medium">
+                        New to WealthTrack?{' '}
+                        <Link
+                            href="/signup"
+                            className="text-indigo-600 font-black hover:text-indigo-700 transition-colors"
+                        >
+                            Initialize Portfolio
+                        </Link>
+                    </p>
+                </div>
 
                 <p className="text-center text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                     Encrypted Session &bull; 2026 Enterprise Security

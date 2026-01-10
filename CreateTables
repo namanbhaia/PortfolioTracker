@@ -134,3 +134,45 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER validate_sale_qty
 BEFORE INSERT ON sales
 FOR EACH ROW EXECUTE FUNCTION check_sale_qty();
+
+For Login Setup
+-- 1. Create the function that inserts a profile
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, username, email)
+  VALUES (new.id, new.raw_user_meta_data->>'username', new.email);
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Create the trigger to run the function on every signup
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+For Signup 
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  -- 1. Insert into Profiles
+  INSERT INTO public.profiles (id, username, full_name, email)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data->>'username', 
+    new.raw_user_meta_data->>'full_name', 
+    new.email
+  );
+
+  -- 2. Insert into Clients (Your first family member/trading account)
+  INSERT INTO public.clients (client_name, trading_id, user_id)
+  VALUES (
+    new.raw_user_meta_data->>'primary_client_name', 
+    new.raw_user_meta_data->>'trading_id', 
+    new.id
+  );
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -1,8 +1,8 @@
 ﻿// app/dashboard/holdings/page.tsx
-import { createClient } from '@/lib/supabase/server'; // Your Supabase server util
+import { createClient } from '@/lib/supabase/client'; // Your Supabase server util
 import HoldingsTable from '@/components/dashboard/holdings-table';
 import { Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton'; // Assuming shadcn/ui
+import { Skeleton } from '@/compone-nts/ui/skeleton'; // Assuming shadcn/ui
 
 export const metadata = {
     title: 'Your Holdings | Portfolio Tracker',
@@ -13,6 +13,7 @@ async function HoldingsDataFetcher() {
 
     // 1. Get the current logged-in user
     const { data: { user } } = await supabase.auth.getUser();
+    console.log(user);
 
     // 2. Fetch data from your 'user_holdings' view
     // We filter by user_id to ensure the user only sees their own data
