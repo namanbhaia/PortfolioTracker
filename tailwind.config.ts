@@ -11,7 +11,9 @@ export default {
                 brand: "#4F46E5",
                 profit: "#10B981",
                 loss: "#EF4444",
-            }
+                background: "var(--background)",
+                foreground: "var(--foreground)",
+            },
         },
     },
     plugins: [],

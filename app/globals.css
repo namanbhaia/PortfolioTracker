@@ -7,8 +7,9 @@
     --background-start-rgb: 248, 250, 252;
 }
 
-body {
+html, body {
     color: rgb(var(--foreground-rgb));
     background: rgb(var(--background-start-rgb));
     min-height: 100vh;
+    height: 100%;
 }
