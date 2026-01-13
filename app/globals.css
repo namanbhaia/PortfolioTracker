@@ -1,15 +1,48 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-    --foreground-rgb: 15, 23, 42;
-    --background-start-rgb: 248, 250, 252;
+/* In v4, we don't need @layer base for body styles 
+   if we want them to be global defaults. */
+
+@theme {
+    /* This is how you define the font in v4 if you want to use it 
+     as the default sans font */
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-html, body {
-    color: rgb(var(--foreground-rgb));
-    background: rgb(var(--background-start-rgb));
-    min-height: 100vh;
-    height: 100%;
+@layer base {
+    html, body {
+        /* Ensure the body always takes up the full screen height */
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        /* v4 uses standard CSS variables for theme values */
+        background-color: var(--color-slate-50);
+        color: var(--color-slate-900);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Apple-like subtle scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #d1d1d6;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1aa;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
 }

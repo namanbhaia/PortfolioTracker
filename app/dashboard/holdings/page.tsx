@@ -1,8 +1,10 @@
-﻿// app/dashboard/holdings/page.tsx
-import { createClient } from '@/lib/supabase/client'; // Your Supabase server util
+﻿import { createClient } from '@/lib/supabase/server';
 import HoldingsTable from '@/components/dashboard/holdings-table';
 import { Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton'; // Assuming shadcn/ui
+import { Skeleton } from '@/components/ui/skeleton';
+import { redirect } from 'next/navigation'; // 1. Import redirect
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
     title: 'Your Holdings | Portfolio Tracker',
@@ -11,35 +13,38 @@ export const metadata = {
 async function HoldingsDataFetcher() {
     const supabase = await createClient();
 
-    // 1. Get the current logged-in user
+    // 2. Fetch User
     const { data: { user } } = await supabase.auth.getUser();
-    console.log(user);
 
-    // 2. Fetch data from your 'user_holdings' view
-    // We filter by user_id to ensure the user only sees their own data
+    // 3. FIX: Protect the route. If no user, stop and redirect.
+    if (!user) {
+        //redirect('/login');
+        console.log("No user found");
+    }
+
+    // 4. Now safe to use user.id
     const { data, error } = await supabase
-        .from('user_holdings') // This is the View we discussed earlier
+        .from('user_holdings')
         .select('*')
-        .eq('manager_id', user?.id) // Ensure manager_id matches the logged-in user
+        .eq('manager_id', user.id)
         .order('ticker', { ascending: true });
 
     if (error) {
+        // Log the actual error for debugging
         console.error('Error fetching holdings:', error);
         return (
             <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                Failed to load holdings. Please try refreshing the page.
+                Failed to load holdings. Error: {error.message}
             </div>
         );
     }
 
-    // 3. Render the Client Component with the fetched data
     return <HoldingsTable holdings={data || []} />;
 }
 
 export default function HoldingsPage() {
     return (
         <div className="flex flex-col gap-8 p-8 max-w-7xl mx-auto">
-            {/* Page Header */}
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Active Holdings</h1>
@@ -48,13 +53,11 @@ export default function HoldingsPage() {
                     </p>
                 </div>
 
-                {/* Quick Filter Info */}
                 <div className="bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium text-slate-600">
                     Currency: <span className="text-slate-900 font-bold">INR (₹)</span>
                 </div>
             </header>
 
-            {/* Holdings Table with Loading State */}
             <Suspense fallback={<TableSkeleton />}>
                 <HoldingsDataFetcher />
             </Suspense>
@@ -62,14 +65,13 @@ export default function HoldingsPage() {
     );
 }
 
-// Simple Skeleton for better User Experience while loading
 function TableSkeleton() {
     return (
-        <div className="space-y-3">
-            {/* If holdings is null or empty, render 5 skeletons as a placeholder */}
-            {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-xl" />
-            ))}
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
         </div>
     );
 }

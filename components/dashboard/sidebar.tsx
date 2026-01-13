@@ -10,7 +10,8 @@ import {
     PlusCircle,
     Info,
     LogOut,
-    ShieldCheck
+    ShieldCheck,
+    UserCircle // <--- Added Icon
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -25,7 +26,8 @@ const secondaryItems = [
     { name: 'Info & Rules', href: '/info', icon: Info },
 ];
 
-export default function Sidebar() {
+// 1. Update component to accept props
+export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
@@ -35,6 +37,10 @@ export default function Sidebar() {
         router.push('/login');
         router.refresh();
     };
+
+    // 2. Calculate Display Name
+    const displayName = profile?.full_name || profile?.username || 'User';
+    const displayEmail = user?.email || '';
 
     return (
         <aside className="w-64 h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800">
@@ -56,8 +62,8 @@ export default function Sidebar() {
                             key={item.name}
                             href={item.href}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'hover:bg-slate-800 hover:text-slate-100'
+                                ? 'bg-indigo-600 text-white'
+                                : 'hover:bg-slate-800 hover:text-slate-100'
                                 }`}
                         >
                             <item.icon size={18} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
@@ -66,6 +72,19 @@ export default function Sidebar() {
                     );
                 })}
             </nav>
+
+            {/* 3. NEW: Active User Card */}
+            <div className="px-4 mb-2">
+                <div className="bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 border border-slate-700/50">
+                    <div className="bg-indigo-500/20 p-2 rounded-full">
+                        <UserCircle size={20} className="text-indigo-400" />
+                    </div>
+                    <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-white truncate">{displayName}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{displayEmail}</p>
+                    </div>
+                </div>
+            </div>
 
             {/* Secondary & Help */}
             <div className="px-4 space-y-1 mb-4">
@@ -81,7 +100,7 @@ export default function Sidebar() {
                 ))}
             </div>
 
-            {/* User Session / Logout */}
+            {/* Logout */}
             <div className="p-4 border-t border-slate-800">
                 <button
                     onClick={handleLogout}

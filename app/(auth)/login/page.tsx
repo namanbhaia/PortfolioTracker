@@ -1,27 +1,29 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Lock, User, Loader2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ChevronRight, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function LoginPage() {
     const router = useRouter();
     const supabase = createClient();
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    // State for form and status
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError("");
-
-        const formData = new FormData(e.currentTarget);
-        const username = formData.get('username') as string;
-        const password = formData.get('password') as string;
+        setIsLoading(true);
+        setError(null);
 
         try {
+            // 1. Resolve email from username (Public lookup)
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('email')
@@ -32,6 +34,7 @@ export default function LoginPage() {
                 throw new Error("Invalid username or password.");
             }
 
+            // 2. Auth with resolved email
             const { error: authError } = await supabase.auth.signInWithPassword({
                 email: profile.email,
                 password: password,
@@ -44,94 +47,121 @@ export default function LoginPage() {
         } catch (err) {
             setError(err instanceof Error ? err.message : "Authentication failed");
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Dynamic Background Gradients - Adjusted for Light Mode */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-100/50 blur-[120px] rounded-full" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/50 blur-[120px] rounded-full" />
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+            {/* Background Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-100/50 blur-[120px] rounded-full" />
+                <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-100/50 blur-[120px] rounded-full" />
+            </div>
 
-            <div className="max-w-md w-full relative group">
-
-                {/* Card Container: White with shadow instead of dark glassmorphism */}
-                <div className="relative bg-white border border-slate-200 p-10 rounded-3xl shadow-xl">
-
-                    <div className="text-center mb-10">
-                        <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl mb-6 shadow-lg shadow-indigo-500/20">
-                            <ShieldCheck className="text-white" size={28} />
-                        </div>
-                        {/* Text is now Dark (Slate-900) for readability */}
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic">WEALTH<span className="text-indigo-600">TRACK</span></h2>
-                        <p className="mt-2 text-xs text-slate-500 font-bold uppercase tracking-[0.2em]">Family Asset Terminal</p>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-md w-full relative z-10"
+            >
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60">
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-semibold text-slate-900">Sign In</h2>
+                        <p className="text-slate-500 text-sm mt-1 font-medium">Access your family wealth terminal.</p>
                     </div>
 
-                    <form className="space-y-5" onSubmit={handleSubmit}>
-                        {error && (
-                            <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-shake">
-                                <div className="w-1.5 h-1.5 bg-rose-600 rounded-full" />
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="space-y-4">
-                            <div className="group relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        {/* Username Field */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">Username</label>
+                            <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
-                                    name="username"
                                     type="text"
                                     required
-                                    // Input: Light background (slate-50), dark text, clear border
-                                    className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none text-sm font-medium"
-                                    placeholder="Identity ID"
-                                />
-                            </div>
-
-                            <div className="group relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                                <input
-                                    name="password"
-                                    type="password"
-                                    required
-                                    className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all outline-none text-sm font-medium"
-                                    placeholder="Security Key"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="your_username"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-400"
                                 />
                             </div>
                         </div>
 
+                        {/* Password Field */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center ml-1">
+                                <label className="text-sm font-medium text-slate-700">Password</label>
+                                <button
+                                    type="button"
+                                    onClick={() => router.push('/reset-password')}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                                >
+                                    Forgot?
+                                </button>
+                            </div>
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="��������"
+                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100"
+                            >
+                                <AlertCircle className="w-4 h-4" />
+                                {error}
+                            </motion.div>
+                        )}
+
+                        {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 text-white hover:bg-slate-800 text-sm font-bold rounded-2xl transition-all shadow-xl shadow-slate-200 disabled:opacity-50 active:scale-[0.98]"
+                            disabled={isLoading}
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
                         >
-                            {loading ? <Loader2 className="animate-spin" size={20} /> : (
+                            {isLoading ? (
+                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
                                 <>
-                                    Enter Dashboard
-                                    <ArrowRight size={18} />
+                                    Sign In
+                                    <ChevronRight className="w-5 h-5" />
                                 </>
                             )}
                         </button>
                     </form>
 
-                    <div className="mt-8 pt-8 border-t border-slate-100 text-center">
-                        <p className="text-sm text-slate-500">
-                            New identity?{' '}
-                            <Link href="/signup" className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
-                                Initialize Portfolio
-                            </Link>
+                    {/* Footer Link */}
+                    <div className="mt-8 text-center">
+                        <p className="text-slate-500 text-sm">
+                            Don't have an account?{' '}
+                            <button
+                                onClick={() => router.push('/signup')}
+                                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                                Create one now
+                            </button>
                         </p>
                     </div>
                 </div>
-            </div>
-
-            {/* Footer - Slate-400 for subtle visibility on light bg */}
-            <div className="absolute bottom-8 left-0 right-0 text-center">
-                <p className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black">
-                    Quantum-Grade Encryption &bull; Node-01-SEC
-                </p>
-            </div>
+            </motion.div>
         </div>
     );
 }

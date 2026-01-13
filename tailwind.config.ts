@@ -7,12 +7,9 @@ export default {
     ],
     theme: {
         extend: {
-            colors: {
-                brand: "#4F46E5",
-                profit: "#10B981",
-                loss: "#EF4444",
-                background: "var(--background)",
-                foreground: "var(--foreground)",
+            fontFamily: {
+                // This maps 'font-inter' to the Inter font we imported in CSS
+                inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
             },
         },
     },

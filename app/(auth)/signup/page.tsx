@@ -2,121 +2,207 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { User, Mail, Lock, Loader2, ArrowLeft, Briefcase, Hash } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, ChevronRight, ArrowLeft, AlertCircle, Hash } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-export default function SignUpPage() {
+export default function SignupPage() {
     const router = useRouter();
     const supabase = createClient();
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
+    // State for all required fields
+    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [tradingId, setTradingId] = useState(''); // <--- NEW: Now collecting Trading ID
+    const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setError("");
-
-        const formData = new FormData(e.currentTarget);
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
-        const username = formData.get('username') as string;
-        const clientName = formData.get('clientName') as string;
-        const tradingId = formData.get('tradingId') as string;
+        setIsLoading(true);
+        setError(null);
 
         try {
-            const { data, error: authError } = await supabase.auth.signUp({
+            const { data, error: signupError } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: {
                         username: username.toLowerCase().trim(),
-                        full_name: clientName, // Initial name for the profile
-                        primary_client_name: clientName, // For the Clients table
-                        trading_id: tradingId // For the Clients table
+                        full_name: name,
+                        primary_client_name: name, // Maps to client_name in your trigger
+                        trading_id: tradingId,     // Maps to trading_id in your trigger
                     }
                 }
             });
 
-            if (authError) throw authError;
+            if (signupError) throw signupError;
 
             if (data.user) {
-                setSuccess(true);
-                setTimeout(() => router.push('/login'), 2500);
+                router.push('/login?message=Account created! Please sign in.');
             }
-
         } catch (err) {
-            setError(err instanceof Error ? err.message : "An error occurred");
+            setError(err instanceof Error ? err.message : "Signup failed");
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
-    if (success) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="max-w-md w-full text-center space-y-4 bg-white p-10 rounded-3xl shadow-xl">
-                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 italic font-black text-2xl">✓</div>
-                    <h2 className="text-2xl font-black text-slate-900">Portfolio Ready!</h2>
-                    <p className="text-slate-500 font-medium leading-relaxed">Account and primary client created. <br />Redirecting to login...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 py-12">
-            <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl border border-slate-200 shadow-xl">
-
-                <div>
-                    <Link href="/login" className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors mb-6 uppercase tracking-tighter">
-                        <ArrowLeft size={14} /> Back to Entry
-                    </Link>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create Identity</h2>
-                    <p className="mt-2 text-sm text-slate-500 font-medium">Set up your profile and primary trading account.</p>
-                </div>
-
-                <form className="mt-8 space-y-5" onSubmit={handleSignUp}>
-                    {error && <div className="bg-rose-50 text-rose-600 p-4 rounded-xl text-xs font-bold border border-rose-100">{error}</div>}
-
-                    <div className="space-y-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-2">Auth Credentials</p>
-
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input name="username" type="text" required className="block w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Username (for login)" />
-                        </div>
-
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input name="email" type="email" required className="block w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Email Address" />
-                        </div>
-
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input name="password" type="password" required minLength={6} className="block w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Security Password" />
-                        </div>
-
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-2 pt-4">Primary Client Details</p>
-
-                        <div className="relative">
-                            <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input name="clientName" type="text" required className="block w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Client Name (e.g. Personal A/C)" />
-                        </div>
-
-                        <div className="relative">
-                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input name="tradingId" type="text" required className="block w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Trading ID (e.g. TRD-001)" />
-                        </div>
-                    </div>
-
-                    <button type="submit" disabled={loading} className="w-full py-4 bg-slate-900 hover:bg-black text-white text-sm font-black rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                        {loading ? <Loader2 className="animate-spin" size={20} /> : "Initialize Portfolio"}
-                    </button>
-                </form>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
+            {/* Background Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-100/50 blur-[120px] rounded-full" />
+                <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-100/50 blur-[120px] rounded-full" />
             </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-md w-full relative z-10"
+            >
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60">
+                    <button
+                        onClick={() => router.push('/login')}
+                        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-6 group"
+                    >
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-sm font-medium">Back to login</span>
+                    </button>
+
+                    <h2 className="text-2xl font-semibold mb-8 text-slate-900">Create Account</h2>
+
+                    <form onSubmit={handleSignup} className="space-y-4">
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100"
+                            >
+                                <AlertCircle className="w-4 h-4" />
+                                {error}
+                            </motion.div>
+                        )}
+
+                        {/* Full Name */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">Full Name</label>
+                            <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="John Doe"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Trading ID (Added This) */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">Trading ID</label>
+                            <div className="relative group">
+                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={tradingId}
+                                    onChange={(e) => setTradingId(e.target.value)}
+                                    placeholder="e.g. TRD-12345"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Username */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">Username</label>
+                            <div className="relative group">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="your_username"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">Email Address</label>
+                            <div className="relative group">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="name@company.com"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Password */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">Password</label>
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="At least 8 characters"
+                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+                        >
+                            {isLoading ? (
+                                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    Create Account
+                                    <ChevronRight className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="mt-8 text-center">
+                        <p className="text-slate-500 text-sm">
+                            Already have an account?{' '}
+                            <button
+                                onClick={() => router.push('/login')}
+                                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                                Sign in here
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </motion.div>
         </div>
     );
 }
