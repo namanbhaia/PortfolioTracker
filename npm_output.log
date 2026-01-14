@@ -1,0 +1,13 @@
+
+> portfoliotracker@1.0.0 dev
+> next dev
+
+▲ Next.js 16.1.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Environments: .env.local
+
+✓ Starting...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 865ms
+ GET /signup 200 in 2.9s (compile: 2.2s, proxy.ts: 179ms, render: 519ms)
