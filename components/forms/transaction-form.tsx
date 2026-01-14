@@ -30,16 +30,27 @@ export function TransactionForm({ clients }: { clients: any[] }) {
         fetchLots();
     }, [selectedClient]);
 
-    const onSubmit = async (data: any, type: 'BUY' | 'SELL') => {
+    // Separate handlers for clearer logic and type safety
+    const onPurchaseSubmit = async (data: any) => {
         setLoading(true);
-        const table = type === 'BUY' ? 'purchases' : 'sales';
-
-        // Auto-populate user_id logic happens on server or via session here
-        const { error } = await supabase.from(table).insert([data]);
-
+        const { error } = await supabase.from('purchases').insert([data]);
         if (!error) {
             setSuccess(true);
-            reset();
+            reset(); // Reset form on success
+            setTimeout(() => setSuccess(false), 3000);
+        }
+        setLoading(false);
+    };
+
+    const onSaleSubmit = async (data: any) => {
+        setLoading(true);
+        // The 'sales' table does not have a 'client_name' column.
+        // We remove it from the payload before sending it to the database.
+        const { client_name, ...saleData } = data;
+        const { error } = await supabase.from('sales').insert([saleData]);
+        if (!error) {
+            setSuccess(true);
+            reset(); // Reset form on success
             setTimeout(() => setSuccess(false), 3000);
         }
         setLoading(false);
@@ -59,7 +70,7 @@ export function TransactionForm({ clients }: { clients: any[] }) {
 
                 {/* --- PURCHASE FORM --- */}
                 <TabsContent value="buy" className="p-8">
-                    <form onSubmit={handleSubmit((d) => onSubmit(d, 'BUY'))} className="space-y-4">
+                    <form onSubmit={handleSubmit(onPurchaseSubmit)} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-bold uppercase text-slate-500">Client</label>
@@ -90,7 +101,7 @@ export function TransactionForm({ clients }: { clients: any[] }) {
 
                 {/* --- SALE FORM --- */}
                 <TabsContent value="sell" className="p-8">
-                    <form onSubmit={handleSubmit((d) => onSubmit(d, 'SELL'))} className="space-y-4">
+                    <form onSubmit={handleSubmit(onSaleSubmit)} className="space-y-4">
                         <div className="space-y-1">
                             <label className="text-xs font-bold uppercase text-slate-500">Select Client First</label>
                             <select {...register("client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
