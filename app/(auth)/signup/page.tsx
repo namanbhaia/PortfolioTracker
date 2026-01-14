@@ -19,6 +19,7 @@ export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [dpId, setDpId] = useState('');
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,6 +36,7 @@ export default function SignupPage() {
                         full_name: name,
                         primary_client_name: name, // Maps to client_name in your trigger
                         trading_id: tradingId,     // Maps to trading_id in your trigger
+                        dp_id: dpId,
                     }
                 }
             });
@@ -114,6 +116,21 @@ export default function SignupPage() {
                                     value={tradingId}
                                     onChange={(e) => setTradingId(e.target.value)}
                                     placeholder="e.g. TRD-12345"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 ml-1">DP ID</label>
+                            <div className="relative group">
+                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={dpId}
+                                    onChange={(e) => setDpId(e.target.value)}
+                                    placeholder="Enter unique DP ID"
                                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
                                 />
                             </div>
