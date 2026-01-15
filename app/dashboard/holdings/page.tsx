@@ -1,6 +1,7 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import HoldingsFilters from '@/components/holdings-filters';
 
 // Define the valid sortable columns based on your view
 type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'is_long_term';
@@ -8,7 +9,16 @@ type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent'
 export default async function HoldingsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ sort?: string; order?: string }>;
+    searchParams: Promise<{
+        sort?: string;
+        order?: string;
+        client_name?: string;
+        ticker?: string;
+        date_from?: string;
+        date_to?: string;
+        term?: string;
+        positive_balance?: string;
+    }>;
 }) {
     const supabase = await createClient();
     const params = await searchParams;
@@ -28,12 +38,44 @@ export default async function HoldingsPage({
 
     if (!profile?.client_ids?.length) return <div>No authorized clients.</div>;
 
-    // 3. Fetch data with dynamic sorting
-    const { data: holdings, error } = await supabase
+    // 3. Fetch data with dynamic sorting and filtering
+    let query = supabase
         .from('client_holdings')
-        .select('*')
-        .in('client_id', profile.client_ids)
-        .order(sortField, { ascending: sortOrder });
+        .select('*');
+
+    // Base filter for authorized clients
+    let authorizedClientIds = profile.client_ids;
+
+    // Filter by selected client_name(s)
+    if (params.client_name) {
+        const selectedClientIds = params.client_name.split(',');
+        // Intersect with authorized clients for security
+        authorizedClientIds = selectedClientIds.filter(id => profile.client_ids.includes(id));
+    }
+
+    query = query.in('client_id', authorizedClientIds);
+
+    if (params.ticker) {
+        query = query.ilike('ticker', `%${params.ticker}%`);
+    }
+    if (params.date_from) {
+        query = query.gte('date', params.date_from);
+    }
+    if (params.date_to) {
+        query = query.lte('date', params.date_to);
+    }
+    if (params.positive_balance === 'true') {
+        query = query.gt('balance_qty', 0);
+    }
+    if (params.term) {
+        if (params.term === 'long') {
+            query = query.eq('is_long_term', true);
+        } else if (params.term === 'short') {
+            query = query.eq('is_long_term', false);
+        }
+    }
+
+    const { data: holdings, error } = await query.order(sortField, { ascending: sortOrder });
 
     if (error) return <div>Error loading data.</div>;
 
@@ -52,6 +94,7 @@ export default async function HoldingsPage({
     return (
         <div className="p-4 space-y-4">
             <h1 className="text-2xl font-bold">Portfolio Holdings:</h1>
+            <HoldingsFilters />
 
             <div className="border rounded-lg shadow-sm bg-white overflow-x-auto">
                 <table className="w-full text-xs text-left border-collapse">
