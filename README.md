@@ -1,56 +1,101 @@
-﻿WealthTrack Manager (2026)
- 
-Multi-Entity Financial Portfolio & Tax Engine
+# WealthTrack Manager (2026)
+
+## Multi-Entity Financial Portfolio & Tax Engine
+
 WealthTrack Manager is a high-performance, private investment dashboard designed for managing complex family wealth. Built with Next.js 16 and Supabase, it allows a single manager to oversee multiple "Clients" (family accounts), track individual purchase "lots," and view consolidated exposure—all while calculating Indian Capital Gains tax in real-time.
 
-🚀 Key Features
-- Hierarchical Management: Manage multiple independent clients (e.g., Personal, Spouse, Parents) under one secure login.
-- The "Lot-Level" Ledger: Tracks every buy as a unique batch, allowing for precise First-In-First-Out (FIFO) selling and tax optimization.
-- Automated Tax Logic: Built-in engine for LTCG (12.5%) and STCG (20%) based on the 2024-26 Indian Union Budget rules.
-- Consolidated Holdings: A unique "Union" view that aggregates a specific stock's exposure across all selected family accounts.
-- Edge-Powered Market Data: Automated price fetching via Supabase Edge Functions and pg_cron schedules.
+## 🚀 Key Features
 
-🛠 Tech Stack
+- **Hierarchical Management**: Manage multiple independent clients (e.g., Personal, Spouse, Parents) under one secure login.
+- **The "Lot-Level" Ledger**: Tracks every buy as a unique batch, allowing for precise First-In-First-Out (FIFO) selling and tax optimization.
+- **Automated Tax Logic**: Built-in engine for LTCG (12.5%) and STCG (20%) based on the 2024-26 Indian Union Budget rules.
+- **Consolidated Holdings**: A unique "Union" view that aggregates a specific stock's exposure across all selected family accounts.
+- **Edge-Powered Market Data**: Automated price fetching via Supabase Edge Functions and pg_cron schedules.
 
-.📂 Project StructurePlaintext/app
+## 🛠 Tech Stack
+
+- **Framework**: Next.js 16
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Styling**: Tailwind CSS
+
+## 📂 Project Structure
+
+```
+/app
+  /(auth)         # Signup and Login routes
   /dashboard
     /holdings       # Active "Open" positions
     /sales          # Realized P&L history
     /ledger         # New transaction entry (Buy/Sell)
     /consolidated   # Multi-client aggregated view
 /components
-  /dashboard        # Complex UI (Tables, Charts)
+  /dashboard        # Complex UI (Tables, Charts, Sidebar)
   /forms            # Transaction & Modal logic
 /lib
   /calculations.ts  # Shared Tax & P&L math
 /supabase
   /functions        # Market data update engine
-  
-🏗 Database Architecture
-The system uses PostgreSQL Views to perform heavy financial math at the database level rather than the client level:
-- client_holdings (View): Joins purchases and sales to calculate balance_qty and potential_profit.
-- sales_view (View): Pairs every sale with its specific purchase lot to calculate realized gains and tax_payable.
+```
 
-🏁 Getting Started
-1. Prerequisites
-   - Node.js 22+
-   - Supabase Account
-   - Market Data API Key (e.g., Alpha Vantage or Dhan)
-2. Environment Variables
-   Create a .env.local file:
-   Bash
-     NEXT_PUBLIC_SUPABASE_URL=your_project_url
-     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-     MARKET_DATA_API_KEY=your_key
- 3.  Setup Database
-    1. Run the Master SQL Script in the Supabase SQL Editor to create tables and views.
-    2. Enable Row Level Security (RLS) to protect client data.
-    3. Deploy the Edge Function:
-       Bash
-       supabase functions deploy update-prices
+## 🏗 Database Architecture
 
-📊 Decision Intelligence
+The system uses PostgreSQL Views to perform heavy financial math at the database level rather than the client level.
+
+### Core Tables
+
+| Table       | Description                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| `profiles`  | Stores manager information, linked to `auth.users`.                         |
+| `clients`   | Represents individual family member accounts being managed.                 |
+| `assets`    | A master list of all tradable stocks and securities.                        |
+| `purchases` | The "In" ledger. Every row is a unique purchase lot with a specific cost basis. |
+| `sales`     | The "Out" ledger. Each sale is linked to a specific purchase lot.           |
+
+### Key Views
+
+- **`client_holdings` (View)**: Joins `purchases` and `assets` to calculate the current value, profit/loss, and balance quantity for each open position.
+- **`sales_view` (View)**: Joins `sales` with their corresponding `purchases` to calculate realized gains and the precise `tax_payable` for each transaction.
+
+## 💻 Code Flow
+
+1.  **Authentication**: The `middleware.ts` file protects all routes within the `/dashboard` directory, redirecting unauthenticated users to the login page. User signup and login are handled by the pages in `app/(auth)`.
+2.  **Dashboard**: After a successful login, the user is redirected to the `/dashboard/holdings` page. The main layout in `app/dashboard/layout.tsx` renders the `Sidebar` component.
+3.  **Navigation**: The sidebar, located at `components/dashboard/sidebar.tsx`, provides links to the different sections of the application (`Holdings`, `Sales`, `Ledger`, etc.).
+4.  **Data Display**: Each page within the dashboard fetches data from the corresponding Supabase views (`client_holdings`, `sales_view`) and displays it in a tabular format using components like `holdings-table.tsx` and `sales-table.tsx`.
+5.  **Transactions**: The `/ledger` page allows users to enter new buy or sell transactions using forms from the `components/forms` directory. This data is then inserted into the `purchases` or `sales` tables in the database.
+
+## 🏁 Getting Started
+
+### 1. Prerequisites
+
+- Node.js 22+
+- A Supabase Account
+- Market Data API Key (e.g., Alpha Vantage or Dhan)
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the root of the project:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+MARKET_DATA_API_KEY=your_key
+```
+
+### 3. Setup Database
+
+1.  Run the `CreateTables` SQL script in the Supabase SQL Editor to create the necessary tables and views.
+2.  Enable Row Level Security (RLS) on all tables to protect client data.
+3.  Deploy the Edge Function for market data:
+    ```bash
+    supabase functions deploy update-prices
+    ```
+
+## 📊 Decision Intelligence
+
 This app is built to answer three questions every morning:
-1. "What is our total family exposure to this asset?" (Consolidated View)
-2. "How much tax do I owe if I sell today?" (Holdings/Sales Tables)
-3. "Which account is under-allocated?" (Dashboard Summary)
+
+1.  "What is our total family exposure to this asset?" (Consolidated View)
+2.  "How much tax do I owe if I sell today?" (Holdings/Sales Tables)
+3.  "Which account is under-allocated?" (Dashboard Summary)
