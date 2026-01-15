@@ -12,7 +12,6 @@ CREATE TABLE profiles (
 CREATE TABLE clients (
     client_name TEXT PRIMARY KEY, -- Using name as PK as requested
     trading_id TEXT UNIQUE NOT NULL,
-    dp_id TEXT UNIQUE NOT NULL,
     client_id UUID UNIQUE DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -167,11 +166,10 @@ BEGIN
   );
 
   -- 2. Insert into Clients (Your first family member/trading account)
-  INSERT INTO public.clients (client_name, trading_id, dp_id, user_id)
+  INSERT INTO public.clients (client_name, trading_id, user_id)
   VALUES (
     new.raw_user_meta_data->>'primary_client_name', 
     new.raw_user_meta_data->>'trading_id', 
-    new.raw_user_meta_data->>'dp_id',
     new.id
   );
 
