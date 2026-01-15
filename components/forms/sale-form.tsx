@@ -19,7 +19,7 @@ export function SaleForm({ clients }: { clients: any[] }) {
             if (!selectedClient) return;
             setLoadingLots(true);
             const { data } = await supabase
-                .from('user_holdings') // Your SQL View
+                .from('client_holdings') // Your SQL View
                 .select('trx_id, ticker, purchase_date, balance_qty, purchase_rate')
                 .eq('client_name', selectedClient)
                 .gt('balance_qty', 0);

@@ -28,7 +28,7 @@ WealthTrack Manager is a high-performance, private investment dashboard designed
   
 🏗 Database Architecture
 The system uses PostgreSQL Views to perform heavy financial math at the database level rather than the client level:
-- user_holdings (View): Joins purchases and sales to calculate balance_qty and potential_profit.
+- client_holdings (View): Joins purchases and sales to calculate balance_qty and potential_profit.
 - sales_view (View): Pairs every sale with its specific purchase lot to calculate realized gains and tax_payable.
 
 🏁 Getting Started

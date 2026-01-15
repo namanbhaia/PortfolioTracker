@@ -13,7 +13,7 @@ export default async function ConsolidatedPage() {
 
     // 2. Fetch all active holdings across all clients
     const { data: holdings } = await supabase
-        .from('user_holdings') // The view we created earlier
+        .from('client_holdings') // The view we created earlier
         .select('*')
         .eq('manager_id', user?.id);
 

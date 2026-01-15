@@ -21,7 +21,7 @@ export function TransactionForm({ clients }: { clients: any[] }) {
         async function fetchLots() {
             if (!selectedClient) return;
             const { data } = await supabase
-                .from('user_holdings')
+                .from('client_holdings')
                 .select('*')
                 .eq('client_name', selectedClient)
                 .gt('balance_qty', 0);

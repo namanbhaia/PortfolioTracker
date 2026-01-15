@@ -52,35 +52,47 @@ CREATE TABLE sales (
 );
 
 
-
-
 Create Holding Views
-CREATE OR REPLACE VIEW user_holdings AS
+CREATE OR REPLACE VIEW public.client_holdings AS
 SELECT 
+    -- 1. IDs and Identifiers
     p.trx_id,
-    c.client_id,
+    c.client_id,        -- Fetched from clients table via name link
+    c.client_name,      -- The link itself
+    c.dp_id,
     c.trading_id,
-    p.client_name,
-    p.ticker,
+    a.ticker,
     a.stock_name,
     a.isin,
-    p.date AS purchase_date,
-    p.qty AS purchase_qty,
-    p.rate AS purchase_rate,
-    (p.qty * p.rate) AS purchase_value,
-    COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0) AS sold_qty,
-    (p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0)) AS balance_qty,
-    a.current_price AS market_rate,
-    ((p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0)) * a.current_price) AS market_value,
-    (a.current_price - p.rate) AS potential_profit_per_share,
-    ((a.current_price - p.rate) * (p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0))) AS potential_profit,
-    (CURRENT_DATE - p.date > 365) AS is_long_term,
+    
+    -- 2. Purchase Details
+    p.date,
+    p.purchase_qty,
+    p.rate,
+    (p.purchase_qty * p.rate) AS purchase_value,
+    p.balance_qty,
     p.comments,
-    p.user_id AS manager_id
-FROM purchases p
-JOIN clients c ON p.client_name = c.client_name
-JOIN assets a ON p.ticker = a.ticker
-WHERE (p.qty - COALESCE((SELECT SUM(s.qty) FROM sales s WHERE s.purchase_trx_id = p.trx_id), 0)) > 0;
+
+    -- 3. Market Details
+    a.current_price AS market_rate,
+    (p.balance_qty * a.current_price) AS market_value,
+
+    -- 4. Calculations
+    (a.current_price - p.rate) AS pl_per_share,
+    ((a.current_price - p.rate) * p.balance_qty) AS pl,
+    CASE 
+        WHEN p.rate > 0 
+        THEN ((a.current_price - p.rate) / p.rate) * 100 
+        ELSE 0 
+    END AS pl_percent
+
+FROM 
+    public.purchases p
+JOIN 
+    public.assets a ON p.ticker = a.ticker
+JOIN 
+    public.clients c ON p.client_name = c.client_name; -- Linking via Name
+
 
 Create Sales View
 CREATE OR REPLACE VIEW sales_view AS
@@ -121,7 +133,7 @@ DECLARE
     available_qty NUMERIC;
 BEGIN
     SELECT balance_qty INTO available_qty 
-    FROM user_holdings 
+    FROM client_holdings 
     WHERE trx_id = NEW.purchase_trx_id;
 
     IF NEW.qty > available_qty THEN
