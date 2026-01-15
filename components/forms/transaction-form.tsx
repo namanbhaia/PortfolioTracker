@@ -3,40 +3,90 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, MinusCircle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ShoppingCart, Tag } from 'lucide-react';
 
 export function TransactionForm({ clients }: { clients: any[] }) {
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
-    const [openPurchases, setOpenPurchases] = useState([]); // For the Sale dropdown
+    const [openPurchases, setOpenPurchases] = useState([]);
+    
+    // TAB STATE: 'purchase' or 'sale'
+    const [activeTab, setActiveTab] = useState<'purchase' | 'sale'>('purchase');
 
-    // 1. Setup Form
     const { register, handleSubmit, reset, watch, setValue } = useForm();
-    const selectedClient = watch("client_name");
+    
+    const purchaseClient = watch("purchase_client_name");
+    const saleClient = watch("sale_client_name");
 
-    // 2. Fetch "Sellable" lots when client changes
+    // Auto-populate DP and Trading ID
+    useEffect(() => {
+        const activeClientName = activeTab === 'purchase' ? purchaseClient : saleClient;
+        
+        const client = clients.find(
+            c => c.client_name?.trim() === activeClientName?.trim()
+        );
+
+        if (client) {
+            setValue("dp_id", client.dp_id);
+            setValue("trading_id", client.trading_id);
+            setValue("client_id", client.client_id); 
+        } else {
+            setValue("dp_id", '');
+            setValue("trading_id", '');
+            setValue("client_id", '');
+        }
+    }, [purchaseClient, saleClient, activeTab, clients, setValue]);
+
+    // Fetch Sellable lots
     useEffect(() => {
         async function fetchLots() {
-            if (!selectedClient) return;
+            if (!saleClient) {
+                setOpenPurchases([]);
+                return;
+            }
             const { data } = await supabase
                 .from('client_holdings')
                 .select('*')
-                .eq('client_name', selectedClient)
+                .eq('client_name', saleClient.trim())
                 .gt('balance_qty', 0);
             setOpenPurchases(data || []);
         }
-        fetchLots();
-    }, [selectedClient]);
+        if (activeTab === 'sale') fetchLots();
+    }, [saleClient, activeTab, supabase]);
 
-    const onSubmit = async (data: any, type: 'BUY' | 'SELL') => {
+    const onPurchaseSubmit = async (data: any) => {
         setLoading(true);
-        const table = type === 'BUY' ? 'purchases' : 'sales';
+        const payload = {
+            client_name: data.purchase_client_name,
+            ticker: data.ticker?.toUpperCase(),
+            date: data.purchase_date,
+            rate: parseFloat(data.purchase_rate),
+            purchase_qty: parseFloat(data.purchase_qty),
+            comments: data.comments,
+            client_id: data.client_id
+        };
 
-        // Auto-populate user_id logic happens on server or via session here
-        const { error } = await supabase.from(table).insert([data]);
+        const { error } = await supabase.from('purchases').insert([payload]);
+        if (!error) {
+            setSuccess(true);
+            reset();
+            setTimeout(() => setSuccess(false), 3000);
+        }
+        setLoading(false);
+    };
 
+    const onSaleSubmit = async (data: any) => {
+        setLoading(true);
+        const payload = {
+            purchase_trx_id: data.purchase_trx_id,
+            date: data.sale_date,
+            rate: parseFloat(data.sale_rate),
+            sale_qty: parseFloat(data.sale_qty),
+            comments: data.sale_comments
+        };
+
+        const { error } = await supabase.from('sales').insert([payload]);
         if (!error) {
             setSuccess(true);
             reset();
@@ -46,26 +96,43 @@ export function TransactionForm({ clients }: { clients: any[] }) {
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <Tabs defaultValue="buy" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-14 bg-slate-50 rounded-none border-b">
-                    <TabsTrigger value="buy" className="data-[state=active]:text-indigo-600 font-bold flex gap-2">
-                        <PlusCircle size={18} /> Purchase (Buy)
-                    </TabsTrigger>
-                    <TabsTrigger value="sell" className="data-[state=active]:text-rose-600 font-bold flex gap-2">
-                        <MinusCircle size={18} /> Sale (Sell)
-                    </TabsTrigger>
-                </TabsList>
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-w-2xl mx-auto">
+            {/* TAB NAVIGATION */}
+            <div className="flex border-b border-slate-200 bg-slate-50/50">
+                <button
+                    onClick={() => setActiveTab('purchase')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold transition-all ${
+                        activeTab === 'purchase' 
+                        ? "bg-white text-indigo-600 border-b-2 border-indigo-600" 
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                >
+                    <ShoppingCart size={18} />
+                    Purchase (Buy)
+                </button>
+                <button
+                    onClick={() => setActiveTab('sale')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold transition-all ${
+                        activeTab === 'sale' 
+                        ? "bg-white text-rose-600 border-b-2 border-rose-600" 
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                >
+                    <Tag size={18} />
+                    Sale (Sell)
+                </button>
+            </div>
 
-                {/* --- PURCHASE FORM --- */}
-                <TabsContent value="buy" className="p-8">
-                    <form onSubmit={handleSubmit((d) => onSubmit(d, 'BUY'))} className="space-y-4">
+            <div className="p-8">
+                {activeTab === 'purchase' ? (
+                    /* PURCHASE FORM */
+                    <form onSubmit={handleSubmit(onPurchaseSubmit)} className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs font-bold uppercase text-slate-500">Client</label>
-                                <select {...register("client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500">
+                                <select {...register("purchase_client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500">
                                     <option value="">Select Client</option>
-                                    {clients.map(c => <option key={c.client_name}>{c.client_name}</option>)}
+                                    {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-1">
@@ -74,29 +141,49 @@ export function TransactionForm({ clients }: { clients: any[] }) {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <input type="date" {...register("date")} className="p-2.5 bg-slate-50 border rounded-lg" />
-                            <input type="number" step="0.01" {...register("rate")} placeholder="Rate (₹)" className="p-2.5 bg-slate-50 border rounded-lg" />
-                            <input type="number" {...register("qty")} placeholder="Quantity" className="p-2.5 bg-slate-50 border rounded-lg" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold uppercase text-slate-500">DP ID</label>
+                                <input {...register("dp_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
+                                <input {...register("trading_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                            </div>
                         </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <input type="date" {...register("purchase_date")} className="p-2.5 bg-slate-50 border rounded-lg" />
+                            <input type="number" step="0.01" {...register("purchase_rate")} placeholder="Rate (₹)" className="p-2.5 bg-slate-50 border rounded-lg" />
+                            <input type="number" {...register("purchase_qty")} placeholder="Quantity" className="p-2.5 bg-slate-50 border rounded-lg" />
+                        </div>                   
 
                         <textarea {...register("comments")} placeholder="Notes (Strategy, conviction...)" className="w-full p-2.5 bg-slate-50 border rounded-lg h-24" />
 
-                        <button disabled={loading} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all">
+                        <button disabled={loading} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
                             {loading ? "Recording..." : "Confirm Purchase"}
                         </button>
                     </form>
-                </TabsContent>
-
-                {/* --- SALE FORM --- */}
-                <TabsContent value="sell" className="p-8">
-                    <form onSubmit={handleSubmit((d) => onSubmit(d, 'SELL'))} className="space-y-4">
+                ) : (
+                    /* SALE FORM */
+                    <form onSubmit={handleSubmit(onSaleSubmit)} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase text-slate-500">Select Client First</label>
-                            <select {...register("client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                            <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
+                            <select {...register("sale_client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
                                 <option value="">Select Client</option>
-                                {clients.map(c => <option key={c.client_name}>{c.client_name}</option>)}
+                                {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
                             </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold uppercase text-slate-500">DP ID</label>
+                                <input {...register("dp_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
+                                <input {...register("trading_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                            </div>
                         </div>
 
                         <div className="space-y-1">
@@ -112,20 +199,20 @@ export function TransactionForm({ clients }: { clients: any[] }) {
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
-                            <input type="date" {...register("date")} className="p-2.5 bg-slate-50 border rounded-lg" />
-                            <input type="number" step="0.01" {...register("rate")} placeholder="Sale Price (₹)" className="p-2.5 bg-slate-50 border rounded-lg" />
-                            <input type="number" {...register("qty")} placeholder="Qty to Sell" className="p-2.5 bg-slate-50 border rounded-lg" />
+                            <input type="date" {...register("sale_date")} className="p-2.5 bg-slate-50 border rounded-lg" />
+                            <input type="number" step="0.01" {...register("sale_rate")} placeholder="Price" className="p-2.5 bg-slate-50 border rounded-lg" />
+                            <input type="number" {...register("sale_qty")} placeholder="Qty" className="p-2.5 bg-slate-50 border rounded-lg" />
                         </div>
 
-                        <button disabled={loading} className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all">
+                        <button disabled={loading} className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
                             {loading ? "Recording..." : "Confirm Sale"}
                         </button>
                     </form>
-                </TabsContent>
-            </Tabs>
+                )}
+            </div>
 
             {success && (
-                <div className="bg-emerald-500 text-white p-4 text-center flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                <div className="fixed bottom-4 right-4 bg-emerald-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
                     <CheckCircle2 size={20} /> Transaction Recorded Successfully!
                 </div>
             )}
