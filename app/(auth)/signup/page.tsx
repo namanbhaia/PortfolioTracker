@@ -16,6 +16,7 @@ export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [tradingId, setTradingId] = useState(''); // <--- NEW: Now collecting Trading ID
+    const [dpId, setDpId] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ export default function SignupPage() {
                         full_name: name,
                         primary_client_name: name, // Maps to client_name in your trigger
                         trading_id: tradingId,     // Maps to trading_id in your trigger
-                        dp_id: dpId,
+                        dp_id: dpId
                     }
                 }
             });
@@ -121,6 +122,7 @@ export default function SignupPage() {
                             </div>
                         </div>
 
+                        {/* DP ID */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-700 ml-1">DP ID</label>
                             <div className="relative group">
@@ -130,7 +132,7 @@ export default function SignupPage() {
                                     required
                                     value={dpId}
                                     onChange={(e) => setDpId(e.target.value)}
-                                    placeholder="Enter unique DP ID"
+                                    placeholder="e.g. IN123456"
                                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
                                 />
                             </div>
