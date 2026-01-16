@@ -7,6 +7,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function HoldingsFilters() {
     const supabase = createClient();
@@ -14,9 +20,12 @@ export default function HoldingsFilters() {
     const searchParams = useSearchParams();
     const [clients, setClients] = useState<{ client_id: string; client_name: string }[]>([]);
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
+    const [tickers, setTickers] = useState<string[]>([]);
+    const [selectedTicker, setSelectedTicker] = useState('');
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
-        async function fetchClients() {
+        async function fetchData() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 const { data: profile } = await supabase
@@ -32,18 +41,35 @@ export default function HoldingsFilters() {
                     if (clientData) {
                         setClients(clientData);
                     }
+
+                    const { data: tickerData } = await supabase
+                        .from('client_holdings')
+                        .select('ticker')
+                        .in('client_id', profile.client_ids);
+
+                    if (tickerData) {
+                        const uniqueTickers = [...new Set(tickerData.map(t => t.ticker))];
+                        setTickers(uniqueTickers);
+                    }
                 }
             }
         }
-        fetchClients();
+        fetchData();
     }, [supabase]);
 
     useEffect(() => {
         const clientIds = searchParams.get('client_ids');
         if (clientIds) {
             setSelectedClients(clientIds.split(','));
+        } else {
+            setSelectedClients(clients.map(c => c.client_id));
         }
-    }, [searchParams]);
+
+        const ticker = searchParams.get('ticker');
+        if (ticker) {
+            setSelectedTicker(ticker);
+        }
+    }, [searchParams, clients]);
 
     const handleApplyFilters = (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,8 +82,14 @@ export default function HoldingsFilters() {
             params.delete('client_ids');
         }
 
+        if (selectedTicker) {
+            params.set('ticker', selectedTicker);
+        } else {
+            params.delete('ticker');
+        }
+
         for (const [key, value] of formData.entries()) {
-            if (key !== 'client_ids') {
+            if (key !== 'client_ids' && key !== 'ticker') {
                 if (value) {
                     params.set(key, value as string);
                 } else {
@@ -92,6 +124,10 @@ export default function HoldingsFilters() {
         setSelectedClients([]);
     };
 
+    const handleResetFilters = () => {
+        router.push('/dashboard/holdings');
+    };
+
     return (
         <form onSubmit={handleApplyFilters} className="p-4 bg-gray-100 rounded-lg flex items-center space-x-4">
             <DropdownMenu>
@@ -110,39 +146,71 @@ export default function HoldingsFilters() {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <input
-                type="text"
-                name="ticker"
-                placeholder="Ticker"
-                className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                defaultValue={searchParams.get('ticker') ?? ''}
-            />
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className="w-[200px] justify-between"
+                    >
+                        {selectedTicker
+                            ? tickers.find((ticker) => ticker === selectedTicker)
+                            : "Select ticker..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search ticker..." />
+                        <CommandEmpty>No ticker found.</CommandEmpty>
+                        <CommandGroup>
+                            {tickers.map((ticker) => (
+                                <CommandItem
+                                    key={ticker}
+                                    onSelect={(currentValue) => {
+                                        setSelectedTicker(currentValue === selectedTicker ? "" : currentValue)
+                                        setOpen(false)
+                                    }}
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            selectedTicker === ticker ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    {ticker}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </Command>
+                </PopoverContent>
+            </Popover>
 
             <div className="flex items-center space-x-2">
-                <input
+                <Input
                     type="date"
                     name="date_from"
-                    className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                     defaultValue={searchParams.get('date_from') ?? ''}
                 />
                 <span className="text-gray-500">-</span>
-                <input
+                <Input
                     type="date"
                     name="date_to"
-                    className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                     defaultValue={searchParams.get('date_to') ?? ''}
                 />
             </div>
 
-            <select
-                name="term"
-                className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                defaultValue={searchParams.get('term') ?? ''}
-            >
-                <option value="">All Terms</option>
-                <option value="long">Long</option>
-                <option value="short">Short</option>
-            </select>
+            <Select name="term" defaultValue={searchParams.get('term') ?? ''}>
+                <SelectTrigger>
+                    <SelectValue placeholder="All Terms" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">All Terms</SelectItem>
+                    <SelectItem value="long">Long</SelectItem>
+                    <SelectItem value="short">Short</SelectItem>
+                </SelectContent>
+            </Select>
 
             <div className="flex items-center">
                 <Checkbox
@@ -156,6 +224,7 @@ export default function HoldingsFilters() {
             </div>
 
             <Button type="submit">Go</Button>
+            <Button type="button" variant="ghost" onClick={handleResetFilters}>Reset</Button>
         </form>
     );
 }

@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 
 export default function TestHoldingsTable() {
     const searchParams = useSearchParams();
-    const client_name = searchParams.get('client_name');
+    const client_ids = searchParams.get('client_ids');
     const ticker = searchParams.get('ticker');
     const date_from = searchParams.get('date_from');
     const date_to = searchParams.get('date_to');
@@ -16,7 +16,7 @@ export default function TestHoldingsTable() {
             <h2 className="text-lg font-bold">Filtered Results:</h2>
             <pre>
                 {JSON.stringify({
-                    client_name,
+                    client_ids,
                     ticker,
                     date_from,
                     date_to,
