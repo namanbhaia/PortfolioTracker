@@ -98,14 +98,17 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
             <div className="p-4 border-t border-slate-800">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <div>
+                        <button className="w-full bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 border border-slate-700/50 hover:bg-slate-800 transition-colors text-left">
+                            <div className="bg-indigo-500/20 p-2 rounded-full">
+                                <UserCircle size={20} className="text-indigo-400" />
+                            </div>
                             <div className="overflow-hidden">
                                 <p className="text-sm font-bold text-white truncate">{displayName}</p>
                                 <p className="text-[10px] text-slate-500 truncate">{displayEmail}</p>
                             </div>
-                        </div>
+                        </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuContent className="w-56 bg-slate-700" align="end" forceMount>
                         <DropdownMenuItem asChild>
                             <Link href="/dashboard/profile" className="cursor-pointer">
                                 <User size={14} className="mr-2" />
