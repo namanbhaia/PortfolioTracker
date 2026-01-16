@@ -22,6 +22,7 @@ export default function HoldingsFilters() {
     const [selectedClients, setSelectedClients] = useState<string[]>([]);
     const [tickers, setTickers] = useState<string[]>([]);
     const [selectedTicker, setSelectedTicker] = useState('');
+    const [selectedTerm, setSelectedTerm] = useState('all');
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -69,6 +70,11 @@ export default function HoldingsFilters() {
         if (ticker) {
             setSelectedTicker(ticker);
         }
+
+        const term = searchParams.get('term');
+        if (term) {
+            setSelectedTerm(term);
+        }
     }, [searchParams, clients]);
 
     const handleApplyFilters = (e: React.FormEvent) => {
@@ -88,8 +94,14 @@ export default function HoldingsFilters() {
             params.delete('ticker');
         }
 
+        if (selectedTerm && selectedTerm !== 'all') {
+            params.set('term', selectedTerm);
+        } else {
+            params.delete('term');
+        }
+
         for (const [key, value] of formData.entries()) {
-            if (key !== 'client_ids' && key !== 'ticker') {
+            if (key !== 'client_ids' && key !== 'ticker' && key !== 'term') {
                 if (value) {
                     params.set(key, value as string);
                 } else {
@@ -201,12 +213,12 @@ export default function HoldingsFilters() {
                 />
             </div>
 
-            <Select name="term" defaultValue={searchParams.get('term') ?? ''}>
+            <Select value={selectedTerm} onValueChange={setSelectedTerm}>
                 <SelectTrigger>
                     <SelectValue placeholder="All Terms" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">All Terms</SelectItem>
+                    <SelectItem value="all">All Terms</SelectItem>
                     <SelectItem value="long">Long</SelectItem>
                     <SelectItem value="short">Short</SelectItem>
                 </SelectContent>
