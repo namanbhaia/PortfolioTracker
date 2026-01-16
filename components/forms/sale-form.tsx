@@ -1,102 +1,110 @@
-﻿"use client"
+"use client"
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
-import { MinusCircle, Loader2, Info } from 'lucide-react';
 
-export function SaleForm({ clients }: { clients: any[] }) {
+export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
-    const [availableLots, setAvailableLots] = useState([]);
-    const [loadingLots, setLoadingLots] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [openPurchases, setOpenPurchases] = useState([]);
 
-    const { register, handleSubmit, reset, watch, formState: { isSubmitting } } = useForm();
-    const selectedClient = watch("client_name");
+    const { register, handleSubmit, reset, watch, setValue } = useForm();
 
-    // Fetch only active lots for the chosen client
+    const saleClient = watch("sale_client_name");
+
+    // Auto-populate DP and Trading ID
     useEffect(() => {
-        async function getLots() {
-            if (!selectedClient) return;
-            setLoadingLots(true);
+        const client = clients.find(
+            c => c.client_name?.trim() === saleClient?.trim()
+        );
+
+        if (client) {
+            setValue("dp_id", client.dp_id);
+            setValue("trading_id", client.trading_id);
+        } else {
+            setValue("dp_id", '');
+            setValue("trading_id", '');
+        }
+    }, [saleClient, clients, setValue]);
+
+    // Fetch Sellable lots
+    useEffect(() => {
+        async function fetchLots() {
+            if (!saleClient) {
+                setOpenPurchases([]);
+                return;
+            }
             const { data } = await supabase
-                .from('client_holdings') // Your SQL View
-                .select('trx_id, ticker, purchase_date, balance_qty, purchase_rate')
-                .eq('client_name', selectedClient)
+                .from('client_holdings')
+                .select('*')
+                .eq('client_name', saleClient.trim())
                 .gt('balance_qty', 0);
-            setAvailableLots(data || []);
-            setLoadingLots(false);
+            setOpenPurchases(data || []);
         }
-        getLots();
-    }, [selectedClient, supabase]);
+        fetchLots();
+    }, [saleClient, supabase]);
 
-    const onSubmit = async (data: any) => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            const { error } = await supabase.from('sales').insert([{
-                ...data,
-                user_id: user?.id,
-            }]);
+    const onSaleSubmit = async (data: any) => {
+        setLoading(true);
+        const payload = {
+            purchase_trx_id: data.purchase_trx_id,
+            date: data.sale_date,
+            rate: parseFloat(data.sale_rate),
+            sale_qty: parseFloat(data.sale_qty),
+            comments: data.sale_comments
+        };
 
-            if (error) throw error;
-            alert("Sale recorded!");
+        const { error } = await supabase.from('sales').insert([payload]);
+        if (!error) {
+            setSuccess(true);
             reset();
-        } catch (err: any) {
-            alert(err.message);
+            setTimeout(() => setSuccess(false), 3000);
         }
+        setLoading(false);
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-2">
-            <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">1. Select Account</label>
-                <select {...register("client_name", { required: true })} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                    <option value="">Select...</option>
-                    {clients.map(c => <option key={c.client_name} value={c.client_name}>{c.client_name}</option>)}
+        <form onSubmit={handleSubmit(onSaleSubmit)} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
+                <select {...register("sale_client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                    <option value="">Select Client</option>
+                    {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
                 </select>
             </div>
 
-            <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">2. Link to Purchase Batch</label>
-                <select
-                    {...register("purchase_trx_id", { required: true })}
-                    disabled={!selectedClient || loadingLots}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg disabled:opacity-50"
-                >
-                    <option value="">{loadingLots ? "Loading Lots..." : "Choose the specific buy to sell from..."}</option>
-                    {availableLots.map((lot: any) => (
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">DP ID</label>
+                    <input {...register("dp_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
+                    <input {...register("trading_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                </div>
+            </div>
+
+            <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-500">Link to Purchase Batch (Lot)</label>
+                <select {...register("purchase_trx_id")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                    <option value="">Select a batch to sell from</option>
+                    {openPurchases.map((lot: any) => (
                         <option key={lot.trx_id} value={lot.trx_id}>
-                            {lot.ticker} | Bought {new Date(lot.purchase_date).toLocaleDateString()} | Avail: {lot.balance_qty} @ ₹{lot.purchase_rate}
+                            {lot.ticker} - Bought on {new Date(lot.purchase_date).toLocaleDateString()} (Avail: {lot.balance_qty})
                         </option>
                     ))}
                 </select>
-                <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <Info size={10} /> This ensures accurate Capital Gains tax calculation.
-                </p>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sale Date</label>
-                    <input type="date" {...register("date", { required: true })} className="w-full p-2 bg-slate-50 border rounded-lg text-sm" />
-                </div>
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sale Rate (₹)</label>
-                    <input type="number" step="0.01" {...register("rate", { required: true })} className="w-full p-2 bg-slate-50 border rounded-lg text-sm" />
-                </div>
-                <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Qty Sold</label>
-                    <input type="number" {...register("qty", { required: true })} className="w-full p-2 bg-slate-50 border rounded-lg text-sm" />
-                </div>
+                <input type="date" {...register("sale_date")} className="p-2.5 bg-slate-50 border rounded-lg" />
+                <input type="number" step="0.01" {...register("sale_rate")} placeholder="Price" className="p-2.5 bg-slate-50 border rounded-lg" />
+                <input type="number" {...register("sale_qty")} placeholder="Qty" className="p-2.5 bg-slate-50 border rounded-lg" />
             </div>
 
-            <textarea {...register("comments")} placeholder="Sale notes (e.g., Target hit, Stop loss triggered)" className="w-full p-3 bg-slate-50 border rounded-lg text-sm h-20 italic" />
-
-            <button
-                disabled={isSubmitting || !selectedClient}
-                className="w-full py-3.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg flex items-center justify-center gap-2"
-            >
-                {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <MinusCircle size={18} />}
-                Log Sale
+            <button disabled={loading} className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
+                {loading ? "Recording..." : "Confirm Sale"}
             </button>
         </form>
     );
