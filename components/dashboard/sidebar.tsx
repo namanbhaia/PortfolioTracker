@@ -30,7 +30,7 @@ const navItems = [
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
 ];
 
-const secondaryItems = [{ name: 'Info & Rules', href: '/info', icon: Info }];
+const secondaryItems = [{ name: 'Info & Rules', href: '/dashboard/info', icon: Info }];
 
 // 1. Update component to accept props
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {

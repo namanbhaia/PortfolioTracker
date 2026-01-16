@@ -1,7 +1,7 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import HoldingsFilters from '@/components/holdings-filters';
+import HoldingsFilters from '@/components/dashboard/holdings-filters';
 
 // Define the valid sortable columns based on your view
 type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'is_long_term';
