@@ -11,9 +11,17 @@ import {
     Info,
     LogOut,
     ShieldCheck,
-    UserCircle // <--- Added Icon
+    UserCircle,
+    User
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -71,19 +79,6 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                 })}
             </nav>
 
-            {/* 3. NEW: Active User Card */}
-            <div className="px-4 mb-2">
-                <div className="bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 border border-slate-700/50">
-                    <div className="bg-indigo-500/20 p-2 rounded-full">
-                        <UserCircle size={20} className="text-indigo-400" />
-                    </div>
-                    <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                        <p className="text-[10px] text-slate-500 truncate">{displayEmail}</p>
-                    </div>
-                </div>
-            </div>
-
             {/* Secondary & Help */}
             <div className="px-4 space-y-1 mb-4">
                 {secondaryItems.map((item) => (
@@ -98,15 +93,34 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                 ))}
             </div>
 
-            {/* Logout */}
+            {/* Active User Card w/ Dropdown */}
             <div className="p-4 border-t border-slate-800">
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
-                >
-                    <LogOut size={18} />
-                    Sign Out
-                </button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="w-full bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 border border-slate-700/50 hover:bg-slate-800 transition-colors text-left">
+                            <div className="bg-indigo-500/20 p-2 rounded-full">
+                                <UserCircle size={20} className="text-indigo-400" />
+                            </div>
+                            <div className="overflow-hidden">
+                                <p className="text-sm font-bold text-white truncate">{displayName}</p>
+                                <p className="text-[10px] text-slate-500 truncate">{displayEmail}</p>
+                            </div>
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-slate-700" align="end" forceMount>
+                        <DropdownMenuItem asChild>
+                            <Link href="/dashboard/profile" className="cursor-pointer">
+                                <User size={14} className="mr-2" />
+                                Profile
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout} className="text-rose-400 focus:text-rose-400 focus:bg-rose-500/10 cursor-pointer">
+                            <LogOut size={14} className="mr-2" />
+                            Sign Out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </aside>
     );
