@@ -31,6 +31,7 @@ export default function HoldingsTable({ holdings }: { holdings: Holding[] }) {
                             <th className="px-4 py-3 text-right">Balance Qty</th>
                             <th className="px-4 py-3 text-right">Avg. Cost</th>
                             <th className="px-4 py-3 text-right">Market Price</th>
+                            <th className="px-4 py-3 text-right">Market Value</th>
                             <th className="px-4 py-3 text-right">Unrealized P&L</th>
                             <th className="px-4 py-3">Tax Status</th>
                             <th className="px-4 py-3 text-center">Action</th>
@@ -64,6 +65,10 @@ export default function HoldingsTable({ holdings }: { holdings: Holding[] }) {
 
                                     <td className="px-4 py-4 text-right font-mono text-slate-900 font-medium">
                                         ₹{row.market_rate.toLocaleString('en-IN')}
+                                    </td>
+
+                                    <td className="px-4 py-4 text-right font-mono text-slate-900 font-medium">
+                                        ₹{row.market_value.toLocaleString('en-IN')}
                                     </td>
 
                                     <td className="px-4 py-4 text-right">
