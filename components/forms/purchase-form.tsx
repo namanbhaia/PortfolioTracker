@@ -31,18 +31,34 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
     const onPurchaseSubmit = async (data: any) => {
         setLoading(true);
+
+        // 1. Get the current user session
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            alert("You must be logged in to record a purchase.");
+            setLoading(false);
+            return;
+        }
+
         const payload = {
+            user_id: user.id,            // MANDATORY for RLS
+            client_id: data.client_id,   // MANDATORY for RLS
             client_name: data.purchase_client_name,
             ticker: data.ticker?.toUpperCase(),
             date: data.purchase_date,
             rate: parseFloat(data.purchase_rate),
             purchase_qty: parseFloat(data.purchase_qty),
-            comments: data.comments,
-            client_id: data.client_id
+            balance_qty: parseFloat(data.purchase_qty), // Initial balance = purchase qty
+            comments: data.comments
         };
 
         const { error } = await supabase.from('purchases').insert([payload]);
-        if (!error) {
+
+        if (error) {
+            console.error("Insert Error:", error.message);
+            alert(error.message);
+        } else {
             setSuccess(true);
             reset();
             setTimeout(() => setSuccess(false), 3000);
