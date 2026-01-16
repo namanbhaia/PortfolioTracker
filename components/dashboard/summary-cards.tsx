@@ -7,23 +7,22 @@ export default function SummaryCards({ metrics }: { metrics: any }) {
 
     const stats = [
         {
-            label: 'Total AUM',
-            // Fix: (metrics?.value || 0) ensures we never call toLocaleString on undefined
-            value: `₹${formatCurrency(metrics?.total_market_value)}`,
+            label: 'Total Invested',
+            value: `₹${formatCurrency(metrics?.total_invested)}`,
             icon: Landmark,
             color: 'text-indigo-600',
             bg: 'bg-indigo-50'
         },
         {
-            label: 'Realized Profit (FY)',
-            value: `₹${formatCurrency(metrics?.total_realized_profit)}`,
+            label: 'Current Value',
+            value: `₹${formatCurrency(metrics?.current_value)}`,
             icon: TrendingUp,
             color: 'text-emerald-600',
             bg: 'bg-emerald-50'
         },
         {
-            label: 'Est. Tax Liability',
-            value: `₹${formatCurrency(metrics?.total_tax_due)}`,
+            label: 'Total P&L',
+            value: `₹${formatCurrency(metrics?.total_pl)}`,
             icon: ShieldAlert,
             color: 'text-amber-600',
             bg: 'bg-amber-50'

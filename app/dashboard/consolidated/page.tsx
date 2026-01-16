@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import ConsolidatedManager from '@/components/dashboard/consolidated-manager';
+import ClientDashboard from '@/components/dashboard/client-dashboard';
 
 export default async function ConsolidatedPage() {
     const supabase = await createClient();
@@ -17,17 +17,18 @@ export default async function ConsolidatedPage() {
         .select('*')
         .eq('manager_id', user?.id);
 
-    return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
-            <header>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Consolidated Portfolio</h1>
-                <p className="text-slate-500">Aggregate holdings across multiple family members to see total market exposure.</p>
-            </header>
+    // 3. Fetch user profile
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
 
-            <ConsolidatedManager
-                initialHoldings={holdings || []}
-                clients={clients || []}
-            />
-        </div>
+    return (
+        <ClientDashboard
+            clients={clients || []}
+            holdings={holdings || []}
+            profile={profile}
+        />
     );
 }
