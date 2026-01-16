@@ -20,11 +20,10 @@ const navItems = [
     { name: 'Holdings', href: '/dashboard/holdings', icon: Briefcase },
     { name: 'Sales History', href: '/dashboard/sales', icon: History },
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
-];
-
-const secondaryItems = [
     { name: 'Info & Rules', href: '/info', icon: Info },
 ];
+
+const secondaryItems = [];
 
 // 1. Update component to accept props
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
