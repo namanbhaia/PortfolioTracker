@@ -1,14 +1,19 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 
 export default function HoldingsFilters() {
     const supabase = createClient();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [clients, setClients] = useState<{ client_id: string; client_name: string }[]>([]);
+    const [selectedClients, setSelectedClients] = useState<string[]>([]);
 
     useEffect(() => {
         async function fetchClients() {
@@ -33,22 +38,26 @@ export default function HoldingsFilters() {
         fetchClients();
     }, [supabase]);
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        const clientIds = searchParams.get('client_ids');
+        if (clientIds) {
+            setSelectedClients(clientIds.split(','));
+        }
+    }, [searchParams]);
+
+    const handleApplyFilters = (e: React.FormEvent) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
+        const formData = new FormData(e.currentTarget as HTMLFormElement);
         const params = new URLSearchParams(searchParams);
 
-        // Handle multi-select for client_name
-        const clientNames = formData.getAll('client_name');
-        if (clientNames.length > 0) {
-            params.set('client_name', clientNames.join(','));
+        if (selectedClients.length > 0) {
+            params.set('client_ids', selectedClients.join(','));
         } else {
-            params.delete('client_name');
+            params.delete('client_ids');
         }
 
-        // Handle other fields
         for (const [key, value] of formData.entries()) {
-            if (key !== 'client_name' && key !== 'positive_balance') {
+            if (key !== 'client_ids') {
                 if (value) {
                     params.set(key, value as string);
                 } else {
@@ -57,7 +66,6 @@ export default function HoldingsFilters() {
             }
         }
 
-        // Handle checkbox
         const positiveBalance = formData.get('positive_balance');
         if (positiveBalance) {
             params.set('positive_balance', 'true');
@@ -68,79 +76,86 @@ export default function HoldingsFilters() {
         router.push(`?${params.toString()}`);
     };
 
+    const handleClientSelection = (clientId: string) => {
+        setSelectedClients(prev =>
+            prev.includes(clientId)
+                ? prev.filter(id => id !== clientId)
+                : [...prev, clientId]
+        );
+    };
+
+    const handleSelectAll = () => {
+        setSelectedClients(clients.map(c => c.client_id));
+    };
+
+    const handleSelectNone = () => {
+        setSelectedClients([]);
+    };
+
     return (
-        <form onChange={handleFilterChange} className="p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-1">
-                    <label htmlFor="client_name" className="block text-sm font-medium text-gray-700">Client Name</label>
-                    <select
-                        id="client_name"
-                        name="client_name"
-                        multiple
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                    >
-                        {clients.map(client => (
-                            <option key={client.client_id} value={client.client_id}>
-                                {client.client_name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="md:col-span-1">
-                    <label htmlFor="ticker" className="block text-sm font-medium text-gray-700">Ticker</label>
-                    <input
-                        type="text"
-                        id="ticker"
-                        name="ticker"
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                        defaultValue={searchParams.get('ticker') ?? ''}
-                    />
-                </div>
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">Date Range</label>
-                    <div className="flex space-x-2 mt-1">
-                        <input
-                            type="date"
-                            id="date_from"
-                            name="date_from"
-                            className="block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                            defaultValue={searchParams.get('date_from') ?? ''}
-                        />
-                        <input
-                            type="date"
-                            id="date_to"
-                            name="date_to"
-                            className="block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                            defaultValue={searchParams.get('date_to') ?? ''}
-                        />
-                    </div>
-                </div>
-                <div className="md:col-span-1">
-                    <label htmlFor="term" className="block text-sm font-medium text-gray-700">Term</label>
-                    <select
-                        id="term"
-                        name="term"
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                        defaultValue={searchParams.get('term') ?? ''}
-                    >
-                        <option value="">All</option>
-                        <option value="long">Long</option>
-                        <option value="short">Short</option>
-                    </select>
-                </div>
-                <div className="flex items-center md:col-span-1">
-                    <input
-                        id="positive_balance"
-                        name="positive_balance"
-                        type="checkbox"
-                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                        defaultChecked={searchParams.get('positive_balance') === 'true'}
-                    />
-                    <label htmlFor="positive_balance" className="ml-2 block text-sm text-gray-900">
-                        Balance &gt; 0
-                    </label>
-                </div>
+        <form onSubmit={handleApplyFilters} className="p-4 bg-gray-100 rounded-lg flex items-center space-x-4">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline">Clients</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleSelectAll(); }}>Select All</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleSelectNone(); }}>Select None</DropdownMenuItem>
+                    {clients.map(client => (
+                        <DropdownMenuItem key={client.client_id} onSelect={(e) => { e.preventDefault(); handleClientSelection(client.client_id); }}>
+                            <Checkbox checked={selectedClients.includes(client.client_id)} className="mr-2" />
+                            {client.client_name}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <input
+                type="text"
+                name="ticker"
+                placeholder="Ticker"
+                className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                defaultValue={searchParams.get('ticker') ?? ''}
+            />
+
+            <div className="flex items-center space-x-2">
+                <input
+                    type="date"
+                    name="date_from"
+                    className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                    defaultValue={searchParams.get('date_from') ?? ''}
+                />
+                <span className="text-gray-500">-</span>
+                <input
+                    type="date"
+                    name="date_to"
+                    className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                    defaultValue={searchParams.get('date_to') ?? ''}
+                />
             </div>
+
+            <select
+                name="term"
+                className="block w-full px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                defaultValue={searchParams.get('term') ?? ''}
+            >
+                <option value="">All Terms</option>
+                <option value="long">Long</option>
+                <option value="short">Short</option>
+            </select>
+
+            <div className="flex items-center">
+                <Checkbox
+                    id="positive_balance"
+                    name="positive_balance"
+                    defaultChecked={searchParams.get('positive_balance') === 'true'}
+                />
+                <label htmlFor="positive_balance" className="ml-2 block text-sm text-gray-900">
+                    Balance &gt; 0
+                </label>
+            </div>
+
+            <Button type="submit">Go</Button>
         </form>
     );
 }

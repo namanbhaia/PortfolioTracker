@@ -12,7 +12,7 @@ export default async function HoldingsPage({
     searchParams: Promise<{
         sort?: string;
         order?: string;
-        client_name?: string;
+        client_ids?: string;
         ticker?: string;
         date_from?: string;
         date_to?: string;
@@ -46,9 +46,9 @@ export default async function HoldingsPage({
     // Base filter for authorized clients
     let authorizedClientIds = profile.client_ids;
 
-    // Filter by selected client_name(s)
-    if (params.client_name) {
-        const selectedClientIds = params.client_name.split(',');
+    // Filter by selected client_id(s)
+    if (params.client_ids) {
+        const selectedClientIds = params.client_ids.split(',');
         // Intersect with authorized clients for security
         authorizedClientIds = selectedClientIds.filter(id => profile.client_ids.includes(id));
     }
