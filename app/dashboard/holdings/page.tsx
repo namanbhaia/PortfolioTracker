@@ -56,7 +56,7 @@ export default async function HoldingsPage({
     query = query.in('client_id', authorizedClientIds);
 
     if (params.ticker) {
-        query = query.ilike('ticker', `%${params.ticker}%`);
+        query = query.eq('ticker', params.ticker);
     }
     if (params.date_from) {
         query = query.gte('date', params.date_from);

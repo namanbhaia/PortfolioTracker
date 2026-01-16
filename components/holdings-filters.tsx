@@ -69,9 +69,9 @@ export default function HoldingsFilters() {
     };
 
     return (
-        <form onChange={handleFilterChange} className="p-4 bg-gray-50 rounded-lg space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
+        <form onChange={handleFilterChange} className="p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="md:col-span-1">
                     <label htmlFor="client_name" className="block text-sm font-medium text-gray-700">Client Name</label>
                     <select
                         id="client_name"
@@ -86,7 +86,7 @@ export default function HoldingsFilters() {
                         ))}
                     </select>
                 </div>
-                <div>
+                <div className="md:col-span-1">
                     <label htmlFor="ticker" className="block text-sm font-medium text-gray-700">Ticker</label>
                     <input
                         type="text"
@@ -96,27 +96,26 @@ export default function HoldingsFilters() {
                         defaultValue={searchParams.get('ticker') ?? ''}
                     />
                 </div>
-                <div>
-                    <label htmlFor="date_from" className="block text-sm font-medium text-gray-700">Date From</label>
-                    <input
-                        type="date"
-                        id="date_from"
-                        name="date_from"
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                        defaultValue={searchParams.get('date_from') ?? ''}
-                    />
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Date Range</label>
+                    <div className="flex space-x-2 mt-1">
+                        <input
+                            type="date"
+                            id="date_from"
+                            name="date_from"
+                            className="block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                            defaultValue={searchParams.get('date_from') ?? ''}
+                        />
+                        <input
+                            type="date"
+                            id="date_to"
+                            name="date_to"
+                            className="block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                            defaultValue={searchParams.get('date_to') ?? ''}
+                        />
+                    </div>
                 </div>
-                <div>
-                    <label htmlFor="date_to" className="block text-sm font-medium text-gray-700">Date To</label>
-                    <input
-                        type="date"
-                        id="date_to"
-                        name="date_to"
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                        defaultValue={searchParams.get('date_to') ?? ''}
-                    />
-                </div>
-                <div>
+                <div className="md:col-span-1">
                     <label htmlFor="term" className="block text-sm font-medium text-gray-700">Term</label>
                     <select
                         id="term"
@@ -129,7 +128,7 @@ export default function HoldingsFilters() {
                         <option value="short">Short</option>
                     </select>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center md:col-span-1">
                     <input
                         id="positive_balance"
                         name="positive_balance"
