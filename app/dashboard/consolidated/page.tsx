@@ -1,28 +1,34 @@
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import ClientDashboard from '@/components/dashboard/client-dashboard';
 
 export default async function ConsolidatedPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Fetch all clients managed by this user
-    const { data: clients } = await supabase
-        .from('clients')
-        .select('client_name, trading_id')
-        .eq('user_id', user?.id);
+    if (!user) return redirect('/login');
 
-    // 2. Fetch all active holdings across all clients
-    const { data: holdings } = await supabase
-        .from('client_holdings') // The view we created earlier
-        .select('*')
-        .eq('manager_id', user?.id);
-
-    // 3. Fetch user profile
     const { data: profile } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
+        .select('client_ids')
+        .eq('id', user.id)
         .single();
+
+    if (!profile?.client_ids?.length) return <div>No authorized clients.</div>;
+
+    // 3. Fetch data with dynamic sorting
+    const { data: holdings } = await supabase
+        .from('client_holdings')
+        .select('*')
+        .in('client_id', profile.client_ids);
+
+    const authorizedIds = profile.client_ids;
+
+    // 2. Query the clients table using the .in() filter
+    const { data: clients } = await supabase
+        .from('clients')
+        .select('client_id, client_name, trading_id, dp_id') // Added client_id for your form logic
+        .in('client_id', authorizedIds);
 
     return (
         <ClientDashboard
