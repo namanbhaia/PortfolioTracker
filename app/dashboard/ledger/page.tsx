@@ -5,7 +5,7 @@ export default async function LedgerPage() {
     const supabase = await createClient();
 
     // Fetch clients for the dropdown
-    const { data: clients } = await supabase.from('clients').select('client_name, trading_id, dp_id');
+    const { data: clients } = await supabase.from('clients').select('client_id, client_name, trading_id, dp_id');
 
 
     return (

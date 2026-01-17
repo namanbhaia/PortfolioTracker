@@ -8,11 +8,29 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
 
-    const { register, handleSubmit, reset, watch, setValue } = useForm();
+    // 1. Helper to get today's date in YYYY-MM-DD format (Local Timezone)
+    const getTodayDate = () => {
+        const date = new Date();
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().split('T')[0];
+    };
+
+    // 2. Initialize useForm with defaultValues
+    const { register, handleSubmit, reset, watch, setValue } = useForm({
+        defaultValues: {
+            purchase_date: getTodayDate(), // Sets the default on mount
+            purchase_rate: '',
+            purchase_qty: '',
+            ticker: '',
+            purchase_client_name: '',
+            comments: ''
+        }
+    });
 
     const purchaseClient = watch("purchase_client_name");
 
-    // Auto-populate DP and Trading ID
+    // Auto-populate DP and Trading ID logic...
     useEffect(() => {
         const client = clients.find(
             c => c.client_name?.trim() === purchaseClient?.trim()
@@ -31,8 +49,6 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
     const onPurchaseSubmit = async (data: any) => {
         setLoading(true);
-
-        // 1. Get the current user session
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -42,38 +58,53 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
         }
 
         const payload = {
-            user_id: user.id,            // MANDATORY for RLS
-            client_id: data.client_id,   // MANDATORY for RLS
+            user_id: user.id,
+            client_id: data.client_id,
             client_name: data.purchase_client_name,
             ticker: data.ticker?.toUpperCase(),
             date: data.purchase_date,
             rate: parseFloat(data.purchase_rate),
             purchase_qty: parseFloat(data.purchase_qty),
-            balance_qty: parseFloat(data.purchase_qty), // Initial balance = purchase qty
+            balance_qty: parseFloat(data.purchase_qty),
             comments: data.comments
         };
 
         const { error } = await supabase.from('purchases').insert([payload]);
 
         if (error) {
-            console.error("Insert Error:", error.message);
             alert(error.message);
         } else {
             setSuccess(true);
-            reset();
+            reset({
+                ...data, // Optional: keep some data, or just reset to defaults:
+                purchase_date: getTodayDate(),
+                ticker: '',
+                purchase_rate: '',
+                purchase_qty: '',
+                comments: ''
+            });
             setTimeout(() => setSuccess(false), 3000);
         }
         setLoading(false);
     };
-
     return (
         <form onSubmit={handleSubmit(onPurchaseSubmit)} className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Client</label>
-                    <select {...register("purchase_client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500">
+                    <select
+                        {...register("purchase_client_name")}
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
+                    >
                         <option value="">Select Client</option>
-                        {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
+                        {clients.map((c, index) => (
+                            <option
+                                key={c.client_id || `client-${index}`}
+                                value={c.client_name}
+                            >
+                                {c.client_name}
+                            </option>
+                        ))}
                     </select>
                 </div>
                 <div className="space-y-1">
