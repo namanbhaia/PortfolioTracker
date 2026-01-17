@@ -158,6 +158,33 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to handle the sale transaction
+CREATE OR REPLACE FUNCTION record_sale_transaction(
+    sales_to_insert JSONB,
+    purchases_to_update JSONB
+)
+RETURNS void AS $$
+BEGIN
+    -- Insert new sales records
+    INSERT INTO sales (purchase_trx_id, user_id, date, rate, sale_qty, comments, long_term)
+    SELECT
+        (s->>'purchase_trx_id')::UUID,
+        (s->>'user_id')::UUID,
+        (s->>'date')::DATE,
+        (s->>'rate')::NUMERIC,
+        (s->>'sale_qty')::NUMERIC,
+        s->>'comments',
+        (s->>'long_term')::BOOLEAN
+    FROM jsonb_array_elements(sales_to_insert) s;
+
+    -- Update purchase balances
+    UPDATE purchases p
+    SET balance_qty = (u->>'balance_qty')::NUMERIC
+    FROM jsonb_array_elements(purchases_to_update) u
+    WHERE p.trx_id = (u->>'trx_id')::UUID;
+END;
+$$ LANGUAGE plpgsql;
+
 -- 2. Create the trigger to run the function on every signup
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
