@@ -159,6 +159,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to handle the sale transaction
+-- Function to handle the sale transaction
 CREATE OR REPLACE FUNCTION record_sale_transaction(
     sales_to_insert JSONB,
     purchases_to_update JSONB

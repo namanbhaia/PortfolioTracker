@@ -18,8 +18,9 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     });
 
     const saleClient = watch("sale_client_name");
+    const saleClientId = watch("client_id");
 
-    // Auto-populate DP and Trading ID
+    // Auto-populate DP and Trading ID and client_id form value
     useEffect(() => {
         const client = clients.find(
             c => c.client_name?.trim() === saleClient?.trim()
@@ -28,7 +29,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         if (client) {
             setValue("dp_id", client.dp_id);
             setValue("trading_id", client.trading_id);
-            setValue("client_id", client.client_id); // Also set client_id
+            setValue("client_id", client.client_id);
         } else {
             setValue("dp_id", '');
             setValue("trading_id", '');
@@ -39,27 +40,27 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     // Fetch unique tickers for the selected client
     useEffect(() => {
         async function fetchTickers() {
-            if (!saleClient) {
+            if (!saleClientId) {
                 setTickers([]);
                 return;
             }
 
-            const client = clients.find(c => c.client_name?.trim() === saleClient?.trim());
-            if (!client) return;
-
             const { data } = await supabase
                 .from('purchases')
                 .select('ticker')
-                .eq('client_id', client.client_id)
+                .eq('client_id', saleClientId)
                 .gt('balance_qty', 0);
 
             if (data) {
-                const uniqueTickers = Array.from(new Set(data.map(item => item.ticker)));
+                const uniqueTickers = Array.from(new Set(data.map((item: any) => item.ticker)));
                 setTickers(uniqueTickers);
+                setValue('ticker', ''); // Reset ticker selection
+            } else {
+                setTickers([]);
             }
         }
         fetchTickers();
-    }, [saleClient, supabase, clients]);
+    }, [saleClientId, supabase, setValue]);
 
     const onSaleSubmit = async (data: any) => {
         setLoading(true);
