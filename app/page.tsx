@@ -24,15 +24,11 @@ export default function LandingPage() {
         </p>
       </div>
       <div className="relative z-20 flex space-x-6">
-        <Link href="/login" legacyBehavior>
-          <a className="px-8 py-3 bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 transition-transform transform hover:scale-105">
-            Sign In
-          </a>
+        <Link href="/login" className="px-8 py-3 bg-blue-600 rounded-lg font-semibold hover:bg-blue-700 transition-transform transform hover:scale-105">
+          Sign In
         </Link>
-        <Link href="/signup" legacyBehavior>
-          <a className="px-8 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-gray-800 transition-transform transform hover:scale-105">
-            Sign Up
-          </a>
+        <Link href="/signup" className="px-8 py-3 bg-gray-700 rounded-lg font-semibold hover:bg-gray-800 transition-transform transform hover:scale-105">
+          Sign Up
         </Link>
       </div>
     </div>
