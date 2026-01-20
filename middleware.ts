@@ -63,6 +63,14 @@ export const config = {
          * - favicon.ico (favicon file)
          * - auth/callback (important: don't block the callback route!)
          */
-        '/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        /*
+         * Match all request paths except for the ones starting with:
+         * - _next/static (static files)
+         * - _next/image (image optimization files)
+         * - favicon.ico (favicon file)
+         * - auth/callback (important: don't block the callback route!)
+         * - / (the root route, our new landing page)
+         */
+        '/((?!_next/static|_next/image|favicon.ico|auth/callback|/$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
