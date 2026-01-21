@@ -33,7 +33,7 @@ export default async function TransactionsPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
