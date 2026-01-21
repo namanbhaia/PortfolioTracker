@@ -82,14 +82,15 @@ export async function searchTransactions(formData: FormData) {
     if (purchasesError) throw purchasesError;
 
     // 3. Get all sales related to those purchases
-    const { data: sales, error: salesError } = await supabase
+    /*const { data: sales, error: salesError } = await supabase
       .from('sales')
       .select('*')
       .in('purchase_id', purchaseIds);
 
     if (salesError) throw salesError;
 
-    return { purchases, sales };
+    return { purchases, sales };*/
+    return { purchases };
   } catch (error: any) {
     console.error(error);
     return { error: error.message };
