@@ -9,7 +9,7 @@ interface Client {
     client_name: string;
 }
 export default function HoldingsFilter({ availableClients }: { availableClients: any[] }) {
-    const router = useRouter();
+    const router = useRouter();X
     const searchParams = useSearchParams();
 
     // Dropdown State
@@ -121,6 +121,39 @@ export default function HoldingsFilter({ availableClients }: { availableClients:
                         placeholder="Security name..."
                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500"
                     />
+                </div>
+                
+                <div className="flex p-1 bg-slate-100 rounded-xl shrink-0">
+                    <button
+                        onClick={() => updateFilters({ is_long_term: 'true' })}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                            searchParams.get('is_long_term') === 'true' 
+                            ? 'bg-white shadow-sm text-indigo-600' 
+                            : 'text-slate-500'
+                        }`}
+                    >
+                        Long Term
+                    </button>
+                    <button
+                        onClick={() => updateFilters({ is_long_term: 'false' })}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                            searchParams.get('is_long_term') === 'false' 
+                            ? 'bg-white shadow-sm text-indigo-600' 
+                            : 'text-slate-500'
+                        }`}
+                    >
+                        Short Term
+                    </button>
+                    <button
+                        onClick={() => updateFilters({ is_long_term: null })}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                            !searchParams.get('is_long_term') 
+                            ? 'bg-white shadow-sm text-indigo-600' 
+                            : 'text-slate-500'
+                        }`}
+                    >
+                        All 
+                    </button>
                 </div>
 
                 {/* 4. Date Range */}

@@ -16,6 +16,7 @@ export default async function HoldingsPage({
         show_all?: string;
         start_date?: string;
         end_date?: string;
+        is_long_term?: string;
     }>;
 }) {
     const supabase = await createClient();
@@ -78,14 +79,13 @@ export default async function HoldingsPage({
     // 8. Balance Filtering (Default: Active Only)
     if (params.show_all !== 'true') {
         query = query.gt('balance_qty', 0);
+    }  
+    
+    if (params.is_long_term === 'true') {
+        query = query.eq('is_long_term', true);
+    } else if (params.is_long_term === 'false') {
+        query = query.eq('is_long_term', false);
     }
-
-    // 9. Term (Long vs Short)
-    if (params.term) {
-        if (params.term === 'long') query = query.eq('is_long_term', true);
-        if (params.term === 'short') query = query.eq('is_long_term', false);
-    }
-
     // 10. Execute Query with Sorting
     const { data: holdings, error } = await query.order(sortField, { ascending: sortOrder });
 
@@ -160,7 +160,7 @@ export default async function HoldingsPage({
                             {/* Sortable Header: Type (is_long_term) */}
                             <th className="px-3 py-3 text-center">
                                 <Link href={getSortLink('is_long_term')} className="hover:text-blue-600 flex items-center justify-center">
-                                    Term <SortArrow field="is_long_term" />
+                                    Long Term <SortArrow field="is_long_term" />
                                 </Link>
                             </th>
                             <th className="px-3 py-3">Comments</th>
@@ -196,9 +196,11 @@ export default async function HoldingsPage({
                                     ₹{Number(row.pl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                 </td>
                                 <td className="px-3 py-3 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.is_long_term ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
-                                        {row.is_long_term ? 'LONG' : 'SHORT'}
-                                    </span>
+                                   <div className="flex justify-center items-center">
+                                        <span className={row.is_long_term ? 'text-green-600' : 'text-red-500'}>
+                                            {row.is_long_term ? '✓' : '✕'}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td className="px-3 py-3 text-gray-500 italic max-w-[200px] truncate" title={row.comments}>
                                     {row.comments || '-'}
