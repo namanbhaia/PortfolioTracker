@@ -28,7 +28,7 @@ const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Holdings', href: '/dashboard/holdings', icon: Briefcase },
     { name: 'Sales History', href: '/dashboard/sales', icon: History },
-    { name: 'Transactions', href: '/dashboard/transactions', icon: Search },
+    { name: 'Transactions Lookup', href: '/dashboard/transactions-lookup', icon: Search },
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
 ];
 
