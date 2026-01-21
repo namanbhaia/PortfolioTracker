@@ -19,6 +19,9 @@ const config = {
     },
     extend: {
       colors: {
+        "light-gray": "#f0f0f0",
+        "deep-charcoal": "#1a1a1a",
+        "soft-charcoal": "#333333",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -93,6 +96,10 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in-down": "fade-in-down 0.5s ease-out",
         "fade-in-up": "fade-in-up 0.5s ease-out",
+      },
+      fontFamily: {
+        "serif-elegant": ["'Playfair Display'", "serif"],
+        "sans-ui": ["Inter", "sans-serif"]
       },
     },
   },
