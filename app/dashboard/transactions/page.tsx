@@ -105,10 +105,11 @@ export default async function TransactionsPage({
       )}
 
       {/* Results Section */}
-      {hasSearchParams && !searchError && (
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
+      <div className="space-y-4">
+        {!searchError && (
+          <>
+            <Card>
+              <CardHeader>
               <CardTitle>Purchase Transactions</CardTitle>
             </CardHeader>
             <CardContent>
@@ -173,8 +174,9 @@ export default async function TransactionsPage({
               ) : <p>No sale transactions found.</p>}
             </CardContent>
           </Card>
-        </div>
-      )}
+        </>
+        )}
+      </div>
     </div>
   );
 }
