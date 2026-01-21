@@ -31,8 +31,9 @@ type Sale = {
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -44,13 +45,13 @@ export default async function TransactionsPage({
   let sales: Sale[] = [];
   let searchError: string | null = null;
 
-  const hasSearchParams = Object.keys(searchParams).some(key => searchParams[key]);
+  const hasSearchParams = Object.keys(resolvedSearchParams).some(key => resolvedSearchParams[key]);
 
 
   if (hasSearchParams) {
     const formData = new FormData();
-    for (const key in searchParams) {
-      const value = searchParams[key];
+    for (const key in resolvedSearchParams) {
+      const value = resolvedSearchParams[key];
       if (typeof value === 'string' && value) {
         formData.append(key, value);
       }
@@ -75,19 +76,19 @@ export default async function TransactionsPage({
           <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="client_name">Client Name</Label>
-              <Input id="client_name" name="client_name" placeholder="e.g., John Doe" defaultValue={searchParams.client_name as string ?? ''} />
+              <Input id="client_name" name="client_name" placeholder="e.g., John Doe" defaultValue={resolvedSearchParams.client_name as string ?? ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="ticker">Ticker</Label>
-              <Input id="ticker" name="ticker" placeholder="e.g., AAPL" defaultValue={searchParams.ticker as string ?? ''} />
+              <Input id="ticker" name="ticker" placeholder="e.g., AAPL" defaultValue={resolvedSearchParams.ticker as string ?? ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
-              <Input id="date" name="date" type="date" defaultValue={searchParams.date as string ?? ''} />
+              <Input id="date" name="date" type="date" defaultValue={resolvedSearchParams.date as string ?? ''} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="trx_id">Transaction ID</Label>
-              <Input id="trx_id" name="trx_id" placeholder="e.g., 12345" defaultValue={searchParams.trx_id as string ?? ''} />
+              <Input id="trx_id" name="trx_id" placeholder="e.g., 12345" defaultValue={resolvedSearchParams.trx_id as string ?? ''} />
             </div>
             <div className="md:col-span-4 flex justify-end">
               <Button type="submit">Search</Button>
