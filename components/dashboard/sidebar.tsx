@@ -12,7 +12,8 @@ import {
     LogOut,
     ShieldCheck,
     UserCircle,
-    User
+    User,
+    Search
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -27,6 +28,7 @@ const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Holdings', href: '/dashboard/holdings', icon: Briefcase },
     { name: 'Sales History', href: '/dashboard/sales', icon: History },
+    { name: 'Transactions Lookup', href: '/dashboard/transactions-lookup', icon: Search },
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
 ];
 
