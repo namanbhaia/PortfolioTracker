@@ -40,17 +40,27 @@ CREATE TABLE purchases (
 );
 
 -- 5. SALES (The "Out" Ledger)
-CREATE TABLE sales (
-    trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) NOT NULL,
-    purchase_trx_id UUID REFERENCES purchases(trx_id) ON DELETE CASCADE,
-    date DATE NOT NULL,
-    rate NUMERIC NOT NULL,
-    qty NUMERIC NOT NULL CHECK (qty > 0),
-    comments TEXT,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
+create table public.sales (
+  trx_id uuid not null default gen_random_uuid (),
+  user_id uuid null,
+  purchase_trx_id uuid null,
+  date date not null,
+  rate numeric(20, 2) not null,
+  sale_qty numeric(20, 8) not null,
+  comments text null,
+  created_at timestamp with time zone null default now(),
+  long_term boolean null,
+  custom_id text null,
+  client_name text null,
+  profit_stored numeric null,
+  client_id uuid null,
+  constraint sales_pkey primary key (trx_id),
+  constraint sales_purchase_trx_id_fkey foreign KEY (purchase_trx_id) references purchases (trx_id) on delete CASCADE,
+  constraint sales_qty_check check ((sale_qty > (0)::numeric))
+) TABLESPACE pg_default;
 
+create trigger validate_sale_qty BEFORE INSERT on sales for EACH row
+execute FUNCTION check_sale_qty ();
 
 Create Holding Views
 CREATE OR REPLACE VIEW public.client_holdings AS
@@ -97,35 +107,29 @@ JOIN
 Create Sales View
 CREATE OR REPLACE VIEW sales_view AS
 SELECT 
-    s.trx_id,
-    s.purchase_trx_id,
-    c.client_id,
-    c.trading_id,
-    p.client_name, -- Pulled from the parent purchase record
-    p.ticker,
-    a.stock_name,
-    a.isin,
-    p.date AS purchase_date,
-    p.qty AS purchase_qty,
-    p.rate AS purchase_rate,
-    (s.qty * p.rate) AS purchase_value, 
-    s.date AS sale_date,
-    s.qty AS sale_qty,
-    s.rate AS sale_rate,
-    (s.qty * s.rate) AS sale_value,
-    ((s.rate - p.rate) * s.qty) AS profit,
-    (s.date - p.date > 365) AS long_term,
-    CASE 
-        WHEN (s.date - p.date > 365) THEN ((s.rate - p.rate) * s.qty * 0.125) -- 12.5% LTCG
-        ELSE ((s.rate - p.rate) * s.qty * 0.20) -- 20% STCG
-    END AS tax_payable,
-    s.comments,
-    s.user_id
+    s.custom_id,                        -- Your self-generated ID
+    c.trading_id,                       --
+    s.client_name,                      --
+    p.ticker,                           --
+    a.stock_name,                       --
+    a.isin,                             --
+    p.date AS purchase_date,            --
+    p.purchase_qty AS purchase_qty,     -- Corrected column name for Purchases table
+    p.rate AS purchase_rate,            --
+    (s.sale_qty * p.rate) AS purchase_value, -- Value of the specific portion sold
+    s.date AS sale_date,                --
+    s.sale_qty AS sale_qty,             -- Corrected column name for Sales table
+    s.rate AS sale_rate,                --
+    (s.sale_qty * s.rate) AS sale_value, -- Total value of the sale
+    ((s.rate - p.rate) * s.sale_qty) AS profit, -- Realized profit calculation
+    (s.date::DATE - p.date::DATE > 365) AS long_term, -- Fixed date-text operator error
+    s.comments,                         --
+    s.user_id                            -- Required for app/dashboard/sales/page.tsx filtering
 FROM sales s
 JOIN purchases p ON s.purchase_trx_id = p.trx_id
 JOIN clients c ON p.client_name = c.client_name
 JOIN assets a ON p.ticker = a.ticker;
-
+s
 Key Safeguards
 CREATE OR REPLACE FUNCTION check_sale_qty() 
 RETURNS TRIGGER AS $$
