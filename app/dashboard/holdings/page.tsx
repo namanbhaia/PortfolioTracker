@@ -2,6 +2,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import HoldingsFilters from '@/components/dashboard/holdings-filters';
+import TrxIdCell from '@/components/dashboard/trx-id-cell'; 
+import CommentCell from '@/components/dashboard/comment-cell';
 
 // Define the valid sortable columns based on your view
 type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'is_long_term';
@@ -49,7 +51,6 @@ export default async function HoldingsPage({
 
     // 3. Security: Filter by Client IDs (Multiple select support)
     let authorizedClientIds = profile.client_ids;
-
     if (params.client_ids) {
         const selectedClientIds = params.client_ids.split(',');
         // Only filter by IDs the user actually has access to
@@ -75,7 +76,7 @@ export default async function HoldingsPage({
     // 7. Date Range
     if (params.start_date) query = query.gte('date', params.start_date);
     if (params.end_date) query = query.lte('date', params.end_date);
-
+    
     // 8. Balance Filtering (Default: Active Only)
     if (params.show_all !== 'true') {
         query = query.gt('balance_qty', 0);
@@ -115,6 +116,8 @@ export default async function HoldingsPage({
                 <table className="w-full text-xs text-left border-collapse">
                     <thead className="bg-gray-100 border-b uppercase text-gray-600 font-semibold">
                         <tr>
+                            {/* New ID Column */}
+                            <th className="px-3 py-3 w-16">ID</th>
                             {/* Sortable Header: Client Name */}
                             <th className="px-3 py-3">
                                 <Link href={getSortLink('client_name')} className="hover:text-blue-600 flex items-center">
@@ -169,6 +172,10 @@ export default async function HoldingsPage({
                     <tbody className="divide-y divide-gray-200">
                         {holdings?.map((row) => (
                             <tr key={row.trx_id} className={`hover:bg-gray-50 ${row.balance_qty === 0 ? 'bg-gray-50/50 opacity-70' : ''}`}>
+                                {/* New ID Cell */}
+                                <td className="px-3 py-3">
+                                    <TrxIdCell id={row.trx_id} />
+                                </td>
                                 <td className="p-3">
                                     <div className="font-semibold text-gray-900">{row.client_name}</div>
                                     <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
@@ -177,7 +184,7 @@ export default async function HoldingsPage({
                                     <div className="font-bold text-blue-700">{row.ticker}</div>
                                     <div className="text-[10px] text-gray-400">{row.isin}</div>
                                 </td>
-                                <td className="px-3 py-3 max-w-[150px] truncate">{row.stock_name}</td>
+                                <td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
                                 <td className="px-3 py-3 whitespace-nowrap">
                                     {new Date(row.date).toLocaleDateString('en-IN')}
                                 </td>
@@ -199,11 +206,11 @@ export default async function HoldingsPage({
                                    <div className="flex justify-center items-center">
                                         <span className={row.is_long_term ? 'text-green-600' : 'text-red-500'}>
                                             {row.is_long_term ? '✓' : '✕'}
-                                        </span>
+                                    </span>
                                     </div>
                                 </td>
-                                <td className="px-3 py-3 text-gray-500 italic max-w-[200px] truncate" title={row.comments}>
-                                    {row.comments || '-'}
+                               <td className="px-3 py-3">
+                                    <CommentCell comment={row.comments} />
                                 </td>
                             </tr>
                         ))}
