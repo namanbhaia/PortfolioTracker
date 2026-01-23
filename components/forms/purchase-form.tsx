@@ -109,7 +109,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Ticker</label>
-                    <input {...register("ticker")} placeholder="RELIANCE" className="w-full p-2.5 bg-slate-50 border rounded-lg uppercase" />
+                    <input {...register("ticker")} placeholder="Ticker" className="w-full p-2.5 bg-slate-50 border rounded-lg uppercase" />
                 </div>
             </div>
 

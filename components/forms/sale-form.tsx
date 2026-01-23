@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -29,21 +29,41 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     }, [saleClient, clients, setValue]);
 
     // Fetch Sellable lots
-    useEffect(() => {
-        async function fetchLots() {
-            if (!saleClient) {
-                setOpenPurchases([]);
-                return;
-            }
-            const { data } = await supabase
-                .from('client_holdings')
-                .select('*')
-                .eq('client_name', saleClient.trim())
-                .gt('balance_qty', 0);
-            setOpenPurchases(data || []);
+   useEffect(() => {
+    async function fetchLots() {
+        if (!saleClient) {
+            setOpenPurchases([]);
+            return;
         }
-        fetchLots();
-    }, [saleClient, supabase]);
+
+        const { data, error } = await supabase
+            .from('client_holdings')
+            .select('*')
+            .eq('client_name', saleClient.trim())
+            .gt('balance_qty', 0);
+
+        if (error) {
+            console.error("Error fetching holdings:", error);
+            return;
+        }
+
+        // Logic to make balance_qty cumulative by ticker
+        const aggregated = (data || []).reduce((acc: any[], current: any) => {
+            const existing = acc.find(item => item.ticker === current.ticker);
+            if (existing) {
+                // Sum the quantities for the same ticker
+                existing.balance_qty += current.balance_qty;
+            } else {
+                // Add new ticker entry to the accumulator
+                acc.push({ ...current });
+            }
+            return acc;
+        }, [])
+        .sort((a, b) => a.ticker.localeCompare(b.ticker)); // Alphabetical Sort;
+        setOpenPurchases(aggregated);
+    }
+    fetchLots();
+}, [saleClient, supabase]);
 
     const onSaleSubmit = async (data: any) => {
         setLoading(true);
@@ -62,6 +82,13 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             setTimeout(() => setSuccess(false), 3000);
         }
         setLoading(false);
+    };
+
+    const getTodayDate = () => {
+        const date = new Date();
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().split('T')[0];
     };
 
     return (
@@ -86,21 +113,23 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             </div>
 
             <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">Link to Purchase Batch (Lot)</label>
+                <label className="text-xs font-bold uppercase text-slate-500">
+                    Link to Purchase Batch (Lot)
+                </label>
                 <select {...register("purchase_trx_id")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
-                    <option value="">Select a batch to sell from</option>
+                    <option value="">Select share to sell</option>
                     {openPurchases.map((lot: any) => (
-                        <option key={lot.trx_id} value={lot.trx_id}>
-                            {lot.ticker} - Bought on {new Date(lot.purchase_date).toLocaleDateString()} (Avail: {lot.balance_qty})
+                        <option key={lot.ticker} value={lot.trx_id}>
+                            {lot.ticker} (Avail: {lot.balance_qty})
                         </option>
                     ))}
                 </select>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-                <input type="date" {...register("sale_date")} className="p-2.5 bg-slate-50 border rounded-lg" />
-                <input type="number" step="0.01" {...register("sale_rate")} placeholder="Price" className="p-2.5 bg-slate-50 border rounded-lg" />
-                <input type="number" {...register("sale_qty")} placeholder="Qty" className="p-2.5 bg-slate-50 border rounded-lg" />
+                <input type="date" defaultValue={getTodayDate()} {...register("sale_date")} className="p-2.5 bg-slate-50 border rounded-lg" />
+                <input type="number" step="0.01" {...register("sale_rate")} placeholder="Rate (₹)" className="p-2.5 bg-slate-50 border rounded-lg" />
+                <input type="number" {...register("sale_qty")} placeholder="Quantity" className="p-2.5 bg-slate-50 border rounded-lg" />
             </div>
 
             <button disabled={loading} className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
