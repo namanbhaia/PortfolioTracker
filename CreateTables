@@ -59,6 +59,17 @@ create table public.sales (
   constraint sales_qty_check check ((sale_qty > (0)::numeric))
 ) TABLESPACE pg_default;
 
+-- 1. Create a sequence if it doesn't exist
+CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
+
+-- 2. Create the RPC function with the correct return type (BIGINT)
+CREATE OR REPLACE FUNCTION get_next_sale_id()
+RETURNS BIGINT AS $$
+BEGIN
+  RETURN nextval('sale_group_seq');
+END;
+$$ LANGUAGE plpgsql;
+
 create trigger validate_sale_qty BEFORE INSERT on sales for EACH row
 execute FUNCTION check_sale_qty ();
 

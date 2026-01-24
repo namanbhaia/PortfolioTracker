@@ -65,92 +65,101 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     fetchLots();
 }, [saleClient, supabase]);
 
-    const onSaleSubmit = async (data) => {
-        setLoading(true);
-        let remainingQty = parseFloat(data.sale_qty);
+   const onSaleSubmit = async (data) => {
+    setLoading(true);
+    const saleQtyRequested = parseFloat(data.sale_qty || data.qty);
+    let remainingQty = saleQtyRequested;
 
-        try {
-            // 1. Get Ticker from the selected batch
-            const selectedLot = openPurchases.find((l) => l.trx_id === data.purchase_trx_id);
-            const tickerName = selectedLot?.ticker;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("User session not found.");
 
-            if (!tickerName) throw new Error("Ticker not found for selected batch.");
+        // 1. Identify Ticker from the selected batch
+        const selectedLot = openPurchases.find((l) => l.trx_id === data.purchase_trx_id);
+        const tickerName = selectedLot?.ticker;
 
-            // 2. Fetch all available lots for this ticker
-            const { data: lots, error: fetchError } = await supabase
-                .from('client_holdings')
-                .select('*')
-                .eq('client_name', data.sale_client_name.trim())
-                .eq('ticker', tickerName)
-                .gt('balance_qty', 0);
+        if (!tickerName) throw new Error("Batch selection required.");
 
-            if (fetchError) throw fetchError;
+        // 2. Fetch active lots directly from 'purchases' table
+        // We filter for rows where balance_qty > 0 to ignore fully sold lots
+        const { data: lots, error: fetchError } = await supabase
+            .from('purchases')
+            .select('*')
+            .eq('client_name', (data.client_name || data.sale_client_name).trim())
+            .eq('ticker', tickerName)
+            .gt('balance_qty', 0)
+            .order('date', { ascending: true })      // Primary Sort: Purchase Date
+            .order('created_at', { ascending: true }); // Secondary Sort: Entry Time (Tie-breaker)
 
-            // 3. FIFO Sort (Handling your Text Dates safely)
-            const sortedLots = (lots || []).sort((a, b) => {
-                const dateA = new Date(a.purchase_date).getTime() || 0;
-                const dateB = new Date(b.purchase_date).getTime() || 0;
-                return dateA - dateB;
-            });
+        if (fetchError) throw fetchError;
 
-            for (const lot of sortedLots) {
-                if (remainingQty <= 0) break;
+        // 3. FIFO Sort with Tie-breaker for same-day transactions
+        const sortedLots = [...lots].sort((a, b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            if (dateA !== dateB) return dateA - dateB;
+            // Fallback to database creation order
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
 
-                const qtyToTake = Math.min(Number(lot.balance_qty), remainingQty);
-                const newBalance = Number(lot.balance_qty) - qtyToTake;
-
-                // DEBUG: Copy this ID from your console and search it in Supabase manually
-                console.log("Processing ID:", lot.trx_id);
-
-                const { data: { user } } = await supabase.auth.getUser();
-                console.log("Logged in user ID:", user.id);
-
-                const { data, error } = await supabase
-                    .from('purchases')
-                    .update({ 
-                        balance_qty: newBalance,
-                        comments: `Sold ${qtyToTake} on ${new Date().toLocaleDateString()}` 
-                    })
-                    .eq('trx_id', lot.trx_id.trim()) // Ensure no whitespace
-                    .select(); // This is crucial to see if the database actually changed anything
-
-                if (error) {
-                    console.error("Update failed:", error.message);
-                } else if (data && data.length > 0) {
-                    console.log("Update SUCCESS:", data[0]);
-                } else {
-                    console.warn("Update finished but 0 rows changed. Check if trx_id matches.");
-                }
-
-                remainingQty -= qtyToTake;
-            }
-
-            // 5. Finalize Sale Record
-            if (remainingQty === 0) {
-                const { error: saleError } = await supabase
-                    .from('sales')
-                    .insert([{
-                        purchase_trx_id: data.purchase_trx_id, // uuid
-                        client_name: data.sale_client_name,    // text
-                        date: data.sale_date,                  // date (Postgres will auto-cast 'YYYY-MM-DD')
-                        rate: parseFloat(data.sale_rate),      // numeric
-                        sale_qty: parseFloat(data.sale_qty),   // numeric
-                        comments: data.comments || "FIFO Sale" // text
-                    }]);
-                if (saleError) throw saleError;
-                setSuccess(true);
-                reset();
-            } else {
-                throw new Error(`Insufficient stock. Shortfall: ${remainingQty}`);
-            }
-
-        } catch (err) {
-            console.error("Process Failed:", err.message);
-            alert(err.message);
-        } finally {
-            setLoading(false);
+        // 4. Pre-check: Cumulative Validation
+        const totalAvailable = sortedLots.reduce((sum, lot) => sum + Number(lot.balance_qty), 0);
+        if (totalAvailable < saleQtyRequested) {
+            throw new Error(`Insufficient stock. Available: ${totalAvailable}`);
         }
-    };
+
+        // 5. Generate Group ID
+        const { data: nextId } = await supabase.rpc('get_next_sale_id');
+        const sharedCustomId = `SALE-2026-${nextId.toString().padStart(4, '0')}`;
+
+        // 6. Process Split Transactions
+        for (const lot of sortedLots) {
+            if (remainingQty <= 0) break;
+
+            const qtyFromThisLot = Math.min(Number(lot.balance_qty), remainingQty);
+            const saleRate = parseFloat(data.sale_rate || data.rate);
+            const purchaseRate = parseFloat(lot.purchase_rate || lot.rate);
+            
+            const profit = (saleRate - purchaseRate) * qtyFromThisLot;
+            const isLongTerm = (new Date(data.sale_date || data.date).getTime() - new Date(lot.date).getTime()) > (365 * 24 * 60 * 60 * 1000);
+
+            // A. Update Purchase Batch
+            const { error: updateError } = await supabase
+                .from('purchases')
+                .update({ balance_qty: Number(lot.balance_qty) - qtyFromThisLot })
+                .eq('trx_id', lot.trx_id);
+
+            if (updateError) throw updateError;
+
+            // B. Log 1:1 Sale
+            const { error: saleError } = await supabase
+                .from('sales')
+                .insert([{
+                    purchase_trx_id: lot.trx_id,
+                    custom_id: sharedCustomId,
+                    client_name: (data.client_name || data.sale_client_name),
+                    client_id: lot.client_id,
+                    date: data.sale_date || data.date,
+                    rate: saleRate,
+                    sale_qty: qtyFromThisLot,
+                    profit_stored: profit,
+                    long_term: isLongTerm,
+                    user_id: user.id,
+                    comments: data.comments || `FIFO split from ${sharedCustomId}`
+                }]);
+
+            if (saleError) throw saleError;
+            remainingQty -= qtyFromThisLot;
+        }
+
+        setSuccess(true);
+        reset();
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const getTodayDate = () => {
         const date = new Date();
