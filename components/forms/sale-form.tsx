@@ -80,6 +80,13 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
         if (!tickerName) throw new Error("Batch selection required.");
 
+        const { data: assetData } = await supabase
+            .from('assets')
+            .select('cutoff')
+            .eq('ticker', tickerName)
+            .single();
+        const cutoffPrice = assetData?.cutoff;
+
         // 2. Fetch active lots directly from 'purchases' table
         // We filter for rows where balance_qty > 0 to ignore fully sold lots
         const { data: lots, error: fetchError } = await supabase
@@ -119,9 +126,22 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             const qtyFromThisLot = Math.min(Number(lot.balance_qty), remainingQty);
             const saleRate = parseFloat(data.sale_rate || data.rate);
             const purchaseRate = parseFloat(lot.purchase_rate || lot.rate);
+            const purchaseDate = new Date(lot.date);
+            const saleDate = new Date(data.sale_date || data.date);
             
-            const profit = (saleRate - purchaseRate) * qtyFromThisLot;
-            const isLongTerm = (new Date(data.sale_date || data.date).getTime() - new Date(lot.date).getTime()) > (365 * 24 * 60 * 60 * 1000);
+            // Standard Profit Calculation
+            const standardProfit = (saleRate - purchaseRate) * qtyFromThisLot;
+
+            // --- Adjusted Profit (Grandfathering) Logic ---
+            let adjustedProfit = standardProfit;
+            const cutoffDate = new Date('2018-02-01');
+
+            if (purchaseDate < cutoffDate && cutoffPrice != null) {
+                // If bought before Feb 2018, use cutoff price as cost base
+                adjustedProfit = (saleRate - cutoffPrice) * qtyFromThisLot;
+            }
+
+            const isLongTerm = (saleDate.getTime() - new Date(lot.date).getTime()) > (365 * 24 * 60 * 60 * 1000);
 
             // A. Update Purchase Batch
             const { error: updateError } = await supabase
@@ -142,7 +162,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     date: data.sale_date || data.date,
                     rate: saleRate,
                     sale_qty: qtyFromThisLot,
-                    profit_stored: profit,
+                    profit_stored: standardProfit,
+                    adjustedProfit: adjustedProfit,
                     long_term: isLongTerm,
                     user_id: user.id,
                     comments: data.comments || `FIFO split from ${sharedCustomId}`

@@ -59,6 +59,8 @@ create table public.sales (
   constraint sales_qty_check check ((sale_qty > (0)::numeric))
 ) TABLESPACE pg_default;
 
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS adjusted_profit_stored NUMERIC;
+
 -- 1. Create a sequence if it doesn't exist
 CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
 
