@@ -29,160 +29,157 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     }, [saleClient, clients, setValue]);
 
     // Fetch Sellable lots
-   useEffect(() => {
-    async function fetchLots() {
-        if (!saleClient) {
-            setOpenPurchases([]);
-            return;
-        }
-
-        const { data, error } = await supabase
-            .from('client_holdings')
-            .select('*')
-            .eq('client_name', saleClient.trim())
-            .gt('balance_qty', 0);
-
-        if (error) {
-            console.error("Error fetching holdings:", error);
-            return;
-        }
-
-        // Logic to make balance_qty cumulative by ticker
-        const aggregated = (data || []).reduce((acc: any[], current: any) => {
-            const existing = acc.find(item => item.ticker === current.ticker);
-            if (existing) {
-                // Sum the quantities for the same ticker
-                existing.balance_qty += current.balance_qty;
-            } else {
-                // Add new ticker entry to the accumulator
-                acc.push({ ...current });
-            }
-            return acc;
-        }, [])
-        .sort((a, b) => a.ticker.localeCompare(b.ticker)); // Alphabetical Sort;
-        setOpenPurchases(aggregated);
-    }
-    fetchLots();
-}, [saleClient, supabase]);
-
-   const onSaleSubmit = async (data) => {
-    setLoading(true);
-    const saleQtyRequested = parseFloat(data.sale_qty || data.qty || 0);
-    let remainingQty = saleQtyRequested;
-
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("User session not found.");
-
-        // 1. Identify Ticker from the selected batch
-        const selectedLot = openPurchases.find((l) => l.trx_id === data.purchase_trx_id);
-        const tickerName = selectedLot?.ticker;
-
-        if (!tickerName) throw new Error("Batch selection required to identify ticker.");
-
-        const { data: assetData } = await supabase
-            .from('assets')
-            .select('cutoff')
-            .eq('ticker', tickerName)
-            .single();
-        const cutoffPrice = assetData?.cutoff;
-
-        // 2. Fetch active lots directly from 'purchases' table
-        // We filter for rows where balance_qty > 0 to ignore fully sold lots
-        // We let Postgres handle the sorting for better performance
-        const { data: sortedLots, error: fetchError } = await supabase
-            .from('purchases')
-            .select('*')
-            .eq('client_name', (data.client_name || data.client_name).trim())
-            .eq('ticker', tickerName)
-            .gt('balance_qty', 0)
-            .order('date', { ascending: true })      // Primary Sort: Purchase Date
-            .order('created_at', { ascending: true }); // Secondary Sort: Entry Time (Tie-breaker)
-
-        if (fetchError) throw fetchError;
-        if (!sortedLots || sortedLots.length === 0) throw new Error("No available stock found for this ticker.");
-
-        // 3. Pre-check: Cumulative Validation
-        const totalAvailable = sortedLots.reduce((sum, lot) => sum + Number(lot.balance_qty), 0);
-        if (totalAvailable < saleQtyRequested) {
-            throw new Error(`Insufficient stock. Available: ${totalAvailable.toFixed(2)}`);
-        }
-
-        // 4. Generate Group ID via your existing RPC
-        const { data: nextId, error: rpcError } = await supabase.rpc('get_next_sale_id');
-        if (rpcError) throw rpcError;
-        const sharedCustomId = `SALE-2026-${nextId.toString().padStart(4, '0')}`;
-
-        // 5. Process Split Transactions
-        for (const lot of sortedLots) {
-            if (remainingQty <= 0) break;
-
-            // Precision safe math
-            const currentLotBalance = Number(lot.balance_qty);
-            const qtyFromThisLot = Math.min(currentLotBalance, remainingQty);
-            
-            const saleRate = parseFloat(data.sale_rate || data.rate);
-            const purchaseRate = parseFloat(lot.purchase_rate || lot.rate);
-            const purchaseDate = new Date(lot.date);
-            const saleDate = new Date(data.sale_date || data.date);
-            
-            // Standard Profit Calculation
-            const standardProfit = (saleRate - purchaseRate) * qtyFromThisLot;
-
-            // --- Adjusted Profit (Grandfathering) Logic ---
-            let adjustedProfit = standardProfit;
-            const cutoffDate = new Date('2018-02-01');
-
-            if (purchaseDate < cutoffDate && cutoffPrice != null) {
-                // If bought before Feb 2018, use cutoff price as cost base
-                adjustedProfit = (saleRate - cutoffPrice) * qtyFromThisLot;
+    useEffect(() => {
+        async function fetchLots() {
+            if (!saleClient) {
+                setOpenPurchases([]);
+                return;
             }
 
-            const isLongTerm = (saleDate.getTime() - new Date(lot.date).getTime()) > (365 * 24 * 60 * 60 * 1000);
+            const { data, error } = await supabase
+                .from('client_holdings')
+                .select('*')
+                .eq('client_name', saleClient.trim())
+                .gt('balance_qty', 0);
 
-            // A. Update Purchase Batch balance
-            const { error: updateError } = await supabase
+            if (error) {
+                console.error("Error fetching holdings:", error);
+                return;
+            }
+
+            // Logic to make balance_qty cumulative by ticker
+            const aggregated = (data || []).reduce((acc: any[], current: any) => {
+                const existing = acc.find(item => item.ticker === current.ticker);
+                if (existing) {
+                    // Sum the quantities for the same ticker
+                    existing.balance_qty += current.balance_qty;
+                } else {
+                    // Add new ticker entry to the accumulator
+                    acc.push({ ...current });
+                }
+                return acc;
+            }, [])
+                .sort((a, b) => a.ticker.localeCompare(b.ticker)); // Alphabetical Sort;
+            setOpenPurchases(aggregated);
+        }
+        fetchLots();
+    }, [saleClient, supabase]);
+
+    const onSaleSubmit = async (data) => {
+        setLoading(true);
+        // 1. Normalize form data (handling varying field names)
+        const saleQtyRequested = parseFloat(data.sale_qty || data.qty);
+        const saleRate = parseFloat(data.sale_rate || data.rate);
+        const saleDateStr = data.sale_date || data.date;
+        const clientName = (data.client_name || data.sale_client_name).trim();
+        let remainingQty = saleQtyRequested;
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("User session not found.");
+
+            // 2. Identify Ticker from the UI selection
+            const selectedLot = openPurchases.find((l) => l.trx_id === data.purchase_trx_id);
+            const tickerName = selectedLot?.ticker;
+            if (!tickerName) throw new Error("Ticker not found. Please select a purchase batch.");
+
+            // 3. Fetch Asset Cutoff (for Adjusted Profit) and Client ID
+            const [{ data: assetData }, { data: clientData }] = await Promise.all([
+                supabase.from('assets').select('cutoff').eq('ticker', tickerName).single(),
+                supabase.from('clients').select('client_id').eq('client_name', clientName).single()
+            ]);
+
+            const cutoffPrice = assetData?.cutoff;
+
+            // 4. Fetch active lots from 'purchases' table directly
+            const { data: lots, error: fetchError } = await supabase
                 .from('purchases')
-                .update({ 
-                    balance_qty: parseFloat((currentLotBalance - qtyFromThisLot).toFixed(8)) 
-                })
-                .eq('trx_id', lot.trx_id);
+                .select('*')
+                .eq('client_name', clientName)
+                .eq('ticker', tickerName)
+                .gt('balance_qty', 0)
+                .order('date', { ascending: true })       // FIFO Primary
+                .order('created_at', { ascending: true }); // FIFO Tie-breaker
 
-            if (updateError) throw updateError;
+            if (fetchError) throw fetchError;
 
-            // B. Log detailed Sale entry
-            const { error: saleError } = await supabase
-                .from('sales')
-                .insert([{
-                    purchase_trx_id: lot.trx_id,
-                    custom_id: sharedCustomId,
-                    client_name: (data.client_name).trim(),
-                    client_id: lot.client_id,
-                    date: data.sale_date || data.date,
-                    rate: saleRate,
-                    sale_qty: qtyFromThisLot,
-                    profit_stored: parseFloat(standardProfit.toFixed(2)),
-                    adjusted_profit_stored: parseFloat(adjustedProfit.toFixed(2)),
-                    long_term: isLongTerm,
-                    user_id: user.id,
-                    comments: data.comments || `FIFO split from ${sharedCustomId}`
-                }]);
+            // 5. Cumulative Validation
+            const totalAvailable = (lots || []).reduce((sum, lot) => sum + Number(lot.balance_qty), 0);
+            if (totalAvailable < saleQtyRequested) {
+                throw new Error(`Insufficient stock for ${tickerName}. Total available: ${totalAvailable}`);
+            }
 
-            if (saleError) throw saleError;
+            // 6. Generate Transaction Group ID
+            const { data: nextId } = await supabase.rpc('get_next_sale_id');
+            const sharedCustomId = `SALE-2026-${nextId.toString().padStart(4, '0')}`;
 
-            // C. Update remaining quantity for loop control with precision rounding
-            remainingQty = parseFloat((remainingQty - qtyFromThisLot).toFixed(8));
+            // 7. FIFO Processing Loop
+            for (const lot of lots) {
+                if (remainingQty <= 0) break;
+
+                const qtyFromThisLot = Math.min(Number(lot.balance_qty), remainingQty);
+                const purchaseRate = parseFloat(lot.rate);
+                const purchaseDate = new Date(lot.date);
+                const saleDate = new Date(saleDateStr);
+
+                // Performance Calculations
+                const standardProfit = (saleRate - purchaseRate) * qtyFromThisLot;
+
+                // Grandfathering Logic (Feb 1, 2018 cutoff)
+                let adjustedProfit = standardProfit;
+                if (purchaseDate < new Date('2018-02-01') && cutoffPrice != null) {
+                    adjustedProfit = (saleRate - cutoffPrice) * qtyFromThisLot;
+                }
+
+                // Holding Period (> 365 days)
+                const isLongTerm = (saleDate.getTime() - purchaseDate.getTime()) > (365 * 24 * 60 * 60 * 1000);
+
+                // A. Log Sale and get the New Sale UUID
+                const { data: saleRow, error: saleError } = await supabase
+                    .from('sales')
+                    .insert([{
+                        purchase_trx_id: lot.trx_id,
+                        custom_id: sharedCustomId,
+                        client_name: clientName,
+                        client_id: clientData?.client_id,
+                        date: saleDateStr,
+                        rate: saleRate,
+                        sale_qty: qtyFromThisLot,
+                        profit_stored: standardProfit,
+                        adjusted_profit_stored: adjustedProfit,
+                        long_term: isLongTerm,
+                        user_id: user.id,
+                        comments: data.comments || `FIFO Exit: ${sharedCustomId}`
+                    }])
+                    .select('trx_id')
+                    .single();
+
+                if (saleError) throw saleError;
+
+                // B. Update Purchase Table (Atomic Balance + sale_ids append)
+                const newBalance = Number(lot.balance_qty) - qtyFromThisLot;
+                const { error: updateError } = await supabase.rpc('append_sale_id_to_purchase', {
+                    p_purchase_id: lot.trx_id,
+                    p_sale_id: saleRow.trx_id,
+                    p_new_balance: newBalance
+                });
+
+                if (updateError) throw updateError;
+
+                remainingQty -= qtyFromThisLot;
+            }
+
+            setSuccess(true);
+            reset();
+            alert(`Transaction ${sharedCustomId} recorded successfully!`);
+
+        } catch (err) {
+            console.error("Critical Error:", err.message);
+            alert(err.message);
+        } finally {
+            setLoading(false);
         }
-
-        setSuccess(true);
-        if (typeof reset === 'function') reset();
-
-    } catch (err) {
-        console.error("Sale Processing Error:", err);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
     const getTodayDate = () => {
         const date = new Date();
         const offset = date.getTimezoneOffset();
@@ -225,45 +222,45 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 </select>
             </div>
 
-           <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Sale Date</label>
-                    <input 
-                        type="date" 
-                        defaultValue={getTodayDate()} 
-                        {...register("sale_date")} 
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all" 
+                    <input
+                        type="date"
+                        defaultValue={getTodayDate()}
+                        {...register("sale_date")}
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
                     />
                 </div>
-                
+
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Sale Rate (₹)</label>
-                    <input 
-                        type="number" 
-                        step="0.01" 
-                        {...register("sale_rate")} 
-                        placeholder="0.00" 
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all" 
+                    <input
+                        type="number"
+                        step="0.01"
+                        {...register("sale_rate")}
+                        placeholder="0.00"
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
                     />
                 </div>
 
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Sale Qty</label>
-                    <input 
-                        type="number" 
-                        {...register("sale_qty")} 
-                        placeholder="0" 
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all" 
+                    <input
+                        type="number"
+                        {...register("sale_qty")}
+                        placeholder="0"
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
                     />
                 </div>
             </div>
 
             <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-500">Notes</label>
-                <textarea 
-                    {...register("comments")} 
-                    placeholder="Strategy, conviction, etc..." 
-                    className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500" 
+                <textarea
+                    {...register("comments")}
+                    placeholder="Strategy, conviction, etc..."
+                    className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500"
                 />
             </div>
 

@@ -39,6 +39,13 @@ CREATE TABLE purchases (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Add the sale_ids column as an array of UUIDs to the purchases table
+ALTER TABLE purchases 
+ADD COLUMN IF NOT EXISTS sale_ids UUID[] DEFAULT '{}';
+
+-- Optional: Add an index for performance if you plan to query by sale_id often
+CREATE INDEX IF NOT EXISTS idx_purchases_sale_ids ON purchases USING GIN (sale_ids);
+
 -- 5. SALES (The "Out" Ledger)
 create table public.sales (
   trx_id uuid not null default gen_random_uuid (),
@@ -60,6 +67,21 @@ create table public.sales (
 ) TABLESPACE pg_default;
 
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS adjusted_profit_stored NUMERIC;
+
+CREATE OR REPLACE FUNCTION append_sale_id_to_purchase(
+    p_purchase_id UUID, 
+    p_sale_id UUID, 
+    p_new_balance NUMERIC
+)
+RETURNS void AS $$
+BEGIN
+    UPDATE purchases
+    SET 
+        balance_qty = p_new_balance,
+        sale_ids = array_append(COALESCE(sale_ids, '{}'), p_sale_id)
+    WHERE trx_id = p_purchase_id;
+END;
+$$ LANGUAGE plpgsql;
 
 -- 1. Create a sequence if it doesn't exist
 CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
