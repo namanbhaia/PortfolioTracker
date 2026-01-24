@@ -11,7 +11,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
     const { register, handleSubmit, reset, watch, setValue } = useForm();
 
-    const saleClient = watch("sale_client_name");
+    const saleClient = watch("client_name");
 
     // Auto-populate DP and Trading ID
     useEffect(() => {
@@ -67,7 +67,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
    const onSaleSubmit = async (data) => {
     setLoading(true);
-    const saleQtyRequested = parseFloat(data.sale_qty || data.qty);
+    const saleQtyRequested = parseFloat(data.sale_qty || data.qty || 0);
     let remainingQty = saleQtyRequested;
 
     try {
@@ -78,89 +78,93 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         const selectedLot = openPurchases.find((l) => l.trx_id === data.purchase_trx_id);
         const tickerName = selectedLot?.ticker;
 
-        if (!tickerName) throw new Error("Batch selection required.");
+        if (!tickerName) throw new Error("Batch selection required to identify ticker.");
 
-        // 2. Fetch active lots directly from 'purchases' table
-        // We filter for rows where balance_qty > 0 to ignore fully sold lots
-        const { data: lots, error: fetchError } = await supabase
+        // 2. Fetch active lots directly from 'purchases'
+        // We let Postgres handle the sorting for better performance
+        const { data: sortedLots, error: fetchError } = await supabase
             .from('purchases')
             .select('*')
-            .eq('client_name', (data.client_name || data.sale_client_name).trim())
+            .eq('client_name', (data.client_name || data.client_name).trim())
             .eq('ticker', tickerName)
             .gt('balance_qty', 0)
             .order('date', { ascending: true })      // Primary Sort: Purchase Date
             .order('created_at', { ascending: true }); // Secondary Sort: Entry Time (Tie-breaker)
 
         if (fetchError) throw fetchError;
+        if (!sortedLots || sortedLots.length === 0) throw new Error("No available stock found for this ticker.");
 
-        // 3. FIFO Sort with Tie-breaker for same-day transactions
-        const sortedLots = [...lots].sort((a, b) => {
-            const dateA = new Date(a.date).getTime();
-            const dateB = new Date(b.date).getTime();
-            if (dateA !== dateB) return dateA - dateB;
-            // Fallback to database creation order
-            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        });
-
-        // 4. Pre-check: Cumulative Validation
+        // 3. Pre-check: Cumulative Validation
         const totalAvailable = sortedLots.reduce((sum, lot) => sum + Number(lot.balance_qty), 0);
         if (totalAvailable < saleQtyRequested) {
-            throw new Error(`Insufficient stock. Available: ${totalAvailable}`);
+            throw new Error(`Insufficient stock. Available: ${totalAvailable.toFixed(2)}`);
         }
 
-        // 5. Generate Group ID
-        const { data: nextId } = await supabase.rpc('get_next_sale_id');
+        // 4. Generate Group ID via your existing RPC
+        const { data: nextId, error: rpcError } = await supabase.rpc('get_next_sale_id');
+        if (rpcError) throw rpcError;
         const sharedCustomId = `SALE-2026-${nextId.toString().padStart(4, '0')}`;
 
-        // 6. Process Split Transactions
+        // 5. Process Split Transactions
         for (const lot of sortedLots) {
             if (remainingQty <= 0) break;
 
-            const qtyFromThisLot = Math.min(Number(lot.balance_qty), remainingQty);
+            // Precision safe math
+            const currentLotBalance = Number(lot.balance_qty);
+            const qtyFromThisLot = Math.min(currentLotBalance, remainingQty);
+            
             const saleRate = parseFloat(data.sale_rate || data.rate);
-            const purchaseRate = parseFloat(lot.purchase_rate || lot.rate);
+            const purchaseRate = parseFloat(lot.rate || lot.purchase_rate);
             
             const profit = (saleRate - purchaseRate) * qtyFromThisLot;
+            
+            // Calculate if Long Term (held > 365 days)
             const isLongTerm = (new Date(data.sale_date || data.date).getTime() - new Date(lot.date).getTime()) > (365 * 24 * 60 * 60 * 1000);
 
-            // A. Update Purchase Batch
+            // A. Update Purchase Batch balance
             const { error: updateError } = await supabase
                 .from('purchases')
-                .update({ balance_qty: Number(lot.balance_qty) - qtyFromThisLot })
+                .update({ 
+                    balance_qty: parseFloat((currentLotBalance - qtyFromThisLot).toFixed(8)) 
+                })
                 .eq('trx_id', lot.trx_id);
 
             if (updateError) throw updateError;
 
-            // B. Log 1:1 Sale
+            // B. Log detailed Sale entry
             const { error: saleError } = await supabase
                 .from('sales')
                 .insert([{
                     purchase_trx_id: lot.trx_id,
                     custom_id: sharedCustomId,
-                    client_name: (data.client_name || data.sale_client_name),
+                    client_name: (data.client_name).trim(),
                     client_id: lot.client_id,
                     date: data.sale_date || data.date,
                     rate: saleRate,
                     sale_qty: qtyFromThisLot,
-                    profit_stored: profit,
+                    profit_stored: parseFloat(profit.toFixed(2)),
                     long_term: isLongTerm,
                     user_id: user.id,
                     comments: data.comments || `FIFO split from ${sharedCustomId}`
                 }]);
 
             if (saleError) throw saleError;
-            remainingQty -= qtyFromThisLot;
+
+            // C. Update remaining quantity for loop control with precision rounding
+            remainingQty = parseFloat((remainingQty - qtyFromThisLot).toFixed(8));
         }
 
         setSuccess(true);
-        reset();
+        if (typeof reset === 'function') reset();
+        alert(`Sale successful! ID: ${sharedCustomId}`);
+
     } catch (err) {
-        alert(err.message);
+        console.error("Sale Processing Error:", err);
+        alert(`Process Failed: ${err.message}`);
     } finally {
         setLoading(false);
     }
 };
-
     const getTodayDate = () => {
         const date = new Date();
         const offset = date.getTimezoneOffset();
@@ -172,7 +176,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         <form onSubmit={handleSubmit(onSaleSubmit)} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
-                <select {...register("sale_client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                <select {...register("client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
                     <option value="">Select Client</option>
                     {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
                 </select>
@@ -203,10 +207,46 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 </select>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-                <input type="date" defaultValue={getTodayDate()} {...register("sale_date")} className="p-2.5 bg-slate-50 border rounded-lg" />
-                <input type="number" step="0.01" {...register("sale_rate")} placeholder="Rate (₹)" className="p-2.5 bg-slate-50 border rounded-lg" />
-                <input type="number" {...register("sale_qty")} placeholder="Quantity" className="p-2.5 bg-slate-50 border rounded-lg" />
+           <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">Sale Date</label>
+                    <input 
+                        type="date" 
+                        defaultValue={getTodayDate()} 
+                        {...register("sale_date")} 
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all" 
+                    />
+                </div>
+                
+                <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">Sale Rate (₹)</label>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        {...register("sale_rate")} 
+                        placeholder="0.00" 
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all" 
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500">Sale Qty</label>
+                    <input 
+                        type="number" 
+                        {...register("sale_qty")} 
+                        placeholder="0" 
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all" 
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-500">Notes</label>
+                <textarea 
+                    {...register("comments")} 
+                    placeholder="Strategy, conviction, etc..." 
+                    className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500" 
+                />
             </div>
 
             <button disabled={loading} className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">

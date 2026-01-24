@@ -3,10 +3,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
+// 1. Updated Schema to include start_date and end_date
 const searchSchema = z.object({
   client_name: z.string().optional(),
   ticker: z.string().optional(),
-  date: z.string().optional(),
+  start_date: z.string().optional(), // Added
+  end_date: z.string().optional(),   // Added
   trx_id: z.string().optional(),
 });
 
@@ -26,21 +28,39 @@ export async function searchTransactions(formData: FormData) {
     return { error: 'Invalid form data' };
   }
 
-  const { client_name, ticker, date, trx_id } = parsed.data;
+  // Destructure new date fields
+  const { client_name, ticker, start_date, end_date, trx_id } = parsed.data;
+  
+  if (start_date && end_date && start_date > end_date) {
+    return { 
+      purchases: [], 
+      sales: [], 
+      error: "The 'From Date' cannot be later than the 'To Date'." 
+    };
+  }
 
-  // Rule: Do not show results if either Client_name or date fields alone are provided.
-  if ((client_name && !ticker && !date && !trx_id) || (date && !client_name && !ticker && !trx_id)) {
+  const today = new Date().toISOString().split('T')[0];
+
+  if (end_date && end_date > today) {
+      return { error: "Future dates are not permitted for historical lookup." };
+  }
+
+  // 2. Updated Broad Search Rule: Check for date range instead of single date
+  const hasDateRange = start_date || end_date;
+  
+  if (
+    (client_name && !ticker && !hasDateRange && !trx_id) || 
+    (hasDateRange && !client_name && !ticker && !trx_id)
+  ) {
     return { purchases: [], sales: [], error: "Search is too broad. Please provide more criteria." };
   }
 
-
   try {
-    // 1. Find initial set of purchase IDs
     let purchaseQuery = supabase.from('purchases').select('trx_id');
 
+    // Transaction ID logic remains the same
     if (trx_id) {
-        // If a transaction ID is provided, it could be a purchase or a sale
-        const { data: sale, error: saleError } = await supabase
+        const { data: sale } = await supabase
             .from('sales')
             .select('purchase_id')
             .eq('trx_id', trx_id)
@@ -59,12 +79,16 @@ export async function searchTransactions(formData: FormData) {
     if (ticker) {
       purchaseQuery = purchaseQuery.ilike('ticker', `%${ticker}%`);
     }
-    if (date) {
-      purchaseQuery = purchaseQuery.eq('date', date);
+
+    // 3. New Date Range Query Logic
+    if (start_date) {
+      purchaseQuery = purchaseQuery.gte('date', start_date);
+    }
+    if (end_date) {
+      purchaseQuery = purchaseQuery.lte('date', end_date);
     }
 
     const { data: purchaseIdsData, error: purchaseIdsError } = await purchaseQuery;
-
     if (purchaseIdsError) throw purchaseIdsError;
 
     const purchaseIds = purchaseIdsData.map((p) => p.trx_id);
@@ -73,7 +97,6 @@ export async function searchTransactions(formData: FormData) {
       return { purchases: [], sales: [] };
     }
 
-    // 2. Get all purchases for those IDs
     const { data: purchases, error: purchasesError } = await supabase
       .from('purchases')
       .select('*')
@@ -81,15 +104,6 @@ export async function searchTransactions(formData: FormData) {
 
     if (purchasesError) throw purchasesError;
 
-    // 3. Get all sales related to those purchases
-    /*const { data: sales, error: salesError } = await supabase
-      .from('sales')
-      .select('*')
-      .in('purchase_id', purchaseIds);
-
-    if (salesError) throw salesError;
-
-    return { purchases, sales };*/
     return { purchases };
   } catch (error: any) {
     console.error(error);

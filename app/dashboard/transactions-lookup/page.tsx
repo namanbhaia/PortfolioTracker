@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/transaction-label';
 import { searchTransactions } from '@/app/actions/search-transactions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/transaction-table';
-
+import Link from 'next/link';
 // Define types for better type safety
 type Purchase = {
     trx_id: string;
@@ -33,14 +33,19 @@ export default async function TransactionsPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}){
     const resolvedSearchParams = await searchParams;
     const supabase = await createClient();
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
+
+    
+    const { data: clients } = await supabase
+        .from('clients')
+        .select('client_name')
+        .order('client_name', { ascending: true });
+    
 
     let purchases: Purchase[] = [];
     let sales: Sale[] = [];
@@ -88,28 +93,64 @@ export default async function TransactionsPage({
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                    <form className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <form className="grid grid-cols-1 md:grid-cols-5 gap-6">
                         <div className="space-y-1.5">
                             <Label htmlFor="client_name" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Client Name</Label>
-                            <Input id="client_name" name="client_name" placeholder="Search accounts..." defaultValue={resolvedSearchParams.client_name as string ?? ''} className="bg-slate-50 border-slate-200" />
+                            <select 
+                                id="client_name" 
+                                name="client_name" 
+                                defaultValue={resolvedSearchParams.client_name as string ?? ''}
+                                className="flex h-10 w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors cursor-pointer"
+                            >
+                                <option value="">Select Client</option>
+                                {clients?.map((client) => (
+                                    <option key={client.client_name} value={client.client_name}>
+                                        {client.client_name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+
                         <div className="space-y-1.5">
                             <Label htmlFor="ticker" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Ticker</Label>
-                            <Input id="ticker" name="ticker" placeholder="e.g. RELIANCE" defaultValue={resolvedSearchParams.ticker as string ?? ''} className="bg-slate-50 border-slate-200 uppercase font-bold" />
+                            <Input id="ticker" name="ticker" placeholder="Ticker" defaultValue={resolvedSearchParams.ticker as string ?? ''} className="bg-slate-50 border-slate-200 text-xs" />
+                        </div>
+                       
+                        <div className="space-y-1.5">
+                            <Label htmlFor="start_date" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">From Date</Label>
+                            <Input 
+                                id="start_date" 
+                                name="start_date" 
+                                type="date" 
+                                defaultValue={resolvedSearchParams.start_date as string ?? ''} 
+                                className="bg-slate-50 border-slate-200" 
+                            />
                         </div>
                         <div className="space-y-1.5">
-                            <Label htmlFor="date" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Transaction Date</Label>
-                            <Input id="date" name="date" type="date" defaultValue={resolvedSearchParams.date as string ?? ''} className="bg-slate-50 border-slate-200" />
+                            <Label htmlFor="end_date" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">To Date</Label>
+                            <Input 
+                                id="end_date" 
+                                name="end_date" 
+                                type="date" 
+                                defaultValue={resolvedSearchParams.end_date as string ?? ''} 
+                                className="bg-slate-50 border-slate-200" 
+                            />
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="trx_id" className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Transaction ID</Label>
-                            <Input id="trx_id" name="trx_id" placeholder="UUID search..." defaultValue={resolvedSearchParams.trx_id as string ?? ''} className="bg-slate-50 border-slate-200 font-mono text-xs" />
+                            <Input id="trx_id" name="trx_id" placeholder="UUID" defaultValue={resolvedSearchParams.trx_id as string ?? ''} className="bg-slate-50 border-slate-200  text-xs" />
                         </div>
-                        <div className="md:col-span-4 flex justify-end">
-                            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2">
+                        <div className="md:col-span-5 flex justify-end items-center gap-3 pt-2">
+                            <Link 
+                                href="/dashboard/transactions-lookup"
+                                className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors px-4"
+                            >
+                                Clear Filters
+                            </Link>
+                            {/* <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
                                 <Search size={18} />
                                 Run Lookup
-                            </Button>
+                            </Button> */}
                         </div>
                     </form>
                 </CardContent>
