@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import HoldingsFilters from '@/components/dashboard/holdings-filters';
-import TrxIdCell from '@/components/dashboard/trx-id-cell'; 
+import TrxIdCell from '@/components/dashboard/trx-id-cell';
 import CommentCell from '@/components/dashboard/comment-cell';
 import HoldingsTable from '@/components/dashboard/holdings-table';
 
@@ -26,7 +26,6 @@ export default async function HoldingsPage({
     const params = await searchParams;
 
     // 1. Types & Default sorting
-    type SortField = 'date' | 'ticker' | 'client_name' | 'market_value' | 'pl_percent';
     const sortField = (params.sort as SortField) || 'date';
     const sortOrder = params.order === 'asc'; // true for ASC, false for DESC (default)
 
@@ -77,12 +76,12 @@ export default async function HoldingsPage({
     // 7. Date Range
     if (params.start_date) query = query.gte('date', params.start_date);
     if (params.end_date) query = query.lte('date', params.end_date);
-    
+
     // 8. Balance Filtering (Default: Active Only)
     if (params.show_all !== 'true') {
         query = query.gt('balance_qty', 0);
-    }  
-    
+    }
+
     if (params.is_long_term === 'true') {
         query = query.eq('is_long_term', true);
     } else if (params.is_long_term === 'false') {
@@ -110,8 +109,8 @@ export default async function HoldingsPage({
 
     return (
         <div className="p-4 space-y-4">
-            <h1 className="text-2xl font-bold">Portfolio Holdings:</h1>
-            <HoldingsFilters availableClients={availableClients || []} />
+            <h1 className="text-2xl font-bold">Portfolio Holdings:</h1
+            <HoldingsFilters availableClients={availableClients || []} showBalanceToggle={true} />
 
             <HoldingsTable holdings={holdings || []} params={params} />
         </div>

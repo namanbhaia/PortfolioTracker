@@ -1,61 +1,113 @@
 ﻿import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import HoldingsFilters from '@/components/dashboard/holdings-filters';
+import TrxIdCell from '@/components/dashboard/trx-id-cell';
+import CommentCell from '@/components/dashboard/comment-cell';
 import SalesTable from '@/components/dashboard/sales-table';
-import { Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata = {
-    title: 'Sales History | WealthTrack',
-};
+// Define the valid sortable columns based on your view
+type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'is_long_term';
 
-async function SalesDataFetcher() {
+export default async function SalesPage({
+    searchParams,
+}: {
+    searchParams: Promise<{
+        ticker?: string;
+        share_name?: string;
+        client_name?: string;
+        show_all?: string;
+        start_date?: string;
+        end_date?: string;
+        is_long_term?: string;
+    }>;
+}) {
     const supabase = await createClient();
+    const params = await searchParams;
+
+    // 1. Types & Default sorting
+    const sortField = (params.sort as SortField) || 'sale_date';
+    const sortOrder = params.order === 'asc'; // true for ASC, false for DESC (default)
+
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return redirect('/login');
 
-    // Query the updated sales_view that includes user_id and custom_id
-    const { data, error } = await supabase
-        .from('sales_view')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('sale_date', { ascending: false });
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, client_ids')
+        .eq('id', user.id)
+        .single();
 
-    if (error) {
-        console.error('Error fetching sales:', error);
-        return <div className="p-8 text-red-500 bg-red-50 rounded-xl border border-red-100">Error loading sales data. Please refresh.</div>;
+    if (!profile?.client_ids?.length) return <div>No authorized clients.</div>;
+
+    // Fetch client metadata for the dropdown
+    const { data: availableClients } = await supabase
+        .from('clients')
+        .select('client_id, client_name')
+        .in('client_id', profile.client_ids);
+
+    // 2. Base Query
+    let query = supabase.from('sales_view').select('*');
+
+    // 3. Security: Filter by Client IDs (Multiple select support)
+    let authorizedClientIds = profile.client_ids;
+    if (params.client_ids) {
+        const selectedClientIds = params.client_ids.split(',');
+        // Only filter by IDs the user actually has access to
+        authorizedClientIds = selectedClientIds.filter(id => profile.client_ids.includes(id));
+    }
+    query = query.in('client_id', authorizedClientIds);
+
+    // 4. Client Name (Exact match case-insensitive, if passed as string)
+    if (params.client_name) {
+        query = query.ilike('client_name', params.client_name);
     }
 
-    return <SalesTable data={data || []} />;
-}
+    // 5. Ticker (Exact match, case-insensitive)
+    if (params.ticker) {
+        query = query.ilike('ticker', params.ticker);
+    }
 
-export default function SalesPage() {
+    // 6. Share Name (Partial match)
+    if (params.share_name) {
+        query = query.ilike('stock_name', `%${params.share_name}%`);
+    }
+
+    // 7. Date Range
+    if (params.start_date) query = query.gte('date', params.start_date);
+    if (params.end_date) query = query.lte('date', params.end_date);
+
+    if (params.is_long_term === 'true') {
+        query = query.eq('is_long_term', true);
+    } else if (params.is_long_term === 'false') {
+        query = query.eq('is_long_term', false);
+    }
+    // 10. Execute Query with Sorting
+    const { data: sales, error } = await query.order(sortField, { ascending: sortOrder });
+
+    if (error) {
+        console.error("Supabase Error:", error.message);
+        return <div className="p-4 text-red-500 bg-red-50 rounded-lg">Error loading portfolio data.</div>;
+    }
+
+    // Helper function to create sort URLs
+    const getSortLink = (field: SortField) => {
+        const newOrder = params.sort === field && params.order === 'asc' ? 'desc' : 'asc';
+        return `?sort=${field}&order=${newOrder}`;
+    };
+
+    // Helper to render sort arrow
+    const SortArrow = ({ field }: { field: SortField }) => {
+        if (params.sort !== field) return <span className="text-gray-300 ml-1">↕</span>;
+        return params.order === 'asc' ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
+    };
+
     return (
-        <div className="flex flex-col gap-8 p-8 max-w-7xl mx-auto">
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Sales History</h1>
-                    <p className="text-slate-500 mt-1">Realized performance and batch-linked exit logs across all clients.</p>
-                </div>
+        <div className="p-4 space-y-4">
+            <h1 className="text-2xl font-bold">Portfolio Holdings:</h1>
+            <HoldingsFilters availableClients={availableClients || []} showBalanceToggle={false} />
 
-                <div className="bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium text-slate-600">
-                    Reporting: <span className="text-slate-900 font-bold">Realized P&L</span>
-                </div>
-            </header>
-
-            <Suspense fallback={<TableSkeleton />}>
-                <SalesDataFetcher />
-            </Suspense>
-        </div>
-    );
-}
-
-function TableSkeleton() {
-    return (
-        <div className="space-y-4">
-            <Skeleton className="h-12 w-full rounded-xl" />
-            <div className="border rounded-xl p-4 space-y-4">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-            </div>
+            <SalesTable sales={sales || []} params={params} />
         </div>
     );
 }

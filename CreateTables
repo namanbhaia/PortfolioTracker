@@ -142,29 +142,32 @@ JOIN
 Create Sales View
 CREATE OR REPLACE VIEW sales_view AS
 SELECT 
-    s.custom_id,                        -- Your self-generated ID
-    c.trading_id,                       --
-    s.client_name,                      --
-    p.ticker,                           --
-    a.stock_name,                       --
-    a.isin,                             --
-    p.date AS purchase_date,            --
-    p.purchase_qty AS purchase_qty,     -- Corrected column name for Purchases table
-    p.rate AS purchase_rate,            --
-    (s.sale_qty * p.rate) AS purchase_value, -- Value of the specific portion sold
-    s.date AS sale_date,                --
-    s.sale_qty AS sale_qty,             -- Corrected column name for Sales table
-    s.rate AS sale_rate,                --
-    (s.sale_qty * s.rate) AS sale_value, -- Total value of the sale
-    ((s.rate - p.rate) * s.sale_qty) AS profit, -- Realized profit calculation
-    (s.date::DATE - p.date::DATE > 365) AS long_term, -- Fixed date-text operator error
-    s.comments,                         --
-    s.user_id                            -- Required for app/dashboard/sales/page.tsx filtering
+    s.trx_id,
+    c.client_id,
+    c.trading_id,
+    c.dp_id, -- New column
+    s.client_name,
+    p.ticker,
+    a.stock_name,
+    a.isin,
+    p.date AS purchase_date,
+    p.rate AS purchase_rate,
+    s.date AS sale_date,
+    s.sale_qty,
+    s.rate AS sale_rate,
+    (s.sale_qty * p.rate) AS purchase_value,
+    (s.sale_qty * s.rate) AS sale_value,
+    ((s.rate - p.rate) * s.sale_qty) AS profit,
+    (((s.rate - p.rate) / p.rate) * 100) AS profit_percentage,
+    s.long_term,
+    s.comments,
+    s.user_id
 FROM sales s
 JOIN purchases p ON s.purchase_trx_id = p.trx_id
 JOIN clients c ON p.client_name = c.client_name
 JOIN assets a ON p.ticker = a.ticker;
-s
+
+
 Key Safeguards
 CREATE OR REPLACE FUNCTION check_sale_qty() 
 RETURNS TRIGGER AS $$
