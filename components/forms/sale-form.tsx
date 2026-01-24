@@ -111,7 +111,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             // 6. Generate Transaction Group ID
             const { data: nextId } = await supabase.rpc('get_next_sale_id');
-            const sharedCustomId = `SALE-2026-${nextId.toString().padStart(4, '0')}`;
+            const sharedCustomId = `SALE-${nextId.toString().padStart(4, '0')}`;
 
             // 7. FIFO Processing Loop
             for (const lot of lots) {
@@ -149,7 +149,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         adjusted_profit_stored: adjustedProfit,
                         long_term: isLongTerm,
                         user_id: user.id,
-                        comments: data.comments || `FIFO Exit: ${sharedCustomId}`
+                        comments: data.comments ? `${data.comments} | ${sharedCustomId}` : sharedCustomId
                     }])
                     .select('trx_id')
                     .single();
