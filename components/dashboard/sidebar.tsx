@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -10,10 +10,11 @@ import {
     PlusCircle,
     Info,
     LogOut,
-    ShieldCheck,
     UserCircle,
     User,
-    Search
+    Search,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -34,8 +35,8 @@ const navItems = [
 
 const secondaryItems = [{ name: 'Info & Rules', href: '/dashboard/info', icon: Info }];
 
-// 1. Update component to accept props
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
@@ -46,80 +47,126 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
         router.refresh();
     };
 
-    // 2. Calculate Display Name
     const displayName = profile?.full_name || profile?.username || 'User';
     const displayEmail = user?.email || '';
 
     return (
-        <aside className="w-64 h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800">
-            {/* Brand Logo */}
-            <div className="p-6 flex items-center gap-3 text-white">
-                <div className="bg-indigo-600 p-1.5 rounded-lg">
-                    <ShieldCheck size={24} />
-                </div>
-                <span className="font-bold text-lg tracking-tight">WealthTrack</span>
+        <aside 
+            className={`relative h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${
+                isCollapsed ? 'w-20' : 'w-64'
+            }`}
+        >
+            {/* FLOATING TOGGLE BUTTON */}
+            <button 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute -right-3 top-10 z-50 bg-indigo-600 text-white rounded-full p-1 border-2 border-slate-900 hover:bg-indigo-500 transition-all shadow-xl hover:scale-110 active:scale-95"
+                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+                {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+
+            {/* Brand Logo Section */}
+            
+            <div className="p-6 mb-2 flex items-center gap-3 text-white overflow-hidden">
+                <Link href="/dashboard" className="flex items-center gap-3 group">
+                    <div className="shrink-0 transition-transform group-hover:scale-105 active:scale-95">
+                        {/* This "/" points directly to your "public" folder. 
+                            Next.js automatically serves everything inside "public" at the root URL.
+                        */}
+                        <img 
+                            src="/images/logo_2.png" 
+                            alt="PortfolioTracker Logo" 
+                            className="h-8 w-8 rounded-lg object-contain" 
+                        />
+                    </div>
+                    {!isCollapsed && (
+                        <span className="font-bold text-lg tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+                            PortfolioTracker
+                        </span>
+                    )}
+                </Link>
             </div>
 
             {/* Primary Navigation */}
-            <nav className="flex-1 px-4 space-y-1 mt-4">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 mb-2">Main Menu</p>
+            <nav className="flex-1 px-3 space-y-1 mt-4 overflow-y-auto overflow-x-hidden">
+                {!isCollapsed && (
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-4 opacity-60">
+                        Main Menu
+                    </p>
+                )}
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${isActive
-                                ? 'bg-indigo-600 text-white'
-                                : 'hover:bg-slate-800 hover:text-slate-100'
-                                }`}
+                            title={isCollapsed ? item.name : ""}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                                isActive 
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+                                    : 'hover:bg-slate-800 hover:text-slate-100'
+                            }`}
                         >
-                            <item.icon size={18} className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
-                            {item.name}
+                            <item.icon 
+                                size={20} 
+                                className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} 
+                            />
+                            {!isCollapsed && <span className="truncate">{item.name}</span>}
                         </Link>
                     );
                 })}
             </nav>
 
-            {/* Secondary & Help */}
-            <div className="px-4 space-y-1 mb-4">
+            {/* Secondary Items */}
+            <div className="px-3 space-y-1 mb-4">
                 {secondaryItems.map((item) => (
                     <Link
                         key={item.name}
                         href={item.href}
-                        className="flex items-center gap-3 px-3 py-2 text-sm font-medium hover:text-slate-100 transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 text-sm font-medium hover:text-slate-100 transition-colors group"
                     >
-                        <item.icon size={18} />
-                        {item.name}
+                        <item.icon size={18} className="shrink-0 text-slate-500 group-hover:text-slate-300" />
+                        {!isCollapsed && <span className="truncate">{item.name}</span>}
                     </Link>
                 ))}
             </div>
 
-            {/* Active User Card w/ Dropdown */}
-            <div className="p-4 border-t border-slate-800">
+            {/* User Profile Footer */}
+            <div className={`p-4 border-t border-slate-800 ${isCollapsed ? 'px-2' : 'px-4'}`}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="w-full bg-slate-800/50 rounded-xl p-3 flex items-center gap-3 border border-slate-700/50 hover:bg-slate-800 transition-colors text-left">
-                            <div className="bg-indigo-500/20 p-2 rounded-full">
+                        <button className={`flex items-center gap-3 rounded-xl transition-all outline-none ${
+                            isCollapsed 
+                                ? 'p-2 justify-center hover:bg-slate-800 w-full' 
+                                : 'p-3 w-full bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800'
+                        }`}>
+                            <div className="bg-indigo-500/20 p-2 rounded-lg shrink-0">
                                 <UserCircle size={20} className="text-indigo-400" />
                             </div>
-                            <div className="overflow-hidden">
-                                <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                                <p className="text-[10px] text-slate-500 truncate">{displayEmail}</p>
-                            </div>
+                            {!isCollapsed && (
+                                <div className="text-left overflow-hidden">
+                                    <p className="text-sm font-bold text-white truncate leading-tight">{displayName}</p>
+                                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{displayEmail}</p>
+                                </div>
+                            )}
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-slate-700" align="end" forceMount>
+                    
+                    <DropdownMenuContent 
+                        className="w-56 bg-slate-800 border-slate-700 text-slate-200" 
+                        side={isCollapsed ? "right" : "top"} 
+                        align={isCollapsed ? "start" : "center"}
+                    >
                         <DropdownMenuItem asChild>
-                            <Link href="/dashboard/profile" className="cursor-pointer">
-                                <User size={14} className="mr-2" />
-                                Profile
+                            <Link href="/dashboard/profile" className="cursor-pointer flex items-center gap-2">
+                                <User size={16} />
+                                <span>Profile Settings</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout} className="text-rose-400 focus:text-rose-400 focus:bg-rose-500/10 cursor-pointer">
-                            <LogOut size={14} className="mr-2" />
-                            Sign Out
+                        <DropdownMenuSeparator className="bg-slate-700" />
+                        <DropdownMenuItem onClick={handleLogout} className="text-rose-400 cursor-pointer flex items-center gap-2">
+                            <LogOut size={16} />
+                            <span>Sign Out</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
