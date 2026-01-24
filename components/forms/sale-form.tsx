@@ -162,7 +162,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     rate: saleRate,
                     sale_qty: qtyFromThisLot,
                     profit_stored: parseFloat(standardProfit.toFixed(2)),
-                    adjustedProfit: parseFloat(adjustedProfit.toFixed(2)),
+                    adjusted_profit_stored: parseFloat(adjustedProfit.toFixed(2)),
                     long_term: isLongTerm,
                     user_id: user.id,
                     comments: data.comments || `FIFO split from ${sharedCustomId}`
@@ -176,11 +176,9 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
         setSuccess(true);
         if (typeof reset === 'function') reset();
-        alert(`Sale successful! ID: ${sharedCustomId}`);
 
     } catch (err) {
         console.error("Sale Processing Error:", err);
-        alert(`Process Failed: ${err.message}`);
     } finally {
         setLoading(false);
     }
