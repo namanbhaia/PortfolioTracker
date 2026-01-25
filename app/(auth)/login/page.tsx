@@ -42,7 +42,7 @@ export default function LoginPage() {
 
             if (authError) throw authError;
 
-            router.push('/dashboard/holdings');
+            router.push('/dashboard');
             router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Authentication failed");

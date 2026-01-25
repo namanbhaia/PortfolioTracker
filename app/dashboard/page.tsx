@@ -16,6 +16,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import ConsolidatedHoldingsTable from '@/components/dashboard/consolidated-holdings-table';
 
 interface DashboardProps {
     searchParams: Promise<{ clients?: string }>;
@@ -84,14 +85,14 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 total_market_value: 0,
             };
         }
-        
+
         const qty = Number(curr.balance_qty);
         const purchaseRate = Number(curr.rate || curr.purchase_rate); // Fallback depending on view column name
-        
+
         acc[key].total_qty += qty;
         acc[key].total_purchase_value += qty * purchaseRate;
         acc[key].total_market_value += qty * Number(curr.market_rate);
-        
+
         return acc;
     }, {});
 
@@ -105,7 +106,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             pl,
             pl_percent
         };
-    }).sort((a, b) => b.total_market_value - a.total_market_value);
+    }).sort((a, b) => a.ticker.localeCompare(b.ticker));
 
     // 6. Global Portfolio Metrics
     const totalInvested = consolidatedRows.reduce((acc, row) => acc + row.total_purchase_value, 0);
@@ -180,51 +181,15 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-[11px] border-collapse">
-                        <thead className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase">
-                            <tr>
-                                <th className="px-4 py-4">Ticker & ISIN</th>
-                                <th className="px-4 py-4">Share Name</th>
-                                <th className="px-4 py-4 text-right">Balance Qty</th>
-                                <th className="px-4 py-4 text-right">Avg. Purchase</th>
-                                <th className="px-4 py-4 text-right">Purchase Value</th>
-                                <th className="px-4 py-4 text-right">Market Rate</th>
-                                <th className="px-4 py-4 text-right">Market Value</th>
-                                <th className="px-4 py-4 text-right">P/L</th>
-                                <th className="px-4 py-4 text-right">P/L %</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {consolidatedRows.map((row: any) => (
-                                <tr key={row.ticker} className="hover:bg-slate-50/80 transition-colors group">
-                                    <td className="px-4 py-4">
-                                        <div className="font-bold text-indigo-600">{row.ticker}</div>
-                                        <div className="text-[9px] text-slate-400">{row.isin || "N/A"}</div>
-                                    </td>
-                                    <td className="px-4 py-4 font-medium text-slate-700">{row.stock_name}</td>
-                                    <td className="px-4 py-4 text-right font-mono">{row.total_qty}</td>
-                                    <td className="px-4 py-4 text-right font-mono text-slate-500">₹{row.avg_purchase_price.toFixed(2)}</td>
-                                    <td className="px-4 py-4 text-right font-semibold text-slate-800">₹{row.total_purchase_value.toLocaleString('en-IN')}</td>
-                                    <td className="px-4 py-4 text-right font-mono text-slate-500">₹{row.market_rate.toLocaleString('en-IN')}</td>
-                                    <td className="px-4 py-4 text-right font-bold text-slate-900">₹{row.total_market_value.toLocaleString('en-IN')}</td>
-                                    <td className={`px-4 py-4 text-right font-bold ${row.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        ₹{Math.abs(row.pl).toLocaleString('en-IN')}
-                                    </td>
-                                    <td className={`px-4 py-4 text-right font-bold ${row.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {row.pl >= 0 ? '+' : '-'}{Math.abs(row.pl_percent).toFixed(2)}%
-                                    </td>
-                                </tr>
-                            ))}
+                    <ConsolidatedHoldingsTable consolidatedRows={consolidatedRows || []} />
 
-                            {consolidatedRows.length === 0 && (
-                                <tr>
-                                    <td colSpan={9} className="py-20 text-center text-slate-400 italic">
-                                        No holdings found for the selected accounts.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                    {consolidatedRows.length === 0 && (
+                        <tr>
+                            <td colSpan={9} className="py-20 text-center text-slate-400 italic">
+                                No holdings found for the selected accounts.
+                            </td>
+                        </tr>
+                    )}
                 </div>
             </div>
         </div>
