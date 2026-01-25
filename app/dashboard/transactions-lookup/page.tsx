@@ -147,10 +147,10 @@ export default async function TransactionsPage({
                             >
                                 Clear Filters
                             </Link>
-                            {/* <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
+                            {<Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
                                 <Search size={18} />
                                 Run Lookup
-                            </Button> */}
+                            </Button> }
                         </div>
                     </form>
                 </CardContent>

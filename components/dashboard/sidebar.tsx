@@ -14,7 +14,8 @@ import {
     User,
     Search,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    BadgeDollarSign
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -27,13 +28,16 @@ import {
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Holdings', href: '/dashboard/holdings', icon: Briefcase },
+    { name: 'Purchase History', href: '/dashboard/holdings', icon: Briefcase },
     { name: 'Sales History', href: '/dashboard/sales', icon: History },
     { name: 'Transactions Lookup', href: '/dashboard/transactions-lookup', icon: Search },
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
 ];
 
-const secondaryItems = [{ name: 'Info & Rules', href: '/dashboard/info', icon: Info }];
+const secondaryItems = [
+    { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
+    { name: 'Info & Rules', href: '/dashboard/info', icon: Info }
+];
 
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
     const [isCollapsed, setIsCollapsed] = useState(false);

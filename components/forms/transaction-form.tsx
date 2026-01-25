@@ -45,11 +45,6 @@ export function TransactionForm({ clients }: { clients: any[] }) {
                 )}
             </div>
 
-            {success && (
-                <div className="fixed bottom-4 right-4 bg-emerald-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
-                    <CheckCircle2 size={20} /> Transaction Recorded Successfully!
-                </div>
-            )}
         </div>
     );
 }

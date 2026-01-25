@@ -3,20 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
+import { getTodayDate } from '../helper/utility';
+import { SubmitButton } from '@/components/ui/submit-button';
 
 export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
 
-    // 1. Helper to get today's date in YYYY-MM-DD format (Local Timezone)
-    const getTodayDate = () => {
-        const date = new Date();
-        const offset = date.getTimezoneOffset();
-        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
-        return localDate.toISOString().split('T')[0];
-    };
-
-    // 2. Initialize useForm with defaultValues
+    // Initialize useForm with defaultValues
     const { register, handleSubmit, reset, watch, setValue } = useForm({
         defaultValues: {
             purchase_date: getTodayDate(), // Sets the default on mount
@@ -126,7 +120,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
            <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Date</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Purchase Date</label>
                     <input 
                         type="date" 
                         {...register("purchase_date")} 
@@ -134,7 +128,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Rate (₹)</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Purchase Rate (₹)</label>
                     <input 
                         type="number" 
                         step="0.01" 
@@ -144,7 +138,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Quantity</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Purchase Quantity</label>
                     <input 
                         type="number" 
                         {...register("purchase_qty")} 
@@ -162,9 +156,12 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                     className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500" 
                 />
             </div>
-            <button disabled={loading} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
-                {loading ? "Recording..." : "Confirm Purchase"}
-            </button>
+            <SubmitButton 
+                isPending={loading} 
+                label="Confirm Purchase" 
+                classname="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                loadingText='Recording Purchase'
+            />
         </form>
     );
 }
