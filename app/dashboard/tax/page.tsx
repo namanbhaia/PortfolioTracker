@@ -90,7 +90,7 @@ export default async function TaxReportOverviewPage({
                                                 ₹{stats.ltcg.toLocaleString('en-IN')}
                                             </p>
                                         </div>
-                                        <Link href={`/dashboard/tax-report/${client.client_id}?start_date=${startDate}&end_date=${endDate}`}>
+                                        <Link href={`/dashboard/sales?clients-ids=${client.client_id}?start_date=${startDate}&end_date=${endDate}`}>
                                             <Button variant="ghost" className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-bold gap-2">
                                                 Inspect <ChevronRight size={16} />
                                             </Button>
