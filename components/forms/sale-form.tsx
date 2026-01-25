@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
+import { SubmitButton } from '@/components/ui/submit-button';
 
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
@@ -245,7 +246,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Sale Qty</label>
+                    <label className="text-xs font-bold uppercase text-slate-500">Sale Quantity</label>
                     <input
                         type="number"
                         {...register("sale_qty")}
@@ -264,9 +265,12 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 />
             </div>
 
-            <button disabled={loading} className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200">
-                {loading ? "Recording..." : "Confirm Sale"}
-            </button>
+            <SubmitButton 
+                isPending={loading} 
+                label="Confirm Sale" 
+                classname="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
+                loadingText='Recording Sale'
+            />
         </form>
     );
 }

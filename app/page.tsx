@@ -64,6 +64,22 @@ export default function LandingPage() {
 
         <main className="relative z-10 w-full min-h-screen flex flex-col items-center justify-start">
           <div className="mt-[25vh] w-full max-w-5xl px-8 flex flex-col items-center">
+
+           <div className="mb-10 opacity-0 animate-reveal [animation-delay:400ms] flex flex-col items-center">
+              <div className="relative group">
+                <div className="absolute -inset-4 rounded-full blur-xl transition-all duration-500" />
+                <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
+                  <img 
+                    src="/images/logo.png" 
+                    alt="MLB Logo" 
+                    className="w-full h-full object-contain" 
+                  />
+                </div>
+              </div>
+              
+              {/* Optional: Subtle divider line to bridge the logo and title */}
+              <div className="mt-6 w-px h-12 bg-gradient-to-b from-indigo-500 to-transparent opacity-50" />
+            </div>
             
             {/* Title with tracking expansion and blur-reveal */}
             <h1 className="animate-title text-6xl md:text-8xl lg:text-9xl font-extrabold text-slate-900 text-center mb-16 leading-none opacity-0">

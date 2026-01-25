@@ -74,8 +74,8 @@ export default async function SalesPage({
     }
 
     // 7. Date Range
-    if (params.start_date) query = query.gte('date', params.start_date);
-    if (params.end_date) query = query.lte('date', params.end_date);
+    if (params.start_date) query = query.gte('sale_date', params.start_date);
+    if (params.end_date) query = query.lte('sale_date', params.end_date);
 
     if (params.is_long_term === 'true') {
         query = query.eq('is_long_term', true);
