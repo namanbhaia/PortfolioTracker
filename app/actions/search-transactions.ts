@@ -108,6 +108,18 @@ export async function searchTransactions(formData: FormData) {
         }
     }
 
+    if (start_date && end_date && start_date > end_date) {
+        return {
+            purchases: [],
+            sales: [],
+            error: "The 'From Date' cannot be later than the 'To Date'."
+        };
+    }
+    const today = new Date().toISOString().split('T')[0];
+    if (end_date && end_date > today) {
+        return { error: "Future dates are not permitted for historical lookup." };
+    }
+
     // 3. Fallback: Standard combination filtering
     let pQuery = supabase.from('client_holdings').select('*');
     let sQuery = supabase.from('sales_view').select('*');
