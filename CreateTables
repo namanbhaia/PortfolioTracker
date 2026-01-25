@@ -140,6 +140,8 @@ JOIN
 
 
 Create Sales View
+DROP VIEW IF EXISTS sales_view CASCADE;
+
 CREATE OR REPLACE VIEW sales_view AS
 SELECT 
     s.trx_id,
@@ -152,16 +154,20 @@ SELECT
     a.isin,
     p.date AS purchase_date,
     p.rate AS purchase_rate,
+    p.trx_id as purchase_trx_id,
+    p.purchase_qty,
     s.date AS sale_date,
     s.sale_qty,
     s.rate AS sale_rate,
     (s.sale_qty * p.rate) AS purchase_value,
     (s.sale_qty * s.rate) AS sale_value,
-    ((s.rate - p.rate) * s.sale_qty) AS profit,
-    (((s.rate - p.rate) / p.rate) * 100) AS profit_percentage,
+    s.profit_stored AS pl,
+    ((s.profit_stored / p.rate) * 100) AS pl_percentage,
+    s.adjusted_profit_stored AS adjusted_pl,
     s.long_term,
     s.comments,
-    s.user_id
+    s.user_id,
+    s.custom_id
 FROM sales s
 JOIN purchases p ON s.purchase_trx_id = p.trx_id
 JOIN clients c ON p.client_name = c.client_name

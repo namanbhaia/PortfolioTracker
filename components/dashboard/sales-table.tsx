@@ -105,15 +105,17 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                             <td className="px-3 py-3 whitespace-nowrap">
                                 {new Date(row.purchase_date).toLocaleDateString('en-IN')}
                             </td>
-                            <td className="px-3 py-3 text-right">{Number(row.purchase_qty)}</td>
+                            <td className="px-3 py-3 text-right">
+                                {(Number(row.purchase_qty) || 0).toLocaleString('en-IN')}
+                            </td>
                             <td className="px-3 py-3 text-right">₹{Number(row.purchase_rate).toFixed(2)}</td>
                             <td className="px-3 py-3 text-right">₹{Number(row.purchase_value).toLocaleString('en-IN')}</td>
                             <td className="px-3 py-3 whitespace-nowrap">
                                 {new Date(row.sale_date).toLocaleDateString('en-IN')}
                             </td>
-                            <td className="px-3 py-3 text-right">{Number(row.purchase_qty)}</td>
-                            <td className="px-3 py-3 text-right">₹{Number(row.purchase_rate).toFixed(2)}</td>
-                            <td className="px-3 py-3 text-right">₹{Number(row.purchase_value).toLocaleString('en-IN')}</td>
+                            <td className="px-3 py-3 text-right">{Number(row.sale_qty)}</td>
+                            <td className="px-3 py-3 text-right">₹{Number(row.sale_rate).toFixed(2)}</td>
+                            <td className="px-3 py-3 text-right">₹{Number(row.sale_value).toLocaleString('en-IN')}</td>
                             <td className={`px-3 py-3 text-right font-semibold ${row.pl_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {Number(row.pl_percentage).toFixed(2)}%
                             </td>
