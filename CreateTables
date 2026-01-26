@@ -236,3 +236,31 @@ BEGIN
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+For edge function
+-- Enable the cron extension
+create extension if not exists pg_cron;
+
+-- Enable the net extension (to allow the DB to make HTTP calls to the Edge Function)
+create extension if not exists pg_net;
+
+SELECT cron.schedule(
+  'update-market-prices-india-market', -- Unique Job Name
+  '*/5 3-10 * * 1-5',                  -- Every 5 mins, between 3:30 and 10:30 UTC, Mon-Fri
+  $$
+  SELECT
+    net.http_post(
+      url:='https://[YOUR_PROJECT_REF].functions.supabase.co/update-prices',
+      headers:='{
+        "Content-Type": "application/json", 
+        "Authorization": "Bearer [YOUR_ANON_KEY]"
+      }'::jsonb
+    );
+  $$
+);
+
+-- Check the last 10 runs to see if they were successful
+SELECT * FROM cron.job_run_details 
+ORDER BY start_time DESC 
+LIMIT 10;
