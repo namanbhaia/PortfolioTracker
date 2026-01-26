@@ -16,9 +16,10 @@ interface UserContextType {
 // Create the context with a default value
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+import { useMemo } from 'react';
 // Create the Provider component
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any>(null);
     const [clients, setClients] = useState<any[]>([]);
@@ -26,34 +27,36 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            setError(null);
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user || null);
+        });
 
-            // 1. Get the current user session
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            if (sessionError) {
-                setError(sessionError.message);
-                setLoading(false);
-                return;
-            }
+        // Initial session fetch
+        const getInitialSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user || null);
+        };
+        getInitialSession();
 
-            const currentUser = session?.user;
-            setUser(currentUser || null);
+        return () => {
+            authListener?.subscription.unsubscribe();
+        };
+    }, [supabase]);
 
-            if (currentUser) {
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (user) {
+                setLoading(true);
                 try {
-                    // 2. Fetch the user's profile
                     const { data: profileData, error: profileError } = await supabase
                         .from('profiles')
                         .select('full_name, client_ids')
-                        .eq('id', currentUser.id)
+                        .eq('id', user.id)
                         .single();
 
                     if (profileError) throw profileError;
                     setProfile(profileData);
 
-                    // 3. Fetch client details based on the profile's client_ids
                     if (profileData?.client_ids?.length > 0) {
                         const { data: clientData, error: clientError } = await supabase
                             .from('clients')
@@ -62,6 +65,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
                         if (clientError) throw clientError;
                         setClients(clientData || []);
+                    } else {
+                        setClients([]);
                     }
                 } catch (e: any) {
                     setError(e.message);
@@ -69,23 +74,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     setLoading(false);
                 }
             } else {
+                setProfile(null);
+                setClients([]);
                 setLoading(false);
             }
         };
 
-        fetchData();
-
-        // Listen for auth changes to refetch data
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session?.user !== user) {
-                fetchData();
-            }
-        });
-
-        return () => {
-            authListener?.subscription.unsubscribe();
-        };
-    }, []);
+        fetchProfile();
+    }, [user?.id, supabase]);
 
     const value = { user, profile, clients, loading, error };
 

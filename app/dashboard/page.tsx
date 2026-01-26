@@ -10,9 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConsolidatedHoldingsTable from "@/components/dashboard/consolidated-holdings-table";
 import { RefreshButton } from "@/components/dashboard/refresh-button";
 
+import { useMemo } from "react";
 export default function DashboardPage() {
     const { profile, clients: clientMetadata, loading: userLoading, error: userError } = useUser();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const searchParams = useSearchParams();
 
     const [consolidatedRows, setConsolidatedRows] = useState<any[]>([]);
@@ -93,7 +94,7 @@ export default function DashboardPage() {
         if (!userLoading) {
             fetchHoldings();
         }
-    }, [profile, searchParams, userLoading]);
+    }, [profile, searchParams, userLoading, supabase]);
 
     if (userLoading || loading) {
         return <div className="p-6 text-center">Loading Executive Summary...</div>;
@@ -184,9 +185,11 @@ export default function DashboardPage() {
                     <ConsolidatedHoldingsTable consolidatedRows={consolidatedRows || []} />
 
                     {consolidatedRows.length === 0 && (
-                        <div className="py-20 text-center text-slate-400 italic">
+                        <tr>
+                            <td colSpan={9} className="py-20 text-center text-slate-400 italic">
                                 No holdings found for the selected accounts.
-                        </div>
+                            </td>
+                        </tr>
                     )}
                 </div>
             </div>

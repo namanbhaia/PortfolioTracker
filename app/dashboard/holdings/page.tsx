@@ -12,7 +12,7 @@ type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent'
 
 export default function HoldingsPage() {
     const { profile, clients: availableClients, loading: userLoading, error: userError } = useUser();
-    const supabase = createClient();
+    const supabase = useMemo(() => createClient(), []);
     const searchParams = useSearchParams();
 
     const [holdings, setHoldings] = useState<any[]>([]);
@@ -101,6 +101,18 @@ export default function HoldingsPage() {
     if (!profile?.client_ids?.length) {
         return <div className="p-4">No authorized clients found for your profile.</div>;
     }
+
+    // Helper function to create sort URLs
+    const getSortLink = (field: SortField) => {
+        const newOrder = params.sort === field && params.order === 'asc' ? 'desc' : 'asc';
+        return `?sort=${field}&order=${newOrder}`;
+    };
+
+    // Helper to render sort arrow
+    const SortArrow = ({ field }: { field: SortField }) => {
+        if (params.sort !== field) return <span className="text-gray-300 ml-1">↕</span>;
+        return params.order === 'asc' ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
+    };
 
     return (
         <div className="p-4 space-y-4">
