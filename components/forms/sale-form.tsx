@@ -8,7 +8,7 @@ import { SubmitButton } from '@/components/ui/submit-button';
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
-    const [openPurchases, setOpenPurchases] = useState([]);
+    const [openPurchases, setOpenPurchases] = useState<any[]>([]);
 
     const { register, handleSubmit, reset, watch, setValue } = useForm();
 
@@ -66,7 +66,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         fetchLots();
     }, [saleClient, supabase]);
 
-    const onSaleSubmit = async (data) => {
+    const onSaleSubmit = async (data: any) => {
         setLoading(true);
         // 1. Normalize form data (handling varying field names)
         const saleQtyRequested = parseFloat(data.sale_qty || data.qty);
@@ -172,11 +172,10 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             setSuccess(true);
             reset();
-            alert(`Transaction ${sharedCustomId} recorded successfully!`);
 
         } catch (err) {
-            console.error("Critical Error:", err.message);
-            alert(err.message);
+            const error = err as Error;
+            console.error("Critical Error:", error.message);
         } finally {
             setLoading(false);
         }

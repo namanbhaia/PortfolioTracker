@@ -12,7 +12,7 @@ type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_per
 export default async function SalesPage({
     searchParams,
 }: {
-    searchParams: Promise<{
+    searchParams: {
         ticker?: string;
         share_name?: string;
         client_name?: string;
@@ -20,10 +20,10 @@ export default async function SalesPage({
         start_date?: string;
         end_date?: string;
         is_long_term?: string;
-    }>;
+    };
 }) {
     const supabase = await createClient();
-    const params = await searchParams;
+    const params = searchParams;
 
     // 1. Types & Default sorting
     const sortField = (params.sort as SortField) || 'sale_date';

@@ -6,11 +6,31 @@ WealthTrack Manager is a high-performance, private investment dashboard designed
 
 ## 🚀 Key Features
 
-- **Hierarchical Management**: Manage multiple independent clients (e.g., Personal, Spouse, Parents) under one secure login.
-- **The "Lot-Level" Ledger**: Tracks every buy as a unique batch, allowing for precise First-In-First-Out (FIFO) selling and tax optimization.
-- **Automated Tax Logic**: Built-in engine for LTCG (12.5%) and STCG (20%) based on the 2024-26 Indian Union Budget rules.
-- **Consolidated Holdings**: A unique "Union" view that aggregates a specific stock's exposure across all selected family accounts.
-- **Edge-Powered Market Data**: Automated price fetching via Supabase Edge Functions and pg_cron schedules.
+-   **Hierarchical Management**: Manage multiple independent clients (e.g., Personal, Spouse, Parents) under one secure login.
+-   **The "Lot-Level" Ledger**: Tracks every buy as a unique batch, allowing for precise First-In-First-Out (FIFO) selling and tax optimization.
+-   **Automated Tax Logic**: Built-in engine for LTCG (12.5%) and STCG (20%) based on the 2024-26 Indian Union Budget rules.
+-   **Consolidated Holdings**: A unique "Union" view that aggregates a specific stock's exposure across all selected family accounts.
+-   **Edge-Powered Market Data**: Automated price fetching via Supabase Edge Functions and pg_cron schedules.
+
+## ✨ Visual Features
+
+### Consolidated Dashboard
+
+The main dashboard provides a high-level executive summary of all linked accounts. It calculates total invested value, current market value, and overall profit/loss in real-time. This view helps answer the question: "What is our total family exposure to this asset?"
+
+![Consolidated Dashboard](public/images/consolidated.png)
+
+### Sales Ledger & Tax Calculation
+
+The sales view provides a detailed history of all realized gains and losses. The system automatically calculates the tax payable for each transaction based on Indian tax laws, distinguishing between Short-Term and Long-Term Capital Gains. This view helps answer: "How much tax do I owe?"
+
+![Sales Ledger](public/images/sales.png)
+
+### Detailed Holdings View
+
+The holdings page displays a granular, lot-level view of all open positions for a selected client. It tracks the purchase date, rate, and quantity for each individual transaction, which is crucial for accurate FIFO-based tax calculations.
+
+![Holdings Table](public/images/dashboard.png)
 
 ## 🛠 Tech Stack
 
@@ -69,28 +89,58 @@ The system uses PostgreSQL Views to perform heavy financial math at the database
 
 ### 1. Prerequisites
 
-- Node.js 22+
-- A Supabase Account
-- Market Data API Key (e.g., Alpha Vantage or Dhan)
+-   **Node.js**: v22.0 or higher.
+-   **npm**: v11.7 or higher.
+-   **Supabase Account**: A free or paid Supabase account is required for the database and authentication.
+-   **Market Data API Key**: An optional API key from a provider like Alpha Vantage or Dhan is needed for automated market data updates.
 
-### 2. Environment Variables
+### 2. Installation
 
-Create a `.env.local` file in the root of the project:
+1.  **Clone the Repository**:
+    ```bash
+    git clone https://github.com/your-repo/wealthtrack-manager.git
+    cd wealthtrack-manager
+    ```
+
+2.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
+
+### 3. Environment Variables
+
+Create a `.env.local` file in the root of the project by copying the example file:
 
 ```bash
+cp .env.example .env.local
+```
+
+Then, update the `.env.local` file with your Supabase project credentials and API key:
+
+```
 NEXT_PUBLIC_SUPABASE_URL=your_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 MARKET_DATA_API_KEY=your_key
 ```
 
-### 3. Setup Database
+### 4. Database Setup
 
-1.  Run the `CreateTables` SQL script in the Supabase SQL Editor to create the necessary tables and views.
-2.  Enable Row Level Security (RLS) on all tables to protect client data.
-3.  Deploy the Edge Function for market data:
+1.  **Run the SQL Script**: Navigate to the Supabase SQL Editor in your project dashboard and execute the contents of the `CreateTables` file to set up the required tables, views, and database functions.
+2.  **Enable Row Level Security (RLS)**: For data security, ensure that RLS is enabled on all tables that store client-specific information.
+3.  **Deploy Edge Function**: To enable automated market data fetching, deploy the Supabase Edge Function:
     ```bash
     supabase functions deploy update-prices
     ```
+
+### 5. Running the Application
+
+Once the installation and setup are complete, you can run the development server:
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`.
 
 ## 📊 Decision Intelligence
 
