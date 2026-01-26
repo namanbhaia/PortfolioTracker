@@ -18,6 +18,7 @@ import {
     BadgeDollarSign
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useUser } from '@/lib/context/UserContext';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,24 +40,13 @@ const secondaryItems = [
     { name: 'Info & Rules', href: '/dashboard/info', icon: Info }
 ];
 
-export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
+export default function Sidebar() {
     // 1. Declare ALL hooks at the top level
-    const [mounted, setMounted] = useState(false);
-    const pathname = usePathname(); 
-    const router = useRouter();     
+    const { user, profile, loading } = useUser();
+    const pathname = usePathname();
+    const router = useRouter();
     const supabase = createClient();
     const [isCollapsed, setIsCollapsed] = useState(false);
-
-    // Only set mounted to true after the initial render
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    // Prevent hydration mismatch by returning a consistent shell 
-    // or null until the client has taken over
-    if (!mounted) {
-        return <aside className="w-20 h-screen bg-slate-900 border-r border-slate-800" />;
-    }
 
 
     const handleLogout = async () => {
@@ -64,6 +54,10 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
         router.push('/');
         router.refresh();
     };
+
+    if (loading) {
+        return <aside className={`h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'}`} />;
+    }
 
     const displayName = profile?.full_name || profile?.username || 'User';
     const displayEmail = user?.email || '';

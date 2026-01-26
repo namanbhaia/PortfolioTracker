@@ -1,39 +1,63 @@
+"use client";
+
 import Sidebar from '@/components/dashboard/sidebar';
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+import { UserProvider, useUser } from '@/lib/context/UserContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default async function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
-    const supabase = await createClient();
+function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useUser();
+    const router = useRouter();
 
-    // 1. Fetch User & Profile Server-Side
-    const { data: { user } } = await supabase.auth.getUser();
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
 
-    if (!user) {
-        redirect('/login');
+    if (loading) {
+        // You can return a loading spinner or a skeleton layout here
+        return (
+             <div className="flex h-screen bg-slate-50 overflow-hidden">
+                <aside className="w-64 h-screen bg-slate-900 border-r border-slate-800 animate-pulse" />
+                <main className="flex-1 overflow-y-auto relative">
+                    <div className="min-h-full p-6">
+                        <div className="animate-pulse">
+                            <div className="h-8 bg-slate-200 rounded w-1/4 mb-4"></div>
+                            <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
     }
 
-    // 2. Fetch Profile details (for Full Name / Username)
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    if (!user) {
+        // This is to prevent flashing the content for a moment before redirect
+        return null;
+    }
 
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden">
-            {/* 3. Pass data to Sidebar */}
-            <Sidebar user={user} profile={profile} />
-
-            {/* Main Content Area */}
+            <Sidebar />
             <main className="flex-1 overflow-y-auto relative">
                 <div className="min-h-full">
                     {children}
                 </div>
             </main>
         </div>
+    );
+}
+
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <UserProvider>
+            <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        </UserProvider>
     );
 }
