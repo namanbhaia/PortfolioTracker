@@ -20,9 +20,6 @@ export default async function SalesPage({
         start_date?: string;
         end_date?: string;
         is_long_term?: string;
-        sort?: string;
-        order?: string;
-        client_ids?: string;
     };
 }) {
     const supabase = await createClient();

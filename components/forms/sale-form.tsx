@@ -172,12 +172,10 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             setSuccess(true);
             reset();
-            alert(`Transaction ${sharedCustomId} recorded successfully!`);
 
         } catch (err) {
             const error = err as Error;
             console.error("Critical Error:", error.message);
-            alert(error.message);
         } finally {
             setLoading(false);
         }
