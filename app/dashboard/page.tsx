@@ -17,6 +17,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import ConsolidatedHoldingsTable from '@/components/dashboard/consolidated-holdings-table';
+import { RefreshButton } from '@/components/dashboard/refresh-button';
 
 interface DashboardProps {
     searchParams: Promise<{ clients?: string }>;
@@ -125,6 +126,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <RefreshButton/>
                     <ClientFilter
                         availableClients={clientMetadata || []}
                         currentSelection={selectedNames}
