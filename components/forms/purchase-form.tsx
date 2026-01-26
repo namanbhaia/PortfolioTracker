@@ -18,7 +18,10 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
             purchase_qty: '',
             ticker: '',
             purchase_client_name: '',
-            comments: ''
+            comments: '',
+            dp_id: '',
+            trading_id: '',
+            client_id: ''
         }
     });
 
