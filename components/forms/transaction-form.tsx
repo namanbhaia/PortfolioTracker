@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { CheckCircle2, ShoppingCart, Tag } from 'lucide-react';
 import { PurchaseForm } from './purchase-form';
 import { SaleForm } from './sale-form';
+import { useUser } from '@/components/helper/user-context';
 
-export function TransactionForm({ clients }: { clients: any[] }) {
+export function TransactionForm() {
+    const { clients } = useUser(); // Access the clients list directly from context
     const [success, setSuccess] = useState(false);
     const [activeTab, setActiveTab] = useState<'purchase' | 'sale'>('purchase');
 

@@ -1,13 +1,6 @@
 import { TransactionForm } from "@/components/forms/transaction-form";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function LedgerPage() {
-    const supabase = await createClient();
-
-    // Fetch clients for the dropdown
-    const { data: clients } = await supabase.from('clients').select('client_id, client_name, trading_id, dp_id');
-
-
     return (
         <div className="p-8 max-w-2xl mx-auto">
             <header className="mb-8 text-center">
@@ -15,7 +8,7 @@ export default async function LedgerPage() {
                 <p className="text-slate-500 mt-2">Add new purchases or close out existing positions.</p>
             </header>
 
-            <TransactionForm clients={clients || []} />
+            <TransactionForm/>
         </div>
     );
 }

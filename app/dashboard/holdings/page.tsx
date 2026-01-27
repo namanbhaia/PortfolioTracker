@@ -25,7 +25,7 @@ export default async function HoldingsPage({
     };
 }) {
     const supabase = await createClient();
-    const params = searchParams;
+    const params = await searchParams;
 
     // 1. Types & Default sorting
     const sortField = (params.sort as SortField) || 'date';

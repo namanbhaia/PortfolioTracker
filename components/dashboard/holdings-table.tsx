@@ -34,8 +34,10 @@ export default function HoldingsTable({ holdings, params }: HoldingsTableProps) 
 	 * @param {SortField} field - The column to sort by.
 	 * @returns {string} - The URL search string for the sort action.
 	 */
+	const currentSort = params.sort;
+    const currentOrder = params.order;
 	const getSortLink = (field: SortField) => {
-		const newOrder = params.sort === field && params.order === "asc" ? "desc" : "asc";
+		const newOrder = currentSort === field && currentOrder === "asc" ? "desc" : "asc";
 		return `?sort=${field}&order=${newOrder}`;
 	};
 
@@ -45,8 +47,8 @@ export default function HoldingsTable({ holdings, params }: HoldingsTableProps) 
 	 * It shows an up or down arrow if the column is actively sorted, or a double arrow otherwise.
 	 */
 	const SortArrow = ({ field }: { field: SortField }) => {
-		if (params.sort !== field) return <span className="text-gray-300 ml-1">↕</span>;
-		return params.order === "asc" ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
+		if (currentSort !== field) return <span className="text-gray-300 ml-1">↕</span>;
+		return currentOrder === "asc" ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
 	};
 
 	return (
