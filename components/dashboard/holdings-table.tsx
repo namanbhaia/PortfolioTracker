@@ -1,6 +1,6 @@
 import Link from "next/link";
-import TrxIdCell from "@/components/dashboard/trx-id-cell";
-import CommentCell from "@/components/dashboard/comment-cell";
+import TrxIdCell from "@/components/ui/trx-id-cell";
+import CommentCell from "@/components/ui/comment-cell";
 
 /**
  * @file components/dashboard/holdings-table.tsx

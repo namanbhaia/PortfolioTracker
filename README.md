@@ -18,19 +18,19 @@ WealthTrack Manager is a high-performance, private investment dashboard designed
 
 The main dashboard provides a high-level executive summary of all linked accounts. It calculates total invested value, current market value, and overall profit/loss in real-time. This view helps answer the question: "What is our total family exposure to this asset?"
 
-![Consolidated Dashboard](public/images/consolidated.png)
+<!-- ![Consolidated Dashboard](public/images/consolidated.png) -->
 
 ### Sales Ledger & Tax Calculation
 
 The sales view provides a detailed history of all realized gains and losses. The system automatically calculates the tax payable for each transaction based on Indian tax laws, distinguishing between Short-Term and Long-Term Capital Gains. This view helps answer: "How much tax do I owe?"
 
-![Sales Ledger](public/images/sales.png)
+<!-- ![Sales Ledger](public/images/sales.png) -->
 
 ### Detailed Holdings View
 
 The holdings page displays a granular, lot-level view of all open positions for a selected client. It tracks the purchase date, rate, and quantity for each individual transaction, which is crucial for accurate FIFO-based tax calculations.
 
-![Holdings Table](public/images/dashboard.png)
+<!-- ![Holdings Table](public/images/dashboard.png) -->
 
 ## 🛠 Tech Stack
 

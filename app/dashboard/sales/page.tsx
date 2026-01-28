@@ -1,9 +1,7 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import HoldingsFilters from '@/components/dashboard/holdings-filters';
-import TrxIdCell from '@/components/dashboard/trx-id-cell';
-import CommentCell from '@/components/dashboard/comment-cell';
+import HoldingsFilters from '@/components/ui/holdings-filters';
 import SalesTable from '@/components/dashboard/sales-table';
 
 // Define the valid sortable columns based on your view

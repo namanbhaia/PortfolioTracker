@@ -1,6 +1,6 @@
 ﻿import Link from 'next/link';
-import TrxIdCell from '@/components/dashboard/trx-id-cell';
-import CommentCell from '@/components/dashboard/comment-cell';
+import TrxIdCell from '@/components/ui/trx-id-cell';
+import CommentCell from '@/components/ui/comment-cell';
 
 // Define the valid sortable columns for internal component use
 type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'is_long_term';

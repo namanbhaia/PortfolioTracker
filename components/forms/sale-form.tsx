@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { SubmitButton } from '@/components/ui/submit-button';
+import { isLongTerm } from '@/components/helper/utility';
 
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
@@ -133,8 +134,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 }
 
                 // Holding Period (> 365 days)
-                const isLongTerm = (saleDate.getTime() - purchaseDate.getTime()) > (365 * 24 * 60 * 60 * 1000);
-
+                const isTrxLongTerm = isLongTerm(purchaseDate, saleDate);
                 // A. Log Sale and get the New Sale UUID
                 const { data: saleRow, error: saleError } = await supabase
                     .from('sales')
@@ -148,7 +148,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         sale_qty: qtyFromThisLot,
                         profit_stored: standardProfit,
                         adjusted_profit_stored: adjustedProfit,
-                        long_term: isLongTerm,
+                        long_term: isTrxLongTerm,
                         user_id: user.id,
                         comments: data.comments ? `${data.comments} | ${sharedCustomId}` : sharedCustomId
                     }])

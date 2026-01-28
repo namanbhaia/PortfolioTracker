@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, PieChart } from "lucide-react";
-import { ClientFilter } from "@/components/ClientFilter";
+import { ClientFilter } from "@/components/ui/ClientFilter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConsolidatedHoldingsTable from "@/components/dashboard/consolidated-holdings-table";
-import { RefreshButton } from "@/components/dashboard/refresh-button";
+import { RefreshButton } from "@/components/ui/refresh-button";
 
 /**
  * @file app/dashboard/page.tsx

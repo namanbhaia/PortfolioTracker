@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/transaction-label';
 import { searchTransactions } from '@/app/actions/search-transactions';
 import { Table, body, td, th, ther, tr } from '@/components/ui/transaction-table';
 import Link from 'next/link';
-import TrxIdCell from '@/components/dashboard/trx-id-cell';
-import CommentCell from '@/components/dashboard/comment-cell';
+import TrxIdCell from '@/components/ui/trx-id-cell';
+import CommentCell from '@/components/ui/comment-cell';
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }) {
     const resolvedParams = await searchParams;
