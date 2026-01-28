@@ -7,10 +7,13 @@ import { test, expect } from '@playwright/test';
  * in the README.md file.
  */
 test('take screenshots', async ({ page }) => {
-  await page.goto('http://localhost:3000/test');
-  await page.screenshot({ path: 'public/images/dashboard.png' });
+  await page.goto('http://localhost:3000/');
+  await page.screenshot({ path: 'public/images/front-page.png' });
+  await page.goto('http://localhost:3000/signup');
+  await page.screenshot({ path: 'public/images/signup.png' });
+  await page.goto('http://localhost:3000/login');
+  await page.screenshot({ path: 'public/images/login.png' });
+  await page.goto('http://localhost:3000/dashboard');
   await page.screenshot({ path: 'public/images/consolidated.png' });
-
-  await page.goto('http://localhost:3000/test/sales');
-  await page.screenshot({ path: 'public/images/sales.png' });
+  await page.goto('http://localhost:3000/dashboard/holdings');  
 });

@@ -23,6 +23,9 @@ yarn-error.log*
 dev.log
 npm_output.log
 
+# Test Results
+/test-results
+
 # System Files
 .DS_Store
 Thumbs.db
