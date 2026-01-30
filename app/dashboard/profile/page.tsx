@@ -1,48 +1,30 @@
 ﻿"use client";
 
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { User, Mail, Check, Pencil, Loader2 } from 'lucide-react';
 import { updateProfileName } from './actions';
 import ProfileClientsTable from '@/components/dashboard/profile-clients-table';
+import { useUser } from '@/components/helper/user-context';
 
 export default function ProfilePage() {
-    const supabase = createClient();
-    const [loading, setLoading] = useState(true);
+    // 1. Consume data from the central context
+    const { profile, clients, loading } = useUser();
+
     const [saving, setSaving] = useState(false);
-    const [profile, setProfile] = useState<any>(null);
-    const [clients, setClients] = useState<any[]>([]);
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState("");
 
+    // 2. Sync local state when context profile loads
     useEffect(() => {
-        async function loadData() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-
-            // Fetch Profile
-            const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-            setProfile(prof);
-            setNewName(prof?.full_name || "");
-
-            // Fetch Linked Clients metadata
-            if (prof?.client_ids?.length > 0) {
-                const { data: cls } = await supabase
-                    .from('clients')
-                    .select('client_name, trading_id, dp_id, last_verified')
-                    .in('client_id', prof.client_ids);
-                setClients(cls || []);
-            }
-            setLoading(false);
+        if (profile?.full_name) {
+            setNewName(profile.full_name);
         }
-        loadData();
-    }, []);
+    }, [profile]);
 
     const handleSave = async () => {
         setSaving(true);
         try {
             await updateProfileName(newName);
-            setProfile({ ...profile, full_name: newName });
             setIsEditing(false);
         } catch (e) {
             alert("Error updating profile");
@@ -51,7 +33,11 @@ export default function ProfilePage() {
         }
     };
 
-    if (loading) return <div className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>;
+    if (loading) return (
+        <div className="p-20 text-center">
+            <Loader2 className="animate-spin mx-auto text-primary" />
+        </div>
+    );
 
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-10">
@@ -76,9 +62,20 @@ export default function ProfilePage() {
                                         onChange={(e) => setNewName(e.target.value)}
                                         className="flex-1 p-2 border rounded-md outline-none ring-primary/20 focus:ring-2 text-sm"
                                     />
-                                    <button onClick={handleSave} disabled={saving} className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-                                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Save
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleSave} disabled={saving} className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
+                                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Save
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setNewName(profile?.full_name || ""); // Reset to original name
+                                                setIsEditing(false); // Exit editing mode
+                                            }}
+                                            disabled={saving}
+                                            className="bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                        >
+                                            Cancel
+                                        </button></div>
                                 </>
                             ) : (
                                 <div className="flex justify-between items-center w-full group">
@@ -92,9 +89,11 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                        <label className="text-[10px] font-bold uppercase text-slate-400">Email</label>
-                        <div className="flex items-center gap-2 mt-1 text-slate-600 text-sm">
-                            <Mail size={14} /> {profile?.email}
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-slate-400">Email</label>
+                            <div className="flex items-center gap-2 mt-1 text-slate-600 text-sm">
+                                <Mail size={14} /> {profile?.email}
+                            </div>
                         </div>
                     </div>
                 </div>
