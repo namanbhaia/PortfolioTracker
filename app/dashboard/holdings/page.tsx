@@ -4,6 +4,7 @@ import Link from 'next/link';
 import HoldingsFilters from '@/components/ui/holdings-filters';
 import HoldingsTable from '@/components/dashboard/holdings-table';
 import { RefreshButton } from '@/components/ui/refresh-button';
+import { SyncPricesButton } from '@/components/ui/sync-prices-button';
 
 // Define the valid sortable columns based on your view
 type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'is_long_term';
@@ -111,9 +112,11 @@ export default async function HoldingsPage({
 
     return (
         <div className="p-4 space-y-4">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+           <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Holdings</h1>
-                <div className="flex items-center gap-3"><RefreshButton /></div>
+                <div className="flex items-center gap-3">
+                    <RefreshButton /><SyncPricesButton />
+                </div>
             </header>
             <HoldingsFilters availableClients={availableClients || []} showBalanceToggle={true} />
 
