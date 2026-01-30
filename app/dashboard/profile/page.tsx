@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { User, Mail, Shield, Check, Pencil, Loader2, Users, CreditCard } from 'lucide-react';
+import { User, Mail, Check, Pencil, Loader2 } from 'lucide-react';
 import { updateProfileName } from './actions';
+import ProfileClientsTable from '@/components/dashboard/profile-clients-table';
 
 export default function ProfilePage() {
     const supabase = createClient();
@@ -28,7 +29,7 @@ export default function ProfilePage() {
             if (prof?.client_ids?.length > 0) {
                 const { data: cls } = await supabase
                     .from('clients')
-                    .select('client_name, trading_id, dp_id')
+                    .select('client_name, trading_id, dp_id, last_verified')
                     .in('client_id', prof.client_ids);
                 setClients(cls || []);
             }
@@ -91,52 +92,16 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                            <label className="text-[10px] font-bold uppercase text-slate-400">Email</label>
-                            <div className="flex items-center gap-2 mt-1 text-slate-600 text-sm">
-                                <Mail size={14} /> {profile?.email}
-                            </div>
+                        <label className="text-[10px] font-bold uppercase text-slate-400">Email</label>
+                        <div className="flex items-center gap-2 mt-1 text-slate-600 text-sm">
+                            <Mail size={14} /> {profile?.email}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* SECTION 2: LINKED CLIENTS TABLE */}
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                <div className="p-4 border-b bg-slate-50/50 flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-semibold text-slate-700">
-                        <Users size={18} /> Linked Portfolios
-                    </div>
-                    <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold uppercase">
-                        {clients.length} Accounts
-                    </span>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b">
-                            <tr>
-                                <th className="px-6 py-3">Client Name</th>
-                                <th className="px-6 py-3">Trading ID</th>
-                                <th className="px-6 py-3">DP ID</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {clients.map((client, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-semibold text-slate-900">{client.client_name}</td>
-                                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{client.trading_id || '—'}</td>
-                                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{client.dp_id || '—'}</td>
-                                </tr>
-                            ))}
-                            {clients.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-10 text-center text-slate-400 italic">
-                                        No family clients linked to this profile.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <ProfileClientsTable clients={clients || []} />
         </div>
     );
 }

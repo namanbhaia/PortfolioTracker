@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, LayoutList } from 'lucide-react';
-import {DateRangeFilter} from './date-range-filter';
+import { DateRangeFilter } from './date-range-filter';
 import Link from 'next/link';
 import { getTodayDate } from '@/components/helper/utility';
 
@@ -17,10 +17,10 @@ export default async function TaxReportOverviewPage({
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
-    
+
     const startDate = resolvedParams.start_date as string;
     const endDate = resolvedParams.end_date as string || getTodayDate();
-    
+
     // Check if report has been triggered
     const hasDates = !!(startDate && endDate);
 
@@ -53,10 +53,10 @@ export default async function TaxReportOverviewPage({
                 <p className="text-slate-500 mt-1">Select a period to aggregate capital gains across all clients.</p>
             </header>
 
-            
+
             <DateRangeFilter initialDates={{ startDate, endDate }} />
 
-            {startDate > endDate  && (
+            {startDate > endDate && (
                 <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-semibold animate-shake">
                     ⚠️ Selection Error: The "From Date" cannot be later than the "To Date".
                 </div>
@@ -65,6 +65,11 @@ export default async function TaxReportOverviewPage({
                 <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {clients?.map((client) => {
                         const stats = salesByClient[client.client_id] || { stcg: 0, ltcg: 0, count: 0 };
+                        const params = new URLSearchParams({
+                            client_ids: client.client_id,
+                            start_date: startDate,
+                            end_date: endDate
+                        });
                         return (
                             <Card key={client.client_id} className="border-slate-200 hover:shadow-md transition-all">
                                 <CardContent className="p-5 flex items-center justify-between">
@@ -90,7 +95,7 @@ export default async function TaxReportOverviewPage({
                                                 ₹{stats.ltcg.toLocaleString('en-IN')}
                                             </p>
                                         </div>
-                                        <Link href={`/dashboard/sales?clients-ids=${client.client_id}?start_date=${startDate}&end_date=${endDate}`}>
+                                        <Link href={`/dashboard/sales?${params.toString()}`}>
                                             <Button variant="ghost" className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-bold gap-2">
                                                 Inspect <ChevronRight size={16} />
                                             </Button>

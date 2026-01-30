@@ -16,6 +16,8 @@ CREATE TABLE clients (
     user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
+ALTER TABLE clients 
+ADD COLUMN last_verified TIMESTAMPTZ;
 
 -- 3. ASSETS (The Master Catalog)
 CREATE TABLE assets (

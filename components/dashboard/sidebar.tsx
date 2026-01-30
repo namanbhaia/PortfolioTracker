@@ -15,7 +15,8 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    BadgeDollarSign
+    BadgeDollarSign,
+    FileCheck
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -32,6 +33,7 @@ const navItems = [
     { name: 'Sales History', href: '/dashboard/sales', icon: History },
     { name: 'Transactions Lookup', href: '/dashboard/transactions-lookup', icon: Search },
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
+    { name: 'Verification', href: '/dashboard/verification', icon: FileCheck },
 ];
 
 const secondaryItems = [

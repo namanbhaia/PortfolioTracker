@@ -21,7 +21,7 @@ export default async function SalesPage({
     };
 }) {
     const supabase = await createClient();
-    const params = searchParams;
+    const params = await searchParams;
 
     // 1. Types & Default sorting
     const sortField = (params.sort as SortField) || 'sale_date';

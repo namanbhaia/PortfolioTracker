@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
 	//    redirected to their main dashboard.
 	const authPages = ["/login", "/signup", "/reset-password"];
 	if (user && authPages.includes(request.nextUrl.pathname)) {
-		return NextResponse.redirect(new URL("/dashboard/holdings", request.url));
+		return NextResponse.redirect(new URL("/dashboard", request.url));
 	}
 
 	// If no redirection is needed, continue the request-response cycle.
