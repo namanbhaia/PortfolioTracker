@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/transaction-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/transaction-label';
 import { searchTransactions } from '@/app/actions/search-transactions';
-import { Table, body, td, th, ther, tr } from '@/components/ui/transaction-table';
+import { Table, TableBody, TableFooter, TableHeader, TableRow, TableHead, TableCell, TableCaption } from '@/components/ui/transaction-table';
 import Link from 'next/link';
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
@@ -71,51 +71,51 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                     <div className="space-y-4">
                         <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2"><ArrowDownToLine size={16} /> Purchase Records</h2>
                         <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                            <table className="w-full text-xs text-left border-collapse">
-                                <thead className="bg-gray-100 border-b uppercase text-gray-600 font-semibold">
-                                    <tr>
+                            <Table className="w-full text-xs text-left border-collapse">
+                                <TableHeader className="bg-gray-100 border-b uppercase text-gray-600 font-semibold">
+                                    <TableRow>
                                         {/* New ID Column */}
-                                        <th className="px-3 py-3 w-16">ID</th>
-                                        <th className="px-3 py-3 w-16">Client Name</th>
-                                        <th className="px-4">Ticker / ISIN</th>
-                                        <th className="px-4">Stock Name</th>
-                                        <th className="px-4">Date</th>
-                                        <th className="px-4 text-right">Purchase Qty</th>
-                                        <th className="px-4 text-right">Rate</th>
-                                        <th className="px-4 text-right">Value</th>
-                                        <th className="px-4 text-right">Balance</th>
-                                        <th className="px-3 py-3">Comments</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                        <TableHead className="px-3 py-3 w-16">ID</TableHead>
+                                        <TableHead className="px-3 py-3 w-16">Client Name</TableHead>
+                                        <TableHead className="px-4">Ticker / ISIN</TableHead>
+                                        <TableHead className="px-4">Stock Name</TableHead>
+                                        <TableHead className="px-4">Date</TableHead>
+                                        <TableHead className="px-4 text-right">Purchase Qty</TableHead>
+                                        <TableHead className="px-4 text-right">Rate</TableHead>
+                                        <TableHead className="px-4 text-right">Value</TableHead>
+                                        <TableHead className="px-4 text-right">Balance</TableHead>
+                                        <TableHead className="px-3 py-3">Comments</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {purchases.map(row => (
-                                        <tr key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-indigo-50/20' : 'text-slate-400'}`}>
-                                            <td className="px-3 py-3">
+                                        <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-indigo-50/20' : 'text-slate-400'}`}>
+                                            <TableCell className="px-3 py-3">
                                                 <TrxIdCell id={row.trx_id} />
-                                            </td>
-                                            <td className="p-3">
+                                            </TableCell>
+                                            <TableCell className="p-3">
                                                 <div className="font-semibold text-gray-900">{row.client_name}</div>
                                                 <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
-                                            </td>
-                                            <td className="px-3 py-3">
+                                            </TableCell>
+                                            <TableCell className="px-3 py-3">
                                                 <div className="text-blue-700">{row.ticker}</div>
                                                 <div className="text-[10px] text-gray-400">{row.isin}</div>
-                                            </td>
-                                            <td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
-                                            <td className="px-3 py-3 whitespace-nowrap">
+                                            </TableCell>
+                                            <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
+                                            <TableCell className="px-3 py-3 whitespace-nowrap">
                                                 {new Date(row.date).toLocaleDateString('en-IN')}
-                                            </td>
-                                            <td className="px-3 py-3 text-right">{Number(row.purchase_qty)}</td>
-                                            <td className="px-3 py-3 text-right">₹{Number(row.rate).toFixed(2)}</td>
-                                            <td className="px-3 py-3 text-right">₹{Number(row.purchase_value).toLocaleString('en-IN')}</td>
-                                            <td className="px-3 py-3 text-right">{row.balance_qty}</td>
-                                            <td className="px-3 py-3">
+                                            </TableCell>
+                                            <TableCell className="px-3 py-3 text-right">{Number(row.purchase_qty)}</TableCell>
+                                            <TableCell className="px-3 py-3 text-right">₹{Number(row.rate).toFixed(2)}</TableCell>
+                                            <TableCell className="px-3 py-3 text-right">₹{Number(row.purchase_value).toLocaleString('en-IN')}</TableCell>
+                                            <TableCell className="px-3 py-3 text-right">{row.balance_qty}</TableCell>
+                                            <TableCell className="px-3 py-3">
                                                 <CommentCell comment={row.comments} />
-                                            </td>
-                                        </tr>
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
                     </div>
 
@@ -124,65 +124,65 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                         <h2 className="text-sm font-bold text-rose-600 uppercase tracking-widest flex items-center gap-2"><ArrowUpFromLine size={16} /> Sale Records</h2>
                         <div className="bg-white rounded-xl border shadow-sm overflow-hidden overflow-x-auto">
                             <Table className="min-w-[1400px]">
-                                <thead className="bg-slate-50/50">
-                                    <tr className="text-[10px] uppercase font-bold text-slate-500">
-                                        <th className="px-4">ID</th>
-                                        <th className="px-4">Custom ID</th>
-                                        <th className="px-4">Client Info</th>
-                                        <th className="px-4">Ticker / ISIN</th>
-                                        <th className="px-4">Stock Name</th>
-                                        <th className="px-4">Purchase ID</th>
-                                        <th className="px-4">Sale Date</th>
-                                        <th className="px-4 text-right">Sale Qty</th>
-                                        <th className="px-4 text-right">Sale Rate</th>
-                                        <th className="px-4 text-right">Sale Value</th>
-                                        <th className="px-4 text-center">Long Term</th>
-                                        <th className="px-4 text-right">P/L</th>
-                                        <th className="px-4 text-right">P/L%</th>
-                                        <th className="px-4 text-right">GF. P/L</th>
-                                        <th className="px-3 py-3">Comments</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                <TableHeader className="bg-slate-50/50">
+                                    <TableRow className="text-[10px] uppercase font-bold text-slate-500">
+                                        <TableHead className="px-4">ID</TableHead>
+                                        <TableHead className="px-4">Custom ID</TableHead>
+                                        <TableHead className="px-4">Client Info</TableHead>
+                                        <TableHead className="px-4">Ticker / ISIN</TableHead>
+                                        <TableHead className="px-4">Stock Name</TableHead>
+                                        <TableHead className="px-4">Purchase ID</TableHead>
+                                        <TableHead className="px-4">Sale Date</TableHead>
+                                        <TableHead className="px-4 text-right">Sale Qty</TableHead>
+                                        <TableHead className="px-4 text-right">Sale Rate</TableHead>
+                                        <TableHead className="px-4 text-right">Sale Value</TableHead>
+                                        <TableHead className="px-4 text-center">Long Term</TableHead>
+                                        <TableHead className="px-4 text-right">P/L</TableHead>
+                                        <TableHead className="px-4 text-right">P/L%</TableHead>
+                                        <TableHead className="px-4 text-right">GF. P/L</TableHead>
+                                        <TableHead className="px-3 py-3">Comments</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
                                     {sales.map(row => {
                                         const plPercent = (Number(row.profit) / (Number(row.purchase_rate) * Number(row.sale_qty))) * 100;
                                         return (
-                                            <tr key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-rose-50/20' : 'text-slate-400'}`}>
-                                                <td className="px-3 py-3">
+                                            <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-rose-50/20' : 'text-slate-400'}`}>
+                                                <TableCell className="px-3 py-3">
                                                     <TrxIdCell id={row.trx_id} />
-                                                </td>
-                                                <td className="px-4 py-3 font-mono text-[10px]">{row.custom_id || '--'}</td>
-                                                <td className="p-3">
+                                                </TableCell>
+                                                <TableCell className="px-4 py-3 font-mono text-[10px]">{row.custom_id || '--'}</TableCell>
+                                                <TableCell className="p-3">
                                                     <div className="font-semibold text-gray-900">{row.client_name}</div>
                                                     <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
-                                                </td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <div className="text-blue-700">{row.ticker}</div>
                                                     <div className="text-[10px] text-gray-400">{row.isin}</div>
-                                                </td>
-                                                <td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
-                                                <td className="px-4 py-3"><TrxIdCell id={row.purchase_trx_id} /></td>
-                                                <td className="px-4 py-3 text-xs">{new Date(row.sale_date).toLocaleDateString('en-IN')}</td>
-                                                <td className="px-4 py-3 text-right">{Number(row.sale_qty)}</td>
-                                                <td className="px-4 py-3 text-right">₹{Number(row.sale_rate).toLocaleString()}</td>
-                                                <td className="px-4 py-3 text-right text-slate-900">₹{Number(row.sale_value).toLocaleString()}</td>
-                                                <td className="px-3 py-3 text-center">
+                                                </TableCell>
+                                                <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
+                                                <TableCell className="px-4 py-3"><TrxIdCell id={row.purchase_trx_id} /></TableCell>
+                                                <TableCell className="px-4 py-3 text-xs">{new Date(row.sale_date).toLocaleDateString('en-IN')}</TableCell>
+                                                <TableCell className="px-4 py-3 text-right">{Number(row.sale_qty)}</TableCell>
+                                                <TableCell className="px-4 py-3 text-right">₹{Number(row.sale_rate).toLocaleString()}</TableCell>
+                                                <TableCell className="px-4 py-3 text-right text-slate-900">₹{Number(row.sale_value).toLocaleString()}</TableCell>
+                                                <TableCell className="px-3 py-3 text-center">
                                                     <div className="flex justify-center items-center">
                                                         <span className={row.is_long_term ? 'text-green-600' : 'text-red-500'}>
                                                             {row.is_long_term ? '✓' : '✕'}
                                                         </span>
                                                     </div>
-                                                </td>
-                                                <td className={`px-4 py-3 text-right ${Number(row.pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</td>
-                                                <td className={`px-4 py-3 text-right text-[10px] ${Number(row.pl_percent) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{plPercent.toFixed(1)}%</td>
-                                                <td className={`px-4 py-3 text-right ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</td>
-                                                <td className="px-3 py-3">
+                                                </TableCell>
+                                                <TableCell className={`px-4 py-3 text-right ${Number(row.pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right text-[10px] ${Number(row.pl_percent) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{plPercent.toFixed(1)}%</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</TableCell>
+                                                <TableCell className="px-3 py-3">
                                                     <CommentCell comment={row.comments} />
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         );
                                     })}
-                                </tbody>
+                                </TableBody>
                             </Table>
                         </div>
                     </div>
