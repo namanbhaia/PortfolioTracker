@@ -44,16 +44,71 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             {/* Filter Section (Keep your existing Filter Card UI here) */}
             <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
                 <CardContent className="p-6">
-                    <form className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                        {/* Inputs: client_name, ticker, start_date, end_date, trx_id */}
-                        <div className="space-y-1.5"><Label className="text-[11px] font-bold text-slate-500 uppercase">Client</Label><select name="client_name" defaultValue={resolvedParams.client_name || ''} className="h-10 w-full rounded-md border bg-slate-50 px-3 text-sm">{clients?.map(c => <option key={c.client_name}>{c.client_name}</option>)}</select></div>
-                        <div className="space-y-1.5"><Label className="text-[11px] font-bold text-slate-500 uppercase">Ticker</Label><Input name="ticker" placeholder="RELIANCE" defaultValue={resolvedParams.ticker || ''} /></div>
-                        <div className="space-y-1.5"><Label className="text-[11px] font-bold text-slate-500 uppercase">From</Label><Input type="date" name="start_date" defaultValue={resolvedParams.start_date || ''} /></div>
-                        <div className="space-y-1.5"><Label className="text-[11px] font-bold text-slate-500 uppercase">To</Label><Input type="date" name="end_date" defaultValue={resolvedParams.end_date || ''} /></div>
-                        <div className="space-y-1.5"><Label className="text-[11px] font-bold text-slate-500 uppercase">UUID</Label><Input name="trx_id" placeholder="ID" defaultValue={resolvedParams.trx_id || ''} /></div>
-                        <div className="md:col-span-5 flex justify-end gap-3 pt-2">
-                            <Link href="/dashboard/transactions-lookup" className="text-sm font-semibold text-slate-500 py-2">Clear</Link>
-                            <Button type="submit" className="bg-indigo-600 text-white font-bold px-8 rounded-xl">Run Lookup</Button>
+                    <form className="flex flex-col gap-8">
+                        
+                        {/* 1. PRIMARY SEARCH: UUID (Top Row) */}
+                        <div className="max-w-md space-y-2">
+                            <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Direct UUID Lookup</Label>
+                            <div className="relative group">
+                                <div className="absolute left-3 top-2.5 text-indigo-400">
+                                    <Search size={18} />
+                                </div>
+                                <Input 
+                                    name="trx_id" 
+                                    placeholder="Paste Transaction / Search UUID..." 
+                                    defaultValue={resolvedParams.trx_id || ''} 
+                                    className="pl-10 h-11 border-indigo-100 bg-indigo-50/30 focus:bg-white focus:ring-indigo-500 focus:border-indigo-500 transition-all rounded-xl shadow-sm"
+                                />
+                            </div>
+                            <p className="text-[10px] text-slate-400 ml-1 italic">UUID search ignores all filters in the box below.</p>
+                        </div>
+
+                        {/* 2. SECONDARY FILTERS: Single Row Box Boundary */}
+                        <div className="space-y-3">
+                            <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Filter Results</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 bg-slate-50/50 rounded-2xl border border-slate-100 shadow-inner">
+                                <div className="space-y-1.5">
+                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Client</Label>
+                                    <select 
+                                        name="client_name" 
+                                        defaultValue="" 
+                                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                    >
+                                        <option value="">All Clients</option> 
+                                        {clients?.map(c => (
+                                            <option key={c.client_name} value={c.client_name}>{c.client_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Ticker</Label>
+                                    <Input name="ticker" placeholder="RELIANCE" defaultValue={resolvedParams.ticker || ''} className="bg-white h-10 border-slate-200 focus:border-indigo-300" />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">From Date</Label>
+                                    <Input type="date" name="start_date" defaultValue={resolvedParams.start_date || ''} className="bg-white h-10 border-slate-200" />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">To Date</Label>
+                                    <Input type="date" name="end_date" defaultValue={resolvedParams.end_date || ''} className="bg-white h-10 border-slate-200" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. ACTIONS */}
+                        <div className="flex justify-end items-center gap-4 pt-2 border-t border-slate-50">
+                            <Link 
+                                href="/dashboard/transactions-lookup" 
+                                className="text-sm font-semibold text-slate-400 hover:text-rose-500 transition-colors"
+                            >
+                                Reset Fields
+                            </Link>
+                            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-12 h-11 rounded-xl shadow-lg shadow-indigo-100/50 transition-all active:scale-[0.98]">
+                                Run Search
+                            </Button>
                         </div>
                     </form>
                 </CardContent>
