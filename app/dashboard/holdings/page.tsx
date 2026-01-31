@@ -118,7 +118,7 @@ export default async function HoldingsPage({
                     <RefreshButton /><SyncPricesButton />
                 </div>
             </header>
-            <HoldingsFilters availableClients={availableClients || []} showBalanceToggle={true} />
+            <HoldingsFilters availableClients={availableClients || []} showLongTermToggle={true} showBalanceToggle={true} />
 
             <HoldingsTable holdings={holdings || []} params={params} />
         </div>

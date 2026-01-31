@@ -11,9 +11,11 @@ interface Client {
 
 export default function HoldingsFilter({
     availableClients,
-    showBalanceToggle = false
+    showLongTermToggle = true,
+    showBalanceToggle = true,
 }: {
     availableClients: any[],
+    showLongTermToggle?: boolean,
     showBalanceToggle?: boolean
 }) {
     const router = useRouter();
@@ -130,6 +132,8 @@ export default function HoldingsFilter({
                     />
                 </div>
 
+                {/* 4. Long Term Toggle - Conditional Rendering */}
+                {showLongTermToggle && (
                 <div className="flex p-1 bg-slate-100 rounded-xl shrink-0">
                     <button
                         onClick={() => updateFilters({ is_long_term: 'true' })}
@@ -159,8 +163,9 @@ export default function HoldingsFilter({
                         All
                     </button>
                 </div>
+                )}
 
-                {/* 4. Date Range */}
+                {/* 5. Date Range */}
                 <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-xl">
                     <Calendar size={12} className="text-slate-400" />
                     <input
@@ -176,7 +181,7 @@ export default function HoldingsFilter({
                     />
                 </div>
 
-                {/* 5. Balance Toggle - Conditional Rendering */}
+                {/* 6. Balance Toggle - Conditional Rendering */}
                 {showBalanceToggle && (
                     <div className="flex p-1 bg-slate-100 rounded-xl shrink-0">
                         <button
