@@ -106,7 +106,7 @@ export default async function SalesPage({
     return (
         <div className="p-4 space-y-4">
             <h1 className="text-2xl font-bold">Portfolio Holdings:</h1>
-            <HoldingsFilters availableClients={availableClients || []} showBalanceToggle={false} />
+            <HoldingsFilters availableClients={availableClients || []} showLongTermToggle={true} showBalanceToggle={false} />
 
             <SalesTable sales={sales || []} params={params} />
         </div>

@@ -16,7 +16,8 @@ import {
     ChevronLeft,
     ChevronRight,
     BadgeDollarSign,
-    FileCheck
+    FileCheck,
+    FileSpreadsheet
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -37,6 +38,7 @@ const navItems = [
 ];
 
 const secondaryItems = [
+    { name: 'Export Data', href: '/dashboard/export', icon: FileSpreadsheet },
     { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
     { name: 'Info & Rules', href: '/dashboard/info', icon: Info }
 ];

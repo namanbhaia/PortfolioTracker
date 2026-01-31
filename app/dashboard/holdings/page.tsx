@@ -115,7 +115,7 @@ export default async function HoldingsPage({
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Holdings</h1>
                 <div className="flex items-center gap-3"><RefreshButton /></div>
             </header>
-            <HoldingsFilters availableClients={availableClients || []} showBalanceToggle={true} />
+            <HoldingsFilters availableClients={availableClients || []} showLongTermToggle={true} showBalanceToggle={true} />
 
             <HoldingsTable holdings={holdings || []} params={params} />
         </div>
