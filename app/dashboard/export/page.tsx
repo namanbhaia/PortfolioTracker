@@ -127,7 +127,7 @@ export default function ExportPage() {
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                 <HoldingsFilters
                     availableClients={clients || []} 
-                    showLongTermToggle={true} 
+                    showLongTermToggle={false} 
                     showBalanceToggle={false} 
                 />
 
