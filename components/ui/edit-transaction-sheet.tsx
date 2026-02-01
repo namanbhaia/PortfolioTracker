@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { Edit2, X, Save, Loader2, Info, IndianRupee, Calendar } from "lucide-react";
-import { updateTransaction } from '@/app/actions/update-transactions';
+import { updateTransaction } from '@/lib/actions/update-transactions';
 import { usePathname, useSearchParams } from 'next/navigation'; 
 
 export default function EditTransactionSimple({ row, type }: { row: any, type: 'purchase' | 'sale' }) {

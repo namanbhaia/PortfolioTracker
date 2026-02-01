@@ -266,3 +266,68 @@ SELECT cron.schedule(
 SELECT * FROM cron.job_run_details 
 ORDER BY start_time DESC 
 LIMIT 10;
+
+-- Enable the pg_net extension if not already (usually standard)
+-- Create a type for structure if strictly typed, or just use JSONB
+
+CREATE OR REPLACE FUNCTION atomic_ledger_update(payload JSONB)
+RETURNS VOID AS $$
+DECLARE
+    p_record JSONB;
+    s_record JSONB;
+    id_to_delete TEXT;
+BEGIN
+    -- 1. DELETE "Invalidated" Sales (Splits)
+    -- Expecting payload -> 'sales_to_delete' (array of custom_ids or trx_ids)
+    IF payload ? 'sales_to_delete' THEN
+        FOR id_to_delete IN SELECT jsonb_array_elements_text(payload -> 'sales_to_delete')
+        LOOP
+            -- Deleting by custom_id removes all splits associated with that user action
+            DELETE FROM sales WHERE custom_id = id_to_delete;
+        END LOOP;
+    END IF;
+
+    -- 2. UPDATE Purchases (Balance & Linkages)
+    -- Expecting payload -> 'purchases_to_update' (array of objects)
+    IF payload ? 'purchases_to_update' THEN
+        FOR p_record IN SELECT * FROM jsonb_array_elements(payload -> 'purchases_to_update')
+        LOOP
+            UPDATE purchases 
+            SET 
+                balance_qty = (p_record ->> 'balance_qty')::NUMERIC,
+                -- Assumes you added the sale_ids vector/array column
+                sale_ids = ARRAY(SELECT jsonb_array_elements_text(p_record -> 'sale_ids'))
+            WHERE trx_id = (p_record ->> 'trx_id')::UUID;
+        END LOOP;
+    END IF;
+
+    -- 3. INSERT New Sales (Remapped Splits)
+    -- Expecting payload -> 'sales_to_insert' (array of objects)
+    IF payload ? 'sales_to_insert' THEN
+        INSERT INTO sales (
+            custom_id, 
+            purchase_trx_id, 
+            client_name, 
+            ticker, 
+            date, 
+            qty, 
+            rate, 
+            profit_stored, 
+            adjusted_profit_stored,
+            user_id
+        )
+        SELECT 
+            (value ->> 'custom_id'),
+            (value ->> 'purchase_trx_id')::UUID,
+            (value ->> 'client_name'),
+            (value ->> 'ticker'),
+            (value ->> 'date')::DATE,
+            (value ->> 'qty')::NUMERIC,
+            (value ->> 'rate')::NUMERIC,
+            (value ->> 'profit_stored')::NUMERIC,
+            (value ->> 'adjusted_profit_stored')::NUMERIC,
+            (value ->> 'user_id')::UUID
+        FROM jsonb_array_elements(payload -> 'sales_to_insert');
+    END IF;
+END;
+$$ LANGUAGE plpgsql;

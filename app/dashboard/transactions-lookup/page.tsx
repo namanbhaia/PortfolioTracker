@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/transaction-input';
-import { searchTransactions } from '@/app/actions/search-transactions';
+import { searchTransactions } from '@/lib/actions/search-transactions';
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from '@/components/ui/transaction-table';
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';

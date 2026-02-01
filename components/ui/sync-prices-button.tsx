@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { syncAssetsAction } from '@/app/actions/sync-assets';
+import { syncAssetsAction } from '@/lib/actions/sync-assets';
 
 export function SyncPricesButton() {
     const router = useRouter();

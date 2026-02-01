@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Check, Pencil, Loader2 } from 'lucide-react';
-import { updateProfileName } from '@/app/actions/update-profile-name';
+import { updateProfileName } from '@/lib/actions/update-profile-name';
 import ProfileClientsTable from '@/components/dashboard/profile-clients-table';
 import { useUser } from '@/components/helper/user-context';
 

@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Download, Loader2, FileSpreadsheet } from 'lucide-react';
-import { exportToExcel } from '@/lib/excel-export';
+import { exportToExcel } from '@/lib/actions/excel-export';
 import HoldingsFilters from '@/components/ui/holdings-filters';
 import { useUser } from '@/components/helper/user-context';
-import { fetchExportData } from '@/app/actions/fetch-export-data';
+import { fetchExportData } from '@/lib/actions/fetch-export-data';
 
 export default function ExportPage() {
     const supabase = createClient();
