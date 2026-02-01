@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, PieChart } from "lucide-react";
-import { ClientFilter } from "@/components/ui/ClientFilter";
+import { ClientFilter } from "@/components/ui/client-filter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ConsolidatedHoldingsTable from "@/components/dashboard/consolidated-holdings-table";
 import { RefreshButton } from "@/components/ui/refresh-button";
@@ -51,10 +51,6 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 			</div>
 		);
 	}
-
-	// --- 3. Fetch Client Metadata for Filtering ---
-	// Get the names and IDs of all clients the user is authorized to see. This populates the filter dropdown.
-	const { data: clientMetadata } = await supabase.from("clients").select("client_id, client_name").in("client_id", profile.client_ids);
 
 	// --- 4. Fetch and Filter Holdings Data ---
 	// Start building the query to fetch holdings from the `client_holdings` view.
@@ -140,7 +136,6 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 <div className="flex items-center gap-3">
                     <RefreshButton/>
                     <ClientFilter
-                        availableClients={clientMetadata || []}
                         currentSelection={selectedNames}
                     />
                 </div>

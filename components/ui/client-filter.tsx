@@ -3,11 +3,13 @@
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Users, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useUser } from '@/components/helper/user-context';
 
-export function ClientFilter({ availableClients, currentSelection }: { 
-  availableClients: any[], 
-  currentSelection: string[] 
+export function ClientFilter({ currentSelection }: {
+  currentSelection: string[]
 }) {
+
+  const { clients } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,8 +43,8 @@ export function ClientFilter({ availableClients, currentSelection }: {
         <div className="flex items-center gap-2 text-slate-600">
           <Users size={16} />
           <span>
-            {currentSelection.length === 0 
-              ? "All Accounts" 
+            {currentSelection.length === 0
+              ? "All Accounts"
               : `${currentSelection.length} Selected`}
           </span>
         </div>
@@ -53,10 +55,10 @@ export function ClientFilter({ availableClients, currentSelection }: {
         <>
           {/* Backdrop to close dropdown */}
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
-          
+
           <div className="absolute right-0 z-20 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-100">
             <div className="p-2 space-y-1">
-              {availableClients.map((client) => (
+              {clients.map((client) => (
                 <button
                   key={client.client_id}
                   onClick={() => toggleClient(client.client_name)}
@@ -70,7 +72,7 @@ export function ClientFilter({ availableClients, currentSelection }: {
                   )}
                 </button>
               ))}
-              
+
               {currentSelection.length > 0 && (
                 <button
                   onClick={() => {
