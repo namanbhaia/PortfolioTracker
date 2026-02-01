@@ -48,7 +48,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     }
 
     return (
-        <div className="p-8 max-w-[1650px] mx-auto space-y-8">
+        <div className="p-8 mx-auto space-y-8">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Audit Lookup</h1>
@@ -56,32 +56,38 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 </div>
             </header>
 
-            {/* 3. NEW FILTER SECTION */}
-            <div className="space-y-4">
-                {/* 1. Direct UUID Lookup with Embedded Button */}
-                <div className="flex justify-end">
-                     <form className="relative w-full md:w-96">
+           {/* 3. NEW FILTER SECTION (Row Layout) */}
+            <div className="flex flex-col xl:flex-row items-center gap-4 w-full">
+                
+                {/* Left: The Main Filtering Bar (Flexible Width) */}
+                <div className="flex-grow w-full xl:w-auto">
+                    <HoldingsFilter 
+                        availableClients={clients || []}
+                        showLongTermToggle={false} 
+                        showBalanceToggle={false} 
+                    />
+                </div>
+
+                {/* Middle: Separator */}
+                <div className="text-slate-300 font-bold text-xs uppercase shrink-0">OR</div>
+
+                {/* Right: Direct UUID Lookup (Fixed Width) */}
+                <div className="w-full md:w-96 shrink-0">
+                    <form className="relative w-full">
                         <Input 
                             name="trx_id" 
                             placeholder="Direct UUID Lookup..." 
                             defaultValue={resolvedParams.trx_id || ''} 
-                            className="pr-10 pl-4 bg-white border-slate-200 shadow-sm rounded-xl" 
+                            className="pr-10 pl-4 bg-white border-slate-200 shadow-sm rounded-xl h-[58px]" // Matches height of filter bar
                         />
                         <button 
                             type="submit" 
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-2"
                         >
                             <Search size={18} />
                         </button>
-                     </form>
-                 </div>
-
-                 {/* The Reusable Filtering Bar */}
-                 <HoldingsFilter 
-                    availableClients={clients || []}
-                    showLongTermToggle={false} // Transaction history doesn't need "Long Term" toggle usually
-                    showBalanceToggle={false}  // Hide "Active" toggle for history logs
-                 />
+                    </form>
+                </div>
             </div>
 
             {searchError && (
