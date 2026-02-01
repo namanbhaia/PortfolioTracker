@@ -1,16 +1,13 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { Search, History, Filter, ArrowDownToLine, ArrowUpFromLine, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/transaction-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/transaction-label';
 import { searchTransactions } from '@/app/actions/search-transactions';
-import { Table, TableBody, TableFooter, TableHeader, TableRow, TableHead, TableCell, TableCaption } from '@/components/ui/transaction-table';
-import Link from 'next/link';
+import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from '@/components/ui/transaction-table';
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
-import EditTransactionSimple from '@/components/ui/edit-transaction-sheet'; 
+import EditTransactionSimple from '@/components/ui/edit-transaction-sheet';
+import HoldingsFilter from '@/components/ui/holdings-filters'; // Import the new filter [cite: holdings-filters.tsx]
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }) {
     const resolvedParams = await searchParams;
@@ -18,7 +15,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    const { data: clients } = await supabase.from('clients').select('client_name').order('client_name');
+    // 1. Fetch client_id + client_name for the filter [cite: holdings-filters.tsx]
+    const { data: clients } = await supabase.from('clients').select('client_id, client_name').order('client_name');
 
     let purchases: any[] = [];
     let sales: any[] = [];
@@ -27,14 +25,30 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     const hasParams = Object.keys(resolvedParams).some(k => resolvedParams[k]);
     if (hasParams) {
         const formData = new FormData();
-        Object.entries(resolvedParams).forEach(([k, v]) => v && formData.append(k, String(v)));
+        
+        // 2. Map 'client_ids' from filter URL to 'client_name' for searchTransactions backend
+        if (resolvedParams.client_ids && clients) {
+            const ids = resolvedParams.client_ids.split(',');
+            const names = clients
+                .filter(c => ids.includes(c.client_id))
+                .map(c => c.client_name);
+            
+            // Append names so the existing search action finds them
+            names.forEach(n => formData.append('client_name', n));
+        }
+
+        // Pass standard filters directly
+        ['trx_id', 'ticker', 'start_date', 'end_date'].forEach(k => {
+             if (resolvedParams[k]) formData.append(k, resolvedParams[k]);
+        });
+        
         const result = await searchTransactions(formData);
         if (result.error) searchError = result.error;
         else { purchases = result.purchases || []; sales = result.sales || []; }
     }
 
     return (
-        <div className="p-8 max-w-[1650px] mx-auto space-y-8">
+        <div className="p-8 mx-auto space-y-8">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Audit Lookup</h1>
@@ -42,78 +56,39 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 </div>
             </header>
 
-            {/* Filter Section (Keep your existing Filter Card UI here) */}
-            <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-                <CardContent className="p-6">
-                    <form className="flex flex-col gap-8">
-                        
-                        {/* 1. PRIMARY SEARCH: UUID (Top Row) */}
-                        <div className="max-w-md space-y-2">
-                            <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Direct UUID Lookup</Label>
-                            <div className="relative group">
-                                <div className="absolute left-3 top-2.5 text-indigo-400">
-                                    <Search size={18} />
-                                </div>
-                                <Input 
-                                    name="trx_id" 
-                                    placeholder="Paste Transaction / Search UUID..." 
-                                    defaultValue={resolvedParams.trx_id || ''} 
-                                    className="pl-10 h-11 border-indigo-100 bg-indigo-50/30 focus:bg-white focus:ring-indigo-500 focus:border-indigo-500 transition-all rounded-xl shadow-sm"
-                                />
-                            </div>
-                            <p className="text-[10px] text-slate-400 ml-1 italic">UUID search ignores all filters in the box below.</p>
-                        </div>
+           {/* 3. NEW FILTER SECTION (Row Layout) */}
+            <div className="flex flex-col xl:flex-row items-center gap-4 w-full">
+                
+                {/* Left: The Main Filtering Bar (Flexible Width) */}
+                <div className="flex-grow w-full xl:w-auto">
+                    <HoldingsFilter 
+                        availableClients={clients || []}
+                        showLongTermToggle={false} 
+                        showBalanceToggle={false} 
+                    />
+                </div>
 
-                        {/* 2. SECONDARY FILTERS: Single Row Box Boundary */}
-                        <div className="space-y-3">
-                            <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Filter Results</Label>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 bg-slate-50/50 rounded-2xl border border-slate-100 shadow-inner">
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Client</Label>
-                                    <select 
-                                        name="client_name" 
-                                        defaultValue="" 
-                                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                                    >
-                                        <option value="">All Clients</option> 
-                                        {clients?.map(c => (
-                                            <option key={c.client_name} value={c.client_name}>{c.client_name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                {/* Middle: Separator */}
+                <div className="text-slate-300 font-bold text-xs uppercase shrink-0">OR</div>
 
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Ticker</Label>
-                                    <Input name="ticker" placeholder="RELIANCE" defaultValue={resolvedParams.ticker || ''} className="bg-white h-10 border-slate-200 focus:border-indigo-300" />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">From Date</Label>
-                                    <Input type="date" name="start_date" defaultValue={resolvedParams.start_date || ''} className="bg-white h-10 border-slate-200" />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <Label className="text-[10px] font-bold text-slate-400 uppercase">To Date</Label>
-                                    <Input type="date" name="end_date" defaultValue={resolvedParams.end_date || ''} className="bg-white h-10 border-slate-200" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 3. ACTIONS */}
-                        <div className="flex justify-end items-center gap-4 pt-2 border-t border-slate-50">
-                            <Link 
-                                href="/dashboard/transactions-lookup" 
-                                className="text-sm font-semibold text-slate-400 hover:text-rose-500 transition-colors"
-                            >
-                                Reset Fields
-                            </Link>
-                            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-12 h-11 rounded-xl shadow-lg shadow-indigo-100/50 transition-all active:scale-[0.98]">
-                                Run Search
-                            </Button>
-                        </div>
+                {/* Right: Direct UUID Lookup (Fixed Width) */}
+                <div className="w-full md:w-96 shrink-0">
+                    <form className="relative w-full">
+                        <Input 
+                            name="trx_id" 
+                            placeholder="Direct UUID Lookup..." 
+                            defaultValue={resolvedParams.trx_id || ''} 
+                            className="pr-10 pl-4 bg-white border-slate-200 shadow-sm rounded-xl h-[58px]" // Matches height of filter bar
+                        />
+                        <button 
+                            type="submit" 
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-2"
+                        >
+                            <Search size={18} />
+                        </button>
                     </form>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {searchError && (
                 <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-bold flex items-center gap-3">
@@ -140,7 +115,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         <TableHead className="px-4 text-right">Value</TableHead>
                                         <TableHead className="px-4 text-right">Balance</TableHead>
                                         <TableHead className="px-3 py-3">Comments</TableHead>
-                                        <TableHead className="w-10 px-2"></TableHead> {/* 1. NEW HEADER */}
+                                        <TableHead className="w-10 px-2"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -168,7 +143,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                             <TableCell className="px-3 py-3">
                                                 <CommentCell comment={row.comments} />
                                             </TableCell>
-                                            <TableCell className="px-2"> {/* 2. NEW CELL */}
+                                            <TableCell className="px-2">
                                                 <EditTransactionSimple row={row} type="purchase" />
                                             </TableCell>
                                         </TableRow>
@@ -200,7 +175,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         <TableHead className="px-4 text-right">P/L%</TableHead>
                                         <TableHead className="px-4 text-right">GF. P/L</TableHead>
                                         <TableHead className="px-3 py-3">Comments</TableHead>
-                                        <TableHead className="w-10 px-2"></TableHead> {/* 3. NEW HEADER */}
+                                        <TableHead className="w-10 px-2"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -239,7 +214,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <TableCell className="px-3 py-3">
                                                     <CommentCell comment={row.comments} />
                                                 </TableCell>
-                                                <TableCell className="px-2"> {/* 4. NEW CELL */}
+                                                <TableCell className="px-2">
                                                     <EditTransactionSimple row={row} type="sale" />
                                                 </TableCell>
                                             </TableRow>

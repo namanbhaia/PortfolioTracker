@@ -4,15 +4,17 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function searchTransactions(formData: FormData) {
     const supabase = await createClient();
-    
+
     // 1. IDENTITY & AUTHORIZATION
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthorized access." };
 
+    const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
     const { data: allowedClients } = await supabase
         .from('clients')
         .select('client_name')
-        .eq('user_id', user.id);
+        .in('client_id', p.client_ids);
 
     const allowedNames = allowedClients?.map(c => c.client_name) || [];
     if (allowedNames.length === 0) return { purchases: [], sales: [], error: "No authorized clients found." };
@@ -63,7 +65,7 @@ export async function searchTransactions(formData: FormData) {
             const { data: primary } = await supabase.from('sales_view').select('*').eq('trx_id', trx_id).single();
             const { data: linkedP } = await supabase.from('client_holdings').select('*').eq('trx_id', primary.purchase_trx_id).single();
             const { data: relatedS } = await supabase.from('sales_view').select('*').eq('custom_id', primary.custom_id).not('trx_id', 'eq', trx_id);
-            
+
             const rPIds = Array.from(new Set(relatedS?.map(s => s.purchase_trx_id)));
             const { data: relatedP } = await supabase.from('client_holdings').select('*').in('trx_id', rPIds).not('trx_id', 'eq', primary.purchase_trx_id);
 
@@ -75,7 +77,7 @@ export async function searchTransactions(formData: FormData) {
     }
 
     // 4. STANDARD FILTERING (Only runs if NO UUID is provided)
-    
+
     // Validate Dates for standard searches
     if (start_date && end_date && start_date > end_date) {
         return { error: "The 'From Date' cannot be later than the 'To Date'." };
