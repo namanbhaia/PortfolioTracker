@@ -1,13 +1,12 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import HoldingsFilters from '@/components/ui/holdings-filters';
 import HoldingsTable from '@/components/dashboard/holdings-table';
 import { RefreshButton } from '@/components/ui/refresh-button';
 import { SyncPricesButton } from '@/components/ui/sync-prices-button';
 
 // Define the valid sortable columns based on your view
-type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'is_long_term';
+type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'long_term';
 
 export default async function HoldingsPage({
     searchParams,
@@ -19,7 +18,7 @@ export default async function HoldingsPage({
         show_all?: string;
         start_date?: string;
         end_date?: string;
-        is_long_term?: string;
+        long_term?: string;
         sort?: string;
         order?: string;
         client_ids?: string;
@@ -85,10 +84,10 @@ export default async function HoldingsPage({
         query = query.gt('balance_qty', 0);
     }
 
-    if (params.is_long_term === 'true') {
-        query = query.eq('is_long_term', true);
-    } else if (params.is_long_term === 'false') {
-        query = query.eq('is_long_term', false);
+    if (params.long_term === 'true') {
+        query = query.eq('long_term', true);
+    } else if (params.long_term === 'false') {
+        query = query.eq('long_term', false);
     }
     // 10. Execute Query with Sorting
     const { data: holdings, error } = await query.order(sortField, { ascending: sortOrder });

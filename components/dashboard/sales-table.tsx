@@ -3,7 +3,7 @@ import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
 
 // Define the valid sortable columns for internal component use
-type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'is_long_term';
+type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'long_term';
 
 interface SalesTableProps {
     sales: any[];
@@ -77,10 +77,10 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                             </Link>
                         </th>
                         <th className="px-3 py-3 text-right">Grandfathered P/L</th>
-                        {/* Sortable Header: Type (is_long_term) */}
+                        {/* Sortable Header: Type (long_term) */}
                         <th className="px-3 py-3 text-center">
-                            <Link href={getSortLink('is_long_term')} className="hover:text-blue-600 flex items-center justify-center">
-                                Long Term <SortArrow field="is_long_term" />
+                            <Link href={getSortLink('long_term')} className="hover:text-blue-600 flex items-center justify-center">
+                                Long Term <SortArrow field="long_term" />
                             </Link>
                         </th>
                         <th className="px-3 py-3">Comments</th>

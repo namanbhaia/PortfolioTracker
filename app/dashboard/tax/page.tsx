@@ -55,12 +55,7 @@ export default async function TaxReportOverviewPage({
 
 
             <DateRangeFilter initialDates={{ startDate, endDate }} />
-
-            {startDate > endDate && (
-                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-semibold animate-shake">
-                    ⚠️ Selection Error: The "From Date" cannot be later than the "To Date".
-                </div>
-            )}
+    
             {hasDates ? (
                 <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {clients?.map((client) => {

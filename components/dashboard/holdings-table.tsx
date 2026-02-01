@@ -14,7 +14,7 @@ import CommentCell from "@/components/ui/comment-cell";
  */
 
 // Define the valid column names that can be used for sorting. This provides type safety.
-type SortField = "client_name" | "ticker" | "stock_name" | "date" | "pl_percent" | "pl" | "is_long_term";
+type SortField = "client_name" | "ticker" | "stock_name" | "date" | "pl_percent" | "pl" | "long_term";
 
 // Define the props structure for the HoldingsTable component.
 interface HoldingsTableProps {
@@ -104,8 +104,8 @@ export default function HoldingsTable({ holdings, params }: HoldingsTableProps) 
 						</th>
 						{/* Sortable Header: Type (Long Term) */}
 						<th className="px-3 py-3 text-center">
-							<Link href={getSortLink("is_long_term")} className="hover:text-blue-600 flex items-center justify-center">
-								Long Term <SortArrow field="is_long_term" />
+							<Link href={getSortLink("long_term")} className="hover:text-blue-600 flex items-center justify-center">
+								Long Term <SortArrow field="long_term" />
 							</Link>
 						</th>
 						<th className="px-3 py-3">Comments</th>
@@ -152,7 +152,7 @@ export default function HoldingsTable({ holdings, params }: HoldingsTableProps) 
 							{/* Long Term Status */}
 							<td className="px-3 py-3 text-center">
 								<div className="flex justify-center items-center">
-									<span className={row.is_long_term ? "text-green-600" : "text-red-500"}>{row.is_long_term ? "✓" : "✕"}</span>
+									<span className={row.long_term ? "text-green-600" : "text-red-500"}>{row.long_term ? "✓" : "✕"}</span>
 								</div>
 							</td>
 							{/* Comments Cell */}

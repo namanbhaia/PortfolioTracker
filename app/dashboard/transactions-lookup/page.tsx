@@ -228,8 +228,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <TableCell className="px-4 py-3 text-right text-slate-900">₹{Number(row.sale_value).toLocaleString()}</TableCell>
                                                 <TableCell className="px-3 py-3 text-center">
                                                     <div className="flex justify-center items-center">
-                                                        <span className={row.is_long_term ? 'text-green-600' : 'text-red-500'}>
-                                                            {row.is_long_term ? '✓' : '✕'}
+                                                        <span className={row.long_term ? 'text-green-600' : 'text-red-500'}>
+                                                            {row.long_term ? '✓' : '✕'}
                                                         </span>
                                                     </div>
                                                 </TableCell>

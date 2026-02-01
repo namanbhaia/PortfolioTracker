@@ -136,8 +136,8 @@ export default function HoldingsFilter({
                 {showLongTermToggle && (
                 <div className="flex p-1 bg-slate-100 rounded-xl shrink-0">
                     <button
-                        onClick={() => updateFilters({ is_long_term: 'true' })}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${searchParams.get('is_long_term') === 'true'
+                        onClick={() => updateFilters({ long_term: 'true' })}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${searchParams.get('long_term') === 'true'
                                 ? 'bg-white shadow-sm text-indigo-600'
                                 : 'text-slate-500'
                             }`}
@@ -145,8 +145,8 @@ export default function HoldingsFilter({
                         Long Term
                     </button>
                     <button
-                        onClick={() => updateFilters({ is_long_term: 'false' })}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${searchParams.get('is_long_term') === 'false'
+                        onClick={() => updateFilters({ long_term: 'false' })}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${searchParams.get('long_term') === 'false'
                                 ? 'bg-white shadow-sm text-indigo-600'
                                 : 'text-slate-500'
                             }`}
@@ -154,8 +154,8 @@ export default function HoldingsFilter({
                         Short Term
                     </button>
                     <button
-                        onClick={() => updateFilters({ is_long_term: null })}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!searchParams.get('is_long_term')
+                        onClick={() => updateFilters({ long_term: null })}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!searchParams.get('long_term')
                                 ? 'bg-white shadow-sm text-indigo-600'
                                 : 'text-slate-500'
                             }`}

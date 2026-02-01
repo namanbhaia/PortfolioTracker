@@ -23,7 +23,7 @@ export default function ExportPage() {
             const endDate = searchParams.get('end_date');
             const ticker = searchParams.get('ticker');
             const shareName = searchParams.get('share_name');
-            const isLongTerm = searchParams.get('is_long_term');
+            const isLongTerm = searchParams.get('long_term');
             
             const selectedClientIds = searchParams.get('client_ids')?.split(',') || [];
             const selectedClientNames = clients

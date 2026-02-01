@@ -5,7 +5,7 @@ import HoldingsFilters from '@/components/ui/holdings-filters';
 import SalesTable from '@/components/dashboard/sales-table';
 
 // Define the valid sortable columns based on your view
-type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'is_long_term';
+type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'long_term';
 
 export default async function SalesPage({
     searchParams,
@@ -17,7 +17,7 @@ export default async function SalesPage({
         show_all?: string;
         start_date?: string;
         end_date?: string;
-        is_long_term?: string;
+        long_term?: string;
         sort?: string;
         client_ids?: string;
         order?: string;
@@ -78,10 +78,10 @@ export default async function SalesPage({
     if (params.start_date) query = query.gte('sale_date', params.start_date);
     if (params.end_date) query = query.lte('sale_date', params.end_date);
 
-    if (params.is_long_term === 'true') {
-        query = query.eq('is_long_term', true);
-    } else if (params.is_long_term === 'false') {
-        query = query.eq('is_long_term', false);
+    if (params.long_term === 'true') {
+        query = query.eq('long_term', true);
+    } else if (params.long_term === 'false') {
+        query = query.eq('long_term', false);
     }
     // 10. Execute Query with Sorting
     const { data: sales, error } = await query.order(sortField, { ascending: sortOrder });
