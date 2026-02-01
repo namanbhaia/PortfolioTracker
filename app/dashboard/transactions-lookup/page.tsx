@@ -10,6 +10,7 @@ import { Table, TableBody, TableFooter, TableHeader, TableRow, TableHead, TableC
 import Link from 'next/link';
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
+import EditTransactionSimple from '@/components/ui/edit-transaction-sheet'; 
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }) {
     const resolvedParams = await searchParams;
@@ -129,7 +130,6 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                             <Table className="w-full text-xs text-left border-collapse">
                                 <TableHeader className="bg-gray-100 border-b uppercase text-gray-600 font-semibold">
                                     <TableRow>
-                                        {/* New ID Column */}
                                         <TableHead className="px-3 py-3 w-16">ID</TableHead>
                                         <TableHead className="px-3 py-3 w-16">Client Name</TableHead>
                                         <TableHead className="px-4">Ticker / ISIN</TableHead>
@@ -140,12 +140,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         <TableHead className="px-4 text-right">Value</TableHead>
                                         <TableHead className="px-4 text-right">Balance</TableHead>
                                         <TableHead className="px-3 py-3">Comments</TableHead>
+                                        <TableHead className="w-10 px-2"></TableHead> {/* 1. NEW HEADER */}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {purchases.map(row => (
                                         <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-indigo-50/20' : 'text-slate-400'}`}>
-                                            <TableCell className="px-3 py-3">
+                                             <TableCell className="px-3 py-3">
                                                 <TrxIdCell id={row.trx_id} />
                                             </TableCell>
                                             <TableCell className="p-3">
@@ -166,6 +167,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                             <TableCell className="px-3 py-3 text-right">{row.balance_qty}</TableCell>
                                             <TableCell className="px-3 py-3">
                                                 <CommentCell comment={row.comments} />
+                                            </TableCell>
+                                            <TableCell className="px-2"> {/* 2. NEW CELL */}
+                                                <EditTransactionSimple row={row} type="purchase" />
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -196,6 +200,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         <TableHead className="px-4 text-right">P/L%</TableHead>
                                         <TableHead className="px-4 text-right">GF. P/L</TableHead>
                                         <TableHead className="px-3 py-3">Comments</TableHead>
+                                        <TableHead className="w-10 px-2"></TableHead> {/* 3. NEW HEADER */}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -203,7 +208,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         const plPercent = (Number(row.profit) / (Number(row.purchase_rate) * Number(row.sale_qty))) * 100;
                                         return (
                                             <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-rose-50/20' : 'text-slate-400'}`}>
-                                                <TableCell className="px-3 py-3">
+                                                  <TableCell className="px-3 py-3">
                                                     <TrxIdCell id={row.trx_id} />
                                                 </TableCell>
                                                 <TableCell className="px-4 py-3 font-mono text-[10px]">{row.custom_id || '--'}</TableCell>
@@ -233,6 +238,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <TableCell className={`px-4 py-3 text-right ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</TableCell>
                                                 <TableCell className="px-3 py-3">
                                                     <CommentCell comment={row.comments} />
+                                                </TableCell>
+                                                <TableCell className="px-2"> {/* 4. NEW CELL */}
+                                                    <EditTransactionSimple row={row} type="sale" />
                                                 </TableCell>
                                             </TableRow>
                                         );
