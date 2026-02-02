@@ -1,56 +1,84 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
-/**
- * Types based on your schema
- */
-interface Purchase {
+// ==========================================
+// 1. Interfaces
+// ==========================================
+
+export interface Purchase {
   trx_id: string;
+  user_id: string;
   client_name: string;
   ticker: string;
   date: string;
-  qty: number;
   rate: number;
-  sale_ids: string[]; // UUID[]
+  purchase_qty: number; // Mapped from DB 'qty'
+  comments: string;
+  sale_ids: string[];   // UUID[]
+  client_id: string;    // Joined from 'clients' table
   balance_qty: number;
 }
 
-interface Sale {
+export interface Sale {
   trx_id: string;
-  custom_id: string; // The "Master" Transaction ID
+  custom_id: string;    // The "Master" Transaction ID
   purchase_trx_id: string | null;
   client_name: string;
   ticker: string;
   date: string;
-  qty: number;
+  sale_qty: number;     // Mapped from DB 'qty'
   rate: number;
   user_id: string;
   profit_stored: number;
+  comments: string;
+  long_term: boolean;   // Calculated
+  client_id: string;    // Joined from 'clients' table
   adjusted_profit_stored: number;
 }
 
-interface SaleIntent {
-  custom_id: string;
-  date: string;
-  total_qty: number;
-  rate: number;
+export interface SaleIntent {
+  trx_id?: string;      // Optional, usually preserving original ID
+  custom_id: string; 
+  purchase_trx_id: string | null;
   client_name: string;
   ticker: string;
+  date: string;
+  sale_qty: number;
+  rate: number;
   user_id: string;
+  profit_stored: number;
+  comments: string;
+  long_term: boolean;
+  client_id: string;
+  adjusted_profit_stored: number;
 }
+
+// ==========================================
+// 2. Utility Class
+// ==========================================
 
 export class TransactionEditor {
   constructor(private supabase: SupabaseClient) {}
 
-  /**
-   * Helper: Generate UUIDs locally so we can link them in the same transaction
-   */
+  /** Helper: Generate UUIDs locally */
   private generateUUID(): string {
     return crypto.randomUUID();
   }
 
+  /** Helper: Check Long Term Status (> 365 Days) */
+  private isLongTerm(purchaseDate: string, saleDate: string): boolean {
+    const start = new Date(purchaseDate).getTime();
+    const end = new Date(saleDate).getTime();
+    // Difference in milliseconds / (1000 * 60 * 60 * 24)
+    const diffDays = (end - start) / 86400000; 
+    return diffDays > 365;
+  }
+
   /**
    * CORE LOGIC: Reprocesses the ledger from a specific date.
-   * @param overrides - Optional map of modified sales intents (e.g. if you changed a sale's qty/date)
+   * * @param clientName - Context for the re-calc
+   * @param ticker - Context for the re-calc
+   * @param impactDate - The date from which we must "rewind" and "replay"
+   * @param overrides - Optional map of edited transactions to replace DB records
    */
   private async reprocessLedger(
     clientName: string,
@@ -58,10 +86,15 @@ export class TransactionEditor {
     impactDate: string,
     overrides?: Map<string, SaleIntent>
   ) {
-    // 1. Fetch relevant data (Purchases & Sales on/after impact)
+    // ---------------------------------------------------------
+    // A. FETCH DATA
+    // ---------------------------------------------------------
+    
+    // Fetch Purchases (Open OR Future)
+    // We join 'clients' to ensure we populate 'client_id' for the interface
     const { data: rawPurchases, error: pError } = await this.supabase
       .from('purchases')
-      .select('*')
+      .select('*, clients!inner(client_id)')
       .eq('client_name', clientName)
       .eq('ticker', ticker)
       .or(`date.gte.${impactDate},balance_qty.gt.0`)
@@ -69,9 +102,11 @@ export class TransactionEditor {
 
     if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
 
+    // Fetch Sales (On or After Impact Date)
+    // We join 'purchases' to access the original buy date for LT/ST calc if needed
     const { data: rawSales, error: sError } = await this.supabase
       .from('sales')
-      .select('*')
+      .select('*, clients!inner(client_id), purchases(date)') 
       .eq('client_name', clientName)
       .eq('ticker', ticker)
       .gte('date', impactDate)
@@ -79,95 +114,116 @@ export class TransactionEditor {
 
     if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
 
-    let purchases: Purchase[] = rawPurchases || [];
-    const salesRows: Sale[] = rawSales || [];
+    // ---------------------------------------------------------
+    // B. MAP DB TO INTERFACES
+    // ---------------------------------------------------------
 
-    // 2. UNLINK STEP: Calculate "Restored" State
-    // We identify which sales need to be wiped and re-calculated.
-    // If an override exists for a custom_id, we treat the DB version as "to be deleted".
+    let purchases: Purchase[] = (rawPurchases || []).map((p: any) => ({
+      ...p,
+      purchase_qty: Number(p.qty), // Map generic 'qty' to specific interface
+      client_id: p.clients?.client_id,
+      sale_ids: p.sale_ids || [],
+      balance_qty: Number(p.balance_qty)
+    }));
+
+    const salesRows: Sale[] = (rawSales || []).map((s: any) => ({
+      ...s,
+      sale_qty: Number(s.qty), // Map generic 'qty' to specific interface
+      client_id: s.clients?.client_id,
+      long_term: s.purchases?.date ? this.isLongTerm(s.purchases.date, s.date) : false
+    }));
+
+    // ---------------------------------------------------------
+    // C. UNLINK STEP (Calculate "Restored" State)
+    // ---------------------------------------------------------
+    
+    // 1. Identify which Custom IDs (Batches) need to be wiped and re-calculated.
+    //    This includes ALL fetched future sales, PLUS any overrides passed in.
     const customIdsToReprocess = new Set<string>();
     
-    // All fetched sales are candidates for reprocessing
     salesRows.forEach(s => customIdsToReprocess.add(s.custom_id));
     if (overrides) {
         for (const cid of overrides.keys()) customIdsToReprocess.add(cid);
     }
 
+    // 2. Identify the specific DB Transaction IDs (Splits) to unlink
     const salesTrxIdsToUnlink = new Set(
         salesRows.filter(s => customIdsToReprocess.has(s.custom_id)).map(s => s.trx_id)
     );
 
-    // Reset Purchase Balances in Memory
+    // 3. Reset Purchase Balances in Memory
     purchases = purchases.map(p => {
-      // Remove sale_ids that we are about to delete
       const currentSaleIds = p.sale_ids || [];
+      // Remove the IDs of the sales we are effectively deleting
       const validSaleIds = currentSaleIds.filter(id => !salesTrxIdsToUnlink.has(id));
 
-      // Add back the qty from the unlinked sales
+      // Add back the quantity that was consumed by these sales
       const restoredQty = salesRows
         .filter(s => s.purchase_trx_id === p.trx_id && salesTrxIdsToUnlink.has(s.trx_id))
-        .reduce((sum, s) => sum + s.qty, 0);
+        .reduce((sum, s) => sum + s.sale_qty, 0);
 
       return {
         ...p,
         sale_ids: validSaleIds,
-        balance_qty: (p.balance_qty || 0) + restoredQty
+        balance_qty: p.balance_qty + restoredQty
       };
     });
 
-    // 3. AGGREGATE STEP: Build the Queue of "Master Orders"
+    // ---------------------------------------------------------
+    // D. AGGREGATE STEP (Build the "To-Be-Processed" Queue)
+    // ---------------------------------------------------------
     const salesOrdersMap = new Map<string, SaleIntent>();
 
-    // A. Add existing DB sales to the map (aggregating splits)
+    // 1. Add existing DB sales to the map (aggregating splits back to Master)
     salesRows.forEach(split => {
-      // If we have an override, ignore the DB version
+      // If an override exists for this ID, SKIP the DB version entirely
       if (overrides?.has(split.custom_id)) return;
 
       if (!salesOrdersMap.has(split.custom_id)) {
         salesOrdersMap.set(split.custom_id, {
-          custom_id: split.custom_id,
-          date: split.date,
-          total_qty: 0,
-          rate: split.rate,
-          client_name: split.client_name,
-          ticker: split.ticker,
-          user_id: split.user_id
+          ...split,
+          sale_qty: 0, // Reset for accumulation
+          profit_stored: 0, // Will Recalc
+          adjusted_profit_stored: 0 // Will Recalc
         });
       }
-      salesOrdersMap.get(split.custom_id)!.total_qty += split.qty;
+      const order = salesOrdersMap.get(split.custom_id)!;
+      order.sale_qty += split.sale_qty;
     });
 
-    // B. Inject Overrides (The modified transactions)
+    // 2. Inject Overrides (The modified user edits)
     if (overrides) {
         for (const [cid, intent] of overrides.entries()) {
             salesOrdersMap.set(cid, intent);
         }
     }
 
-    // Sort by Date for FIFO
+    // 3. Sort by Date for FIFO execution
     const sortedOrders = Array.from(salesOrdersMap.values()).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // 4. REMAP STEP: Run FIFO
-    const salesToInsert: any[] = [];
+    // ---------------------------------------------------------
+    // E. REMAP STEP (FIFO Execution)
+    // ---------------------------------------------------------
+    const salesToInsert: Sale[] = [];
     const purchasesToUpdate = new Map<string, Purchase>(); 
-    // We map by ID to ensure we capture the final state of a purchase after multiple sales hit it
 
     for (const order of sortedOrders) {
-      let qtyRemaining = order.total_qty;
+      let qtyRemaining = order.sale_qty;
 
-      // Filter eligible purchases: bought before/on sale date, has balance
+      // Filter eligible purchases: Bought BEFORE sale, has Balance
       const eligiblePurchases = purchases.filter(p => 
         (p.balance_qty > 0) && (new Date(p.date) <= new Date(order.date))
       );
 
-      // Validation
+      // Validate Solvency
       const totalAvailable = eligiblePurchases.reduce((sum, p) => sum + p.balance_qty, 0);
       if (totalAvailable < qtyRemaining) {
-        throw new Error(`Insufficient balance for Sale ${order.custom_id} (${order.date}). Needed ${qtyRemaining}, had ${totalAvailable}.`);
+         throw new Error(`Insufficient balance for Sale ${order.custom_id}. Needed ${qtyRemaining}, Found ${totalAvailable}`);
       }
 
+      // Allocate
       for (const p of eligiblePurchases) {
         if (qtyRemaining <= 0) break;
 
@@ -176,34 +232,42 @@ export class TransactionEditor {
         // Update Purchase Memory
         p.balance_qty -= take;
         
-        // Generate NEW ID for this split
+        // Generate NEW ID for this split and Link it
         const newSplitId = this.generateUUID();
-        p.sale_ids.push(newSplitId); // Link it!
+        p.sale_ids.push(newSplitId);
+        
+        // Mark purchase for DB update
+        purchasesToUpdate.set(p.trx_id, { ...p });
 
-        purchasesToUpdate.set(p.trx_id, { ...p }); // Track changes
-
-        // Calculate Profit
+        // Calculate Metrics
         const profit = (order.rate - p.rate) * take;
+        const isLT = this.isLongTerm(p.date, order.date);
 
+        // Add to Insert Queue
         salesToInsert.push({
-          trx_id: newSplitId, // Pre-generated ID
+          trx_id: newSplitId,
           custom_id: order.custom_id,
           purchase_trx_id: p.trx_id,
           client_name: order.client_name,
           ticker: order.ticker,
           date: order.date,
-          qty: take,
+          sale_qty: take,
           rate: order.rate,
           profit_stored: profit,
-          adjusted_profit_stored: profit,
-          user_id: order.user_id
+          adjusted_profit_stored: profit, // Logic for adjustments can go here if needed
+          user_id: order.user_id,
+          comments: order.comments,
+          long_term: isLT,
+          client_id: order.client_id
         });
 
         qtyRemaining -= take;
       }
     }
 
-    // 5. COMMIT
+    // ---------------------------------------------------------
+    // F. COMMIT (Atomic RPC Call)
+    // ---------------------------------------------------------
     const payload = {
       sales_to_delete: Array.from(customIdsToReprocess),
       purchases_to_update: Array.from(purchasesToUpdate.values()),
@@ -214,11 +278,14 @@ export class TransactionEditor {
     if (error) throw new Error(`Atomic Update Failed: ${error.message}`);
   }
 
-  // ==============================================================================
-  // PUBLIC ENTRY POINTS
-  // ==============================================================================
 
-  /** 1. Edit Purchase Rate */
+  // ==========================================
+  // 3. Entry Points
+  // ==========================================
+
+  /** * 1. Edit Purchase Rate
+   * Updates rate and recalculates profit for linked sales instantly.
+   */
   async editPurchaseRate(trx_id: string, newRate: number) {
     // 1. Update the purchase itself
     const { data: purchase, error } = await this.supabase
@@ -230,8 +297,7 @@ export class TransactionEditor {
     
     if (error) throw error;
 
-    // 2. Find directly linked sales and update their profit snapshot
-    // (No FIFO change needed, just math)
+    // 2. Find directly linked sales and update profit snapshots
     const { data: linkedSales } = await this.supabase
       .from('sales')
       .select('*')
@@ -242,16 +308,20 @@ export class TransactionEditor {
         const newProfit = (sale.rate - newRate) * sale.qty;
         await this.supabase
           .from('sales')
-          .update({ profit_stored: newProfit, adjusted_profit_stored: newProfit })
+          .update({ 
+            profit_stored: newProfit, 
+            adjusted_profit_stored: newProfit 
+          })
           .eq('trx_id', sale.trx_id);
       }
     }
   }
 
-  /** 2. Edit Sales Rate */
+  /** * 2. Edit Sales Rate
+   * Updates rate and recalculates profit for specific sales.
+   */
   async editSaleRate(custom_id: string, newRate: number) {
-    // Update all splits for this custom_id
-    // We need to fetch them to recalculate profit based on their specific purchase lots
+    // Fetch splits to get purchase rate
     const { data: splits } = await this.supabase
       .from('sales')
       .select('*, purchases(rate)')
@@ -260,7 +330,7 @@ export class TransactionEditor {
     if (!splits) return;
 
     for (const split of splits) {
-      const purchaseRate = split.purchases.rate; // Assumes join
+      const purchaseRate = split.purchases.rate;
       const newProfit = (newRate - purchaseRate) * split.qty;
       
       await this.supabase
@@ -274,92 +344,111 @@ export class TransactionEditor {
     }
   }
 
-  /** 3. Edit Sales Date */
-  async editSaleDate(custom_id: string, newDate: string, originalDate: string, client: string, ticker: string) {
-    // We must pass this as an override to reprocessLedger
-    // First, fetch the original intent details we need (qty, rate, etc)
+  /** * 3. Edit Sales Date
+   * Changing date may alter FIFO order; triggers re-process.
+   */
+  async editSaleDate(custom_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
+    // Fetch existing details to preserve them
     const { data: existing } = await this.supabase
         .from('sales')
-        .select('*')
+        .select('*, clients!inner(client_id)')
         .eq('custom_id', custom_id)
         .limit(1)
         .single();
     
-    // Calculate total qty from DB (sum of splits)
+    if(!existing) throw new Error("Sale not found");
+
+    // We need total qty across all splits
     const { data: allSplits } = await this.supabase.from('sales').select('qty').eq('custom_id', custom_id);
     const totalQty = allSplits?.reduce((acc, s) => acc + s.qty, 0) || 0;
 
     const intent: SaleIntent = {
         custom_id: custom_id,
-        date: newDate, // The New Date
-        total_qty: totalQty,
-        rate: existing.rate,
-        client_name: client,
+        purchase_trx_id: null, // Will be re-linked
+        client_name: clientName,
         ticker: ticker,
-        user_id: existing.user_id
+        date: newDate, // UPDATED
+        sale_qty: totalQty,
+        rate: existing.rate,
+        user_id: existing.user_id,
+        profit_stored: 0,
+        comments: existing.comments,
+        long_term: false, // Calculated in logic
+        client_id: existing.clients.client_id,
+        adjusted_profit_stored: 0
     };
 
     const overrides = new Map<string, SaleIntent>();
     overrides.set(custom_id, intent);
 
-    // Reprocess from the earlier of the two dates
+    // Process from the earlier of the two dates
     const impactDate = new Date(newDate) < new Date(originalDate) ? newDate : originalDate;
-    await this.reprocessLedger(client, ticker, impactDate, overrides);
+    await this.reprocessLedger(clientName, ticker, impactDate, overrides);
   }
 
-  /** 4. Edit Purchase Date */
-  async editPurchaseDate(trx_id: string, newDate: string, originalDate: string, client: string, ticker: string) {
-    // 1. Update the purchase date in DB first
+  /** * 4. Edit Purchase Date
+   * Changing buy date affects availability for sales; triggers re-process.
+   */
+  async editPurchaseDate(trx_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
+    // 1. Update the purchase date directly
     await this.supabase.from('purchases').update({ date: newDate }).eq('trx_id', trx_id);
 
-    // 2. Reprocess
-    // Changing a buy date might mean it is now available for an earlier sale, or unavailable for a later one.
+    // 2. Reprocess Ledger
     const impactDate = new Date(newDate) < new Date(originalDate) ? newDate : originalDate;
-    await this.reprocessLedger(client, ticker, impactDate);
+    await this.reprocessLedger(clientName, ticker, impactDate);
   }
 
-  /** 5. Edit Purchase Qty */
-  async editPurchaseQty(trx_id: string, newQty: number, client: string, ticker: string, originalDate: string) {
+  /** * 5. Edit Purchase Qty
+   * Complex validation: Cannot reduce below what is already sold.
+   */
+  async editPurchaseQty(trx_id: string, newQty: number, clientName: string, ticker: string, originalDate: string) {
     const { data: p } = await this.supabase.from('purchases').select('qty, balance_qty').eq('trx_id', trx_id).single();
     
-    // Check if we are reducing below what is already sold
     const soldQty = p.qty - p.balance_qty;
     if (newQty < soldQty) {
-       throw new Error(`Cannot reduce quantity below ${soldQty} as these are already sold.`);
+       throw new Error(`Cannot reduce quantity below ${soldQty} as these units are already sold.`);
     }
 
-    // Update DB
+    // Update DB with new Qty and Balance
     const newBalance = newQty - soldQty;
     await this.supabase.from('purchases').update({ qty: newQty, balance_qty: newBalance }).eq('trx_id', trx_id);
 
-    // Reprocess (in case the increase allows it to be picked up by earlier sales, though typically FIFO fills oldest first)
-    await this.reprocessLedger(client, ticker, originalDate);
+    // Reprocess to ensure FIFO order is optimal
+    await this.reprocessLedger(clientName, ticker, originalDate);
   }
 
-  /** 6. Edit Sales Qty */
-  async editSaleQty(custom_id: string, newQty: number, client: string, ticker: string, date: string) {
-    // Fetch basic details for the intent
+  /** * 6. Edit Sales Qty
+   * Increases or decreases sale size; triggers re-process with override.
+   */
+  async editSaleQty(custom_id: string, newQty: number, clientName: string, ticker: string, date: string) {
     const { data: existing } = await this.supabase
         .from('sales')
-        .select('*')
+        .select('*, clients!inner(client_id)')
         .eq('custom_id', custom_id)
         .limit(1)
         .single();
+    
+    if(!existing) throw new Error("Sale not found");
 
     const intent: SaleIntent = {
         custom_id: custom_id,
-        date: existing.date,
-        total_qty: newQty, // The NEW Quantity
-        rate: existing.rate,
-        client_name: client,
+        purchase_trx_id: null,
+        client_name: clientName,
         ticker: ticker,
-        user_id: existing.user_id
+        date: existing.date,
+        sale_qty: newQty, // UPDATED
+        rate: existing.rate,
+        user_id: existing.user_id,
+        profit_stored: 0,
+        comments: existing.comments,
+        long_term: false,
+        client_id: existing.clients.client_id,
+        adjusted_profit_stored: 0
     };
 
-    const overrides = new Map();
+    const overrides = new Map<string, SaleIntent>();
     overrides.set(custom_id, intent);
 
-    // This will implicitly check if we have enough balance for the increase
-    await this.reprocessLedger(client, ticker, date, overrides);
+    await this.reprocessLedger(clientName, ticker, date, overrides);
   }
 }
