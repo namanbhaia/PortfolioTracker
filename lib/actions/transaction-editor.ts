@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { isLongTerm } from '@/components/helper/utility';
 
 // ==========================================
 // 1. Interfaces
@@ -64,15 +65,6 @@ export class TransactionEditor {
     return crypto.randomUUID();
   }
 
-  /** Helper: Check Long Term Status (> 365 Days) */
-  private isLongTerm(purchaseDate: string, saleDate: string): boolean {
-    const start = new Date(purchaseDate).getTime();
-    const end = new Date(saleDate).getTime();
-    // Difference in milliseconds / (1000 * 60 * 60 * 24)
-    const diffDays = (end - start) / 86400000; 
-    return diffDays > 365;
-  }
-
   /**
    * CORE LOGIC: Reprocesses the ledger from a specific date.
    * * @param clientName - Context for the re-calc
@@ -120,7 +112,6 @@ export class TransactionEditor {
 
     let purchases: Purchase[] = (rawPurchases || []).map((p: any) => ({
       ...p,
-      purchase_qty: Number(p.qty), // Map generic 'qty' to specific interface
       client_id: p.clients?.client_id,
       sale_ids: p.sale_ids || [],
       balance_qty: Number(p.balance_qty)
@@ -128,9 +119,8 @@ export class TransactionEditor {
 
     const salesRows: Sale[] = (rawSales || []).map((s: any) => ({
       ...s,
-      sale_qty: Number(s.qty), // Map generic 'qty' to specific interface
       client_id: s.clients?.client_id,
-      long_term: s.purchases?.date ? this.isLongTerm(s.purchases.date, s.date) : false
+      long_term: s.purchases?.date ? isLongTerm(s.purchases.date, s.date) : false
     }));
 
     // ---------------------------------------------------------
@@ -241,7 +231,7 @@ export class TransactionEditor {
 
         // Calculate Metrics
         const profit = (order.rate - p.rate) * take;
-        const isLT = this.isLongTerm(p.date, order.date);
+        const isLT = isLongTerm(p.date, order.date);
 
         // Add to Insert Queue
         salesToInsert.push({
