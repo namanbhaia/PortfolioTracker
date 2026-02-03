@@ -1,5 +1,26 @@
-Create Core Tables
+/* * PORTFOLIO TRACKER DATABASE SCHEMA
+ * ---------------------------------------------------------
+ * This script sets up the core tables, views, functions, and 
+ * triggers required for the Portfolio Tracker application.
+ */
+
+-- =========================================================
+-- 1. EXTENSIONS
+-- =========================================================
+
+-- Enable cron for scheduling updates
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+-- Enable net for HTTP calls (Edge Functions)
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+
+-- =========================================================
+-- 2. CORE TABLES
+-- =========================================================
+
 -- 1. PROFILES (The Managers)
+-- Links directly to Supabase Auth Users
 CREATE TABLE profiles (
     id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
@@ -9,17 +30,18 @@ CREATE TABLE profiles (
 );
 
 -- 2. CLIENTS (The Accounts)
+-- Represents distinct portfolios or family members
 CREATE TABLE clients (
     client_name TEXT PRIMARY KEY, -- Using name as PK as requested
     trading_id TEXT UNIQUE NOT NULL,
     client_id UUID UNIQUE DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    last_verified TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
 );
-ALTER TABLE clients 
-ADD COLUMN last_verified TIMESTAMPTZ;
 
 -- 3. ASSETS (The Master Catalog)
+-- Stores market data and instrument details
 CREATE TABLE assets (
     ticker TEXT PRIMARY KEY,
     stock_name TEXT NOT NULL,
@@ -29,6 +51,7 @@ CREATE TABLE assets (
 );
 
 -- 4. PURCHASES (The "In" Ledger)
+-- Log of all buy transactions
 CREATE TABLE purchases (
     trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) NOT NULL,
@@ -38,81 +61,60 @@ CREATE TABLE purchases (
     rate NUMERIC NOT NULL,
     qty NUMERIC NOT NULL CHECK (qty > 0),
     comments TEXT,
+    sale_ids UUID[] DEFAULT '{}', -- Array to track partial sales linked to this purchase
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Add the sale_ids column as an array of UUIDs to the purchases table
-ALTER TABLE purchases 
-ADD COLUMN IF NOT EXISTS sale_ids UUID[] DEFAULT '{}';
+-- 5. SALES (The "Out" Ledger)
+-- Log of all sell transactions
+CREATE TABLE sales (
+    trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID,
+    purchase_trx_id UUID REFERENCES purchases(trx_id) ON DELETE CASCADE,
+    client_id UUID,
+    client_name TEXT,
+    date DATE NOT NULL,
+    rate NUMERIC(20, 2) NOT NULL,
+    sale_qty NUMERIC(20, 8) NOT NULL CHECK (sale_qty > 0),
+    profit_stored NUMERIC,
+    adjusted_profit_stored NUMERIC,
+    long_term BOOLEAN,
+    custom_id TEXT,
+    comments TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 
--- Optional: Add an index for performance if you plan to query by sale_id often
+
+-- =========================================================
+-- 3. INDEXES & SEQUENCES
+-- =========================================================
+
+-- Performance index for querying purchases by specific sale IDs (GIN index for Arrays)
 CREATE INDEX IF NOT EXISTS idx_purchases_sale_ids ON purchases USING GIN (sale_ids);
 
--- 5. SALES (The "Out" Ledger)
-create table public.sales (
-  trx_id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  purchase_trx_id uuid null,
-  date date not null,
-  rate numeric(20, 2) not null,
-  sale_qty numeric(20, 8) not null,
-  comments text null,
-  created_at timestamp with time zone null default now(),
-  long_term boolean null,
-  custom_id text null,
-  client_name text null,
-  profit_stored numeric null,
-  client_id uuid null,
-  constraint sales_pkey primary key (trx_id),
-  constraint sales_purchase_trx_id_fkey foreign KEY (purchase_trx_id) references purchases (trx_id) on delete CASCADE,
-  constraint sales_qty_check check ((sale_qty > (0)::numeric))
-) TABLESPACE pg_default;
-
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS adjusted_profit_stored NUMERIC;
-
-CREATE OR REPLACE FUNCTION append_sale_id_to_purchase(
-    p_purchase_id UUID, 
-    p_sale_id UUID, 
-    p_new_balance NUMERIC
-)
-RETURNS void AS $$
-BEGIN
-    UPDATE purchases
-    SET 
-        balance_qty = p_new_balance,
-        sale_ids = array_append(COALESCE(sale_ids, '{}'), p_sale_id)
-    WHERE trx_id = p_purchase_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- 1. Create a sequence if it doesn't exist
+-- Sequence for generating custom readable IDs if needed
 CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
 
--- 2. Create the RPC function with the correct return type (BIGINT)
-CREATE OR REPLACE FUNCTION get_next_sale_id()
-RETURNS BIGINT AS $$
-BEGIN
-  RETURN nextval('sale_group_seq');
-END;
-$$ LANGUAGE plpgsql;
 
-create trigger validate_sale_qty BEFORE INSERT on sales for EACH row
-execute FUNCTION check_sale_qty ();
+-- =========================================================
+-- 4. VIEWS
+-- =========================================================
 
-Create Holding Views
-CREATE OR REPLACE VIEW public.client_holdings AS
+-- View: CLIENT HOLDINGS
+-- Calculates live balance, market value, and unrealized P&L
+CREATE OR REPLACE VIEW client_holdings AS
 SELECT 
-    -- 1. IDs and Identifiers
+    -- IDs and Identifiers
     p.trx_id,
-    c.client_id,        -- Fetched from clients table via name link
-    c.client_name,      -- The link itself
+    c.client_id,
+    c.client_name,
     c.dp_id,
     c.trading_id,
     a.ticker,
     a.stock_name,
     a.isin,
     
-    -- 2. Purchase Details
+    -- Purchase Details
     p.date,
     p.purchase_qty,
     p.rate,
@@ -120,36 +122,29 @@ SELECT
     p.balance_qty,
     p.comments,
 
-    -- 3. Market Details
+    -- Market Details
     a.current_price AS market_rate,
     (p.balance_qty * a.current_price) AS market_value,
 
-    -- 4. Calculations
+    -- Calculations
     (a.current_price - p.rate) AS pl_per_share,
     ((a.current_price - p.rate) * p.balance_qty) AS pl,
     CASE 
-        WHEN p.rate > 0 
-        THEN ((a.current_price - p.rate) / p.rate) * 100 
+        WHEN p.rate > 0 THEN ((a.current_price - p.rate) / p.rate) * 100 
         ELSE 0 
     END AS pl_percent
+FROM purchases p
+JOIN assets a ON p.ticker = a.ticker
+JOIN clients c ON p.client_name = c.client_name;
 
-FROM 
-    public.purchases p
-JOIN 
-    public.assets a ON p.ticker = a.ticker
-JOIN 
-    public.clients c ON p.client_name = c.client_name; -- Linking via Name
-
-
-Create Sales View
-DROP VIEW IF EXISTS sales_view CASCADE;
-
+-- View: SALES VIEW
+-- Denormalized view of sales with linked purchase info
 CREATE OR REPLACE VIEW sales_view AS
 SELECT 
     s.trx_id,
     c.client_id,
     c.trading_id,
-    c.dp_id, -- New column
+    c.dp_id,
     s.client_name,
     p.ticker,
     a.stock_name,
@@ -176,93 +171,38 @@ JOIN clients c ON p.client_name = c.client_name
 JOIN assets a ON p.ticker = a.ticker;
 
 
-Key Safeguards
-CREATE OR REPLACE FUNCTION check_sale_qty() 
-RETURNS TRIGGER AS $$
-DECLARE
-    available_qty NUMERIC;
-BEGIN
-    SELECT balance_qty INTO available_qty 
-    FROM client_holdings 
-    WHERE trx_id = NEW.purchase_trx_id;
+-- =========================================================
+-- 5. FUNCTIONS (BUSINESS LOGIC)
+-- =========================================================
 
-    IF NEW.qty > available_qty THEN
-        RAISE EXCEPTION 'Cannot sell % units; only % available in this batch.', NEW.qty, available_qty;
-    END IF;
-    RETURN NEW;
+-- Function: Append Sale ID to Purchase
+-- Updates the purchase record when a portion is sold
+CREATE OR REPLACE FUNCTION append_sale_id_to_purchase(
+    p_purchase_id UUID, 
+    p_sale_id UUID, 
+    p_new_balance NUMERIC
+)
+RETURNS void AS $$
+BEGIN
+    UPDATE purchases
+    SET 
+        balance_qty = p_new_balance,
+        sale_ids = array_append(COALESCE(sale_ids, '{}'), p_sale_id)
+    WHERE trx_id = p_purchase_id;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER validate_sale_qty
-BEFORE INSERT ON sales
-FOR EACH ROW EXECUTE FUNCTION check_sale_qty();
-
-For Login Setup
--- 1. Create the function that inserts a profile
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
+-- Function: Get Next Sale ID
+-- Returns next value from sequence
+CREATE OR REPLACE FUNCTION get_next_sale_id()
+RETURNS BIGINT AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username, email)
-  VALUES (new.id, new.raw_user_meta_data->>'username', new.email);
-  RETURN new;
+  RETURN nextval('sale_group_seq');
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
--- 2. Create the trigger to run the function on every signup
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
-
-For Signup 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  -- 1. Insert into Profiles
-  INSERT INTO public.profiles (id, username, full_name, email)
-  VALUES (
-    new.id, 
-    new.raw_user_meta_data->>'username', 
-    new.raw_user_meta_data->>'full_name', 
-    new.email
-  );
-
-  -- 2. Insert into Clients (Your first family member/trading account)
-  INSERT INTO public.clients (client_name, trading_id, user_id)
-  VALUES (
-    new.raw_user_meta_data->>'primary_client_name', 
-    new.raw_user_meta_data->>'trading_id', 
-    new.id
-  );
-
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
-For edge function
--- Enable the cron extension
-create extension if not exists pg_cron;
-
--- Enable the net extension (to allow the DB to make HTTP calls to the Edge Function)
-create extension if not exists pg_net;
-
-SELECT cron.schedule(
-  'update-market-prices-india-market', -- Unique Job Name
-  '*/5 3-10 * * 1-5',                  -- Every 5 mins, between 3:30 and 10:30 UTC, Mon-Fri
-  $$
-  SELECT
-    net.http_post(
-      url:='https://[YOUR_PROJECT_REF].functions.supabase.co/update-prices',
-      headers:='{
-        "Content-Type": "application/json", 
-        "Authorization": "Bearer [YOUR_ANON_KEY]"
-      }'::jsonb
-    );
-  $$
-);
-
-Edit Transactions Function
+-- Function: Atomic Ledger Update
+-- Handles complex transaction edits (Delete old, Update purchase balance, Insert new)
 CREATE OR REPLACE FUNCTION atomic_ledger_update(payload JSONB)
 RETURNS VOID AS $$
 DECLARE
@@ -278,8 +218,6 @@ BEGIN
     END IF;
 
     -- 2. UPDATE Purchases
-    -- Maps 'purchase_qty' (from interface) to NULL (qty is usually not changed here, only balance_qty)
-    -- But crucially updates 'balance_qty' and 'sale_ids'
     IF payload ? 'purchases_to_update' THEN
         FOR p_record IN SELECT * FROM jsonb_array_elements(payload -> 'purchases_to_update')
         LOOP
@@ -292,22 +230,20 @@ BEGIN
     END IF;
 
     -- 3. INSERT New Sales
-    -- Maps 'sale_qty' (from interface) to 'qty' (DB column)
     IF payload ? 'sales_to_insert' THEN
         INSERT INTO sales (
             trx_id, 
             custom_id, 
             purchase_trx_id, 
-            client_name, -- Assumed you added this column
-            ticker,      -- Assumed you added this column
+            client_name, 
+            ticker,      
             date, 
-            qty,         -- MAPPED FROM sale_qty
+            qty,         -- Maps input 'sale_qty' to DB column 'qty'
             rate, 
             profit_stored, 
             adjusted_profit_stored,
             user_id,
             comments
-            -- Note: 'long_term' and 'client_id' are in JSON but ignored if columns don't exist
         )
         SELECT 
             (value ->> 'trx_id')::UUID,
@@ -316,7 +252,7 @@ BEGIN
             (value ->> 'client_name'),
             (value ->> 'ticker'),
             (value ->> 'date')::DATE,
-            (value ->> 'sale_qty')::NUMERIC, -- MAPPING HERE
+            (value ->> 'sale_qty')::NUMERIC, 
             (value ->> 'rate')::NUMERIC,
             (value ->> 'profit_stored')::NUMERIC,
             (value ->> 'adjusted_profit_stored')::NUMERIC,
@@ -326,3 +262,59 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- =========================================================
+-- 6. TRIGGERS
+-- =========================================================
+-- Function & Trigger: Handle New User (Auth Hook)
+-- Automatically creates Profile and Default Client entries on Signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  -- 1. Insert into Profiles
+  INSERT INTO public.profiles (id, username, full_name, email)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data->>'username', 
+    new.raw_user_meta_data->>'full_name', 
+    new.email
+  );
+
+  -- 2. Insert into Clients (Primary trading account)
+  INSERT INTO public.clients (client_name, trading_id, user_id)
+  VALUES (
+    new.raw_user_meta_data->>'primary_client_name', 
+    new.raw_user_meta_data->>'trading_id', 
+    new.id
+  );
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- =========================================================
+-- 7. SCHEDULED JOBS (EDGE FUNCTIONS)
+-- =========================================================
+
+-- Schedule: Update Market Prices
+-- Runs every 5 mins, between 3:30 and 10:30 UTC, Mon-Fri
+SELECT cron.schedule(
+  'update-market-prices-india-market', 
+  '*/5 3-10 * * 1-5',                  
+  $$
+  SELECT
+    net.http_post(
+      url:='https://[YOUR_PROJECT_REF].functions.supabase.co/update-prices',
+      headers:='{
+        "Content-Type": "application/json", 
+        "Authorization": "Bearer [YOUR_ANON_KEY]"
+      }'::jsonb
+    );
+  $$
+);
