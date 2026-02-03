@@ -50,39 +50,68 @@ export default function VerificationPage() {
         try {
             // A. Fetch current DB Data (Clients & Holdings)
             const { data: dbHoldings, error: holdingsError } = await supabase
-                .from('user_holdings')
-                .select('client_name, trading_id, ticker, isin, stock_name, balance_qty');
+                .from('client_holdings')
+                .select('client_name, dp_id, trading_id, ticker, isin, stock_name, balance_qty');
             
             const { data: dbClients, error: clientsError } = await supabase
                 .from('clients')
-                .select('client_name, trading_id, last_verified');
+                .select('client_name, dp_id, trading_id, last_verified');
 
             if (holdingsError || clientsError) throw new Error("Failed to fetch database records.");
 
             setClients(dbClients || []);
 
-            // B. Parse CSV (Simple browser-based parsing)
+            // B. Parse CSV (Specialized for your non-uniform report)
             const text = await file.text();
-            const rows = text.split('\n').map(row => row.split(','));
-            
-            // Assumption: CSV Headers are row 0. 
-            // Mapping indices based on: dp_id, client_name, share Ticker, share ISIN, share Name, Balance
-            // Adjust indices based on actual CSV format.
-            const parsedData: CsvRow[] = rows.slice(1).map(r => ({
-                dp_id: r[0]?.trim(),
-                client_name: r[1]?.trim(),
-                ticker: r[2]?.trim(),
-                isin: r[3]?.trim(),
-                stock_name: r[4]?.trim(),
-                balance: parseFloat(r[5]?.trim() || "0")
-            })).filter(r => r.dp_id && r.isin); // Filter empty rows
+            const lines = text.split(/\r?\n/);
+
+            const parsedData: CsvRow[] = [];
+            let currentClientId = "";
+
+            // Regex: 2 letters followed by 10 alphanumeric characters (ISIN)
+            const isinRegex = /^[A-Z]{2}[A-Z0-9]{10}/;
+
+            lines.forEach((line) => {
+                const trimmed = line.trim();
+
+                // 1. Detect Client ID row
+                if (trimmed.includes('Client Id.')) {
+                    const idMatch = trimmed.match(/Client Id\.\s*([\w\d]+)/);
+                    if (idMatch) currentClientId = idMatch[1];
+                    return;
+                }
+
+                // 2. Detect ISIN Row (The actual data)
+                if (isinRegex.test(trimmed)) {
+                    const cols = trimmed.split(',').map(c => c.trim());
+                    
+                    /* Based on your provided format:
+                    cols[0] = ISIN
+                    cols[1] = Stock Name
+                    cols[4] = Balance Qty
+                    */
+                    if (cols.length >= 5) {
+                        parsedData.push({
+                            dp_id: currentClientId, // Using extracted Client ID from earlier
+                            client_name: "",         // Not strictly needed as we match by dp_id
+                            ticker: "",              // Fill with name or ID if ticker isn't in this row
+                            isin: cols[0],
+                            stock_name: cols[1],
+                            balance: parseFloat(cols[4]) || 0
+                        });
+                    }
+                }
+            });
+
+            // filter out rows where we didn't have a Client ID context
+            const cleanParsedData = parsedData.filter(r => r.dp_id !== "");
 
             // C. Perform Verification Logic
             const results: Record<string, VerificationResult> = {};
 
             // Group CSV Data by DP ID (Trading ID)
             const csvMap = new Map<string, CsvRow[]>();
-            parsedData.forEach(row => {
+            cleanParsedData.forEach(row => {
                 if (!csvMap.has(row.dp_id)) csvMap.set(row.dp_id, []);
                 csvMap.get(row.dp_id)?.push(row);
             });
@@ -90,12 +119,14 @@ export default function VerificationPage() {
             // Iterate through known DB clients to check against CSV
             for (const client of dbClients || []) {
                 const tradingId = client.trading_id;
+                const dp_id = client.dp_id;
                 const clientName = client.client_name;
                 
                 // If this client isn't in the CSV, skip
-                if (!csvMap.has(tradingId)) continue;
+                // if (!csvMap.has(tradingId)) continue;
+                if (!csvMap.has(dp_id)) continue;
 
-                const clientCsvRows = csvMap.get(tradingId) || [];
+                const clientCsvRows = csvMap.get(dp_id) || [];
                 
                 // Aggregate CSV Holdings for this client (Key: ISIN)
                 const csvHoldings = new Map<string, number>();
@@ -105,7 +136,7 @@ export default function VerificationPage() {
                 });
 
                 // Aggregate DB Holdings for this client (Key: ISIN)
-                const clientDbRows = dbHoldings?.filter(h => h.trading_id === tradingId) || [];
+                const clientDbRows = dbHoldings?.filter(h => h.dp_id === dp_id) || [];
                 const dbMap = new Map<string, { qty: number, ticker: string, name: string }>();
                 
                 clientDbRows.forEach(r => {
@@ -133,7 +164,7 @@ export default function VerificationPage() {
                         
                         discrepancies.push({
                             client_name: clientName,
-                            dp_id: tradingId,
+                            dp_id: dp_id,
                             isin: isin,
                             stock_name: dbEntry?.name || csvMeta?.stock_name || "Unknown",
                             ticker: dbEntry?.ticker || csvMeta?.ticker || "Unknown",
@@ -149,7 +180,7 @@ export default function VerificationPage() {
                     await supabase
                         .from('clients')
                         .update({ last_verified: new Date().toISOString() })
-                        .eq('trading_id', tradingId);
+                        .eq('dp_id', dp_id);
                     
                     results[clientName] = { 
                         status: 'MATCH', 
