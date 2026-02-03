@@ -3,19 +3,19 @@
 import { useRef, useState, useEffect } from 'react';
 import { Edit2, X, Save, Loader2, Info, IndianRupee, Calendar } from "lucide-react";
 import { updateTransaction } from '@/lib/actions/update-transactions';
-import { usePathname, useSearchParams } from 'next/navigation'; 
+import { usePathname, useSearchParams } from 'next/navigation';
 
 export default function EditTransactionSimple({ row, type }: { row: any, type: 'purchase' | 'sale' }) {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [loading, setLoading] = useState(false);
-    
+
     // Capture current URL state
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const currentFullUrl = `${pathname}?${searchParams.toString()}`;
 
     // Standardized fields based on your DB columns
-    const initialDate = row.date || row.sale_date; 
+    const initialDate = row.date || row.sale_date;
     const initialQty = type === 'purchase' ? row.purchase_qty : row.sale_qty;
     const initialRate = row.rate || row.sale_rate;
 
@@ -48,11 +48,11 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
                 <Edit2 size={15} />
             </button>
 
-                <dialog 
-                    ref={dialogRef} 
-                    className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-0 backdrop:bg-slate-900/60 border-none w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 font-normal text-left"
-                >
-                    <div className="bg-white">
+            <dialog
+                ref={dialogRef}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-0 backdrop:bg-slate-900/60 border-none w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 font-normal text-left"
+            >
+                <div className="bg-white">
                     {/* Header */}
                     <div className="bg-slate-50 px-8 py-6 border-b border-slate-100 flex justify-between items-center">
                         <div className="flex items-center gap-3">
@@ -91,21 +91,31 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
                             <div className="space-y-1.5">
                                 <label className="text-[10px]  uppercase text-slate-500 ml-1">Date</label>
                                 <div className="relative">
-                                    <input name="date" type="date" className="w-full border-slate-200 rounded-xl p-2.5 pl-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all" defaultValue={initialDate ? new Date(initialDate).toISOString().split('T')[0] : ''} required />
+                                    <input
+                                        name="date"
+                                        type="date"
+                                        className="w-full border-slate-200 rounded-xl p-2.5 pl-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                        defaultValue={
+                                            initialDate && !isNaN(new Date(initialDate).getTime())
+                                                ? new Date(initialDate).toISOString().split('T')[0]
+                                                : ''
+                                        }
+                                        required
+                                    />
                                 </div>
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] uppercase text-slate-500 font-normal ml-1">Trade Rate</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-normal">₹</span>
-                                    <input 
-                                        name="rate" 
-                                        type="number" 
-                                        step="0.01" 
+                                    <input
+                                        name="rate"
+                                        type="number"
+                                        step="0.01"
                                         value={liveRate}
-                                        onChange={(e) => setLiveRate(Number(e.target.value))} 
-                                        className="w-full border border-slate-200 rounded-lg p-2.5 pl-7 text-sm outline-none bg-white font-normal text-slate-900" 
-                                        required 
+                                        onChange={(e) => setLiveRate(Number(e.target.value))}
+                                        className="w-full border border-slate-200 rounded-lg p-2.5 pl-7 text-sm outline-none bg-white font-normal text-slate-900"
+                                        required
                                     />
                                 </div>
                             </div>
@@ -115,14 +125,14 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] uppercase text-slate-500 font-normal ml-1">Quantity</label>
-                                <input 
-                                    name="qty" 
-                                    type="number" 
-                                    step="any" 
+                                <input
+                                    name="qty"
+                                    type="number"
+                                    step="any"
                                     value={liveQty}
-                                    onChange={(e) => setLiveQty(Number(e.target.value))} 
-                                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm outline-none bg-white font-normal text-slate-900" 
-                                    required 
+                                    onChange={(e) => setLiveQty(Number(e.target.value))}
+                                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm outline-none bg-white font-normal text-slate-900"
+                                    required
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -141,9 +151,9 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
 
                         {/* Actions */}
                         <div className="pt-4 border-t border-slate-50 flex flex-col gap-3">
-                            <button 
+                            <button
                                 disabled={loading}
-                                type="submit" 
+                                type="submit"
                                 className="w-full bg-slate-900 text-white py-3.5 rounded-2xl hover:bg-black flex justify-center items-center gap-2 shadow-lg shadow-slate-200 transition-all active:scale-[0.98] disabled:opacity-70"
                             >
                                 {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
