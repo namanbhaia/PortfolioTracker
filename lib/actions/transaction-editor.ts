@@ -291,8 +291,7 @@ async editPurchaseRate(trx_id: string, newRate: number) {
     // 4. Construct Payload
     const purchasesToUpdate = [{
       ...purchase,
-      rate: newRate,
-      purchase_qty: purchase.purchase_qty // Ensure mapped correctly if column name differs
+      rate: newRate
     }];
 
     const payload = {
@@ -306,26 +305,52 @@ async editPurchaseRate(trx_id: string, newRate: number) {
   }
 
   async editSaleRate(custom_id: string, newRate: number) {
+    // 1. Fetch splits with necessary purchase details (date & ticker needed for calc)
     const { data: splits } = await this.supabase
       .from('sales')
-      .select('*, purchases(rate)')
+      .select('*, purchases(rate, date, ticker)')
       .eq('custom_id', custom_id);
     
-    if (!splits) return;
+    if (!splits || splits.length === 0) return;
 
+    // 2. Fetch Grandfathered Rate (once for the entire batch)
+    // We assume all splits in a custom_id belong to the same ticker
+    const ticker = splits[0].purchases?.ticker;
+    const cutoffPrice = ticker ? await getGrandfatheredRate(this.supabase, ticker) : null;
+
+    const salesToUpdate: any[] = [];
+
+    // 3. Recalculate Logic
     for (const split of splits) {
+      if (!split.purchases) continue; // Safety check
+
       const purchaseRate = split.purchases.rate;
-      const newProfit = (newRate - purchaseRate) * split.sale_qty;
+      const purchaseDate = split.purchases.date;
+
+      // Calculate both Standard and Adjusted Profit
+      const { profit, adjusted_profit } = calculateProfitMetrics(
+        purchaseRate,   // Original Buy Price
+        purchaseDate,   // Original Buy Date
+        newRate,        // NEW Sale Price
+        cutoffPrice,    // Grandfathered Rate
+        split.sale_qty  // Quantity
+      );
       
-      await this.supabase
-        .from('sales')
-        .update({ 
-          rate: newRate, 
-          profit_stored: newProfit, 
-          adjusted_profit_stored: newProfit 
-        })
-        .eq('trx_id', split.trx_id);
+      salesToUpdate.push({
+        ...split,
+        rate: newRate,
+        profit_stored: profit,
+        adjusted_profit_stored: adjusted_profit
+      });
     }
+
+    // 4. Atomic Commit
+    const payload = {
+      sales_to_update: salesToUpdate
+    };
+
+    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
+    if (error) throw new Error(`Failed to update sale rate: ${error.message}`);
   }
 
   async editSaleDate(custom_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
