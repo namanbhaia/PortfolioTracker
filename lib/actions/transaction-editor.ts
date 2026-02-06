@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { isLongTerm } from '@/components/helper/utility';
+import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
 
 // ==========================================
 // 1. Interfaces
@@ -21,36 +21,36 @@ export interface Purchase {
 
 export interface Sale {
   trx_id: string;
-  custom_id: string;
-  purchase_trx_id: string | null;
-  client_name: string;
-  ticker: string;
-  date: string;
-  sale_qty: number;
-  rate: number;
   user_id: string;
-  profit_stored: number;
+  purchase_trx_id: string | null;
+  date: string;
+  rate: number;
+  sale_qty: number;
   comments: string;
   long_term: boolean;
+  custom_id: string;
+  client_name: string;
+  profit_stored: number;  
   client_id: string;
   adjusted_profit_stored: number;
+  ticker: string;
 }
 
 export interface SaleIntent {
   trx_id?: string;
-  custom_id: string; 
-  purchase_trx_id: string | null;
-  client_name: string;
-  ticker: string;
-  date: string;
-  sale_qty: number;
-  rate: number;
   user_id: string;
-  profit_stored: number;
+  purchase_trx_id: string | null;
+  date: string;
+  rate: number;
+  sale_qty: number;
   comments: string;
   long_term: boolean;
+  custom_id: string; 
+  client_name: string;
+  profit_stored: number;
   client_id: string;
   adjusted_profit_stored: number;
+  ticker: string;
 }
 
 // ==========================================
@@ -77,7 +77,7 @@ export class TransactionEditor {
     // FETCH PURCHASES
     const { data: rawPurchases, error: pError } = await this.supabase
       .from('purchases')
-      .select('*, clients(client_id)') // Use Left Join to be safe
+      .select('*') 
       .eq('client_name', clientName)
       .eq('ticker', ticker)
       .or(`date.gte.${impactDate},balance_qty.gt.0`)
@@ -86,12 +86,11 @@ export class TransactionEditor {
     if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
 
     // FETCH SALES
-    // FIX: Join purchases!inner to filter by ticker and get client_id via purchase path
     const { data: rawSales, error: sError } = await this.supabase
       .from('sales')
-      .select('*, purchases!inner(date, ticker, clients(client_id))') 
+      .select('*, purchases!inner(date, ticker)') 
       .eq('client_name', clientName)
-      .eq('purchases.ticker', ticker) // Filter via the joined table
+      .eq('purchases.ticker', ticker) // Filter via joined purchase
       .gte('date', impactDate)
       .order('date', { ascending: true });
 
@@ -103,16 +102,12 @@ export class TransactionEditor {
 
     let purchases: Purchase[] = (rawPurchases || []).map((p: any) => ({
       ...p,
-      client_id: p.client_id || p.clients?.client_id,
       sale_ids: p.sale_ids || [],
       balance_qty: Number(p.balance_qty)
     }));
 
     const salesRows: Sale[] = (rawSales || []).map((s: any) => ({
       ...s,
-      // FIX: Access nested client_id via purchase if direct link is missing
-      client_id: s.client_id || s.purchases?.clients?.client_id,
-      // FIX: Map ticker from purchase
       ticker: s.purchases?.ticker || ticker,
       long_term: s.purchases?.date ? isLongTerm(s.purchases.date, s.date) : false
     }));
@@ -249,32 +244,65 @@ export class TransactionEditor {
   // 3. Entry Points
   // ==========================================
 
-  async editPurchaseRate(trx_id: string, newRate: number) {
-    const { error } = await this.supabase
+async editPurchaseRate(trx_id: string, newRate: number) {
+    // 1. Fetch the full Purchase record
+    const { data: purchase, error: pError } = await this.supabase
       .from('purchases')
-      .update({ rate: newRate })
-      .eq('trx_id', trx_id);
-    
-    if (error) throw error;
-
-    const { data: linkedSales } = await this.supabase
-      .from('sales')
       .select('*')
-      .eq('purchase_trx_id', trx_id);
+      .eq('trx_id', trx_id)
+      .single();
+    
+    if (pError || !purchase) throw new Error("Purchase record not found.");
 
-    if (linkedSales && linkedSales.length > 0) {
-      for (const sale of linkedSales) {
-        // Recalculate based on new base rate
-        const newProfit = (sale.rate - newRate) * sale.sale_qty; 
-        await this.supabase
-          .from('sales')
-          .update({ 
-            profit_stored: newProfit, 
-            adjusted_profit_stored: newProfit 
-          })
-          .eq('trx_id', sale.trx_id);
+    // Fetch grandfathered rate once using the purchase ticker
+    const cutoffPrice = await getGrandfatheredRate(this.supabase, purchase.ticker);
+
+    const salesToUpdate: any[] = [];
+
+    // 2. Fetch only the sales linked via the purchase's sale_ids column
+    if (purchase.sale_ids && purchase.sale_ids.length > 0) {
+      const { data: linkedSales } = await this.supabase
+        .from('sales')
+        .select('*')
+        .in('trx_id', purchase.sale_ids);
+
+      if (linkedSales && linkedSales.length > 0) {
+        // 3. Recalculate profit for each linked sale
+        for (const sale of linkedSales) {
+          
+          // Calculate both Standard and Adjusted Profit
+          const { profit, adjusted_profit } = calculateProfitMetrics(
+            newRate,            // The NEW Purchase Rate
+            purchase.date,      // Purchase Date (Required for < 2018 check)
+            sale.rate,          // Sale Rate
+            cutoffPrice,        // The Grandfathered/Cutoff Rate
+            sale.sale_qty       // Quantity
+          );
+          
+          salesToUpdate.push({
+            ...sale, 
+            profit_stored: profit,
+            adjusted_profit_stored: adjusted_profit
+          });
+        }
       }
     }
+
+    // 4. Construct Payload
+    const purchasesToUpdate = [{
+      ...purchase,
+      rate: newRate,
+      purchase_qty: purchase.purchase_qty // Ensure mapped correctly if column name differs
+    }];
+
+    const payload = {
+      purchases_to_update: purchasesToUpdate,
+      sales_to_update: salesToUpdate.length > 0 ? salesToUpdate : undefined
+    };
+
+    // 5. Atomic Commit
+    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
+    if (error) throw new Error(`Failed to update rate and recalculate sales: ${error.message}`);
   }
 
   async editSaleRate(custom_id: string, newRate: number) {

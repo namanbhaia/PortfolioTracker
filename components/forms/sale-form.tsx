@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { SubmitButton } from '@/components/ui/submit-button';
-import { isLongTerm } from '@/components/helper/utility';
+import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
 
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
@@ -86,12 +86,10 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             if (!tickerName) throw new Error("Ticker not found. Please select a purchase batch.");
 
             // 3. Fetch Asset Cutoff (for Adjusted Profit) and Client ID
-            const [{ data: assetData }, { data: clientData }] = await Promise.all([
-                supabase.from('assets').select('cutoff').eq('ticker', tickerName).single(),
+            const [cutoffPrice, { data: clientData }] = await Promise.all([
+                getGrandfatheredRate(supabase, tickerName),
                 supabase.from('clients').select('client_id').eq('client_name', clientName).single()
             ]);
-
-            const cutoffPrice = assetData?.cutoff;
 
             // 4. Fetch active lots from 'purchases' table directly
             const { data: lots, error: fetchError } = await supabase
@@ -125,13 +123,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 const saleDate = new Date(saleDateStr);
 
                 // Performance Calculations
-                const standardProfit = (saleRate - purchaseRate) * qtyFromThisLot;
-
-                // Grandfathering Logic (Feb 1, 2018 cutoff)
-                let adjustedProfit = standardProfit;
-                if (purchaseDate < new Date('2018-02-01') && cutoffPrice != null) {
-                    adjustedProfit = (saleRate - cutoffPrice) * qtyFromThisLot;
-                }
+                const { profit: standardProfit, adjusted_profit: adjustedProfit } = calculateProfitMetrics(purchaseRate, purchaseDate, saleRate, cutoffPrice, qtyFromThisLot);
 
                 // Holding Period (> 365 days)
                 const isTrxLongTerm = isLongTerm(purchaseDate, saleDate);
@@ -264,9 +256,9 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 />
             </div>
 
-            <SubmitButton 
-                isPending={loading} 
-                label="Confirm Sale" 
+            <SubmitButton
+                isPending={loading}
+                label="Confirm Sale"
                 classname="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
                 loadingText='Recording Sale'
             />
