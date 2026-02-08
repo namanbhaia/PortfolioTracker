@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { UploadCloud, CheckCircle, AlertTriangle, FileCheck } from 'lucide-react';
+import { getTickerDetailsFromYahoo } from '@/lib/actions/find-ticker';
 
 // Types for our data structures
 interface CsvRow {
@@ -34,13 +35,82 @@ interface DiscrepancyRow {
 
 export default function VerificationPage() {
     const supabase = createClient();
+    const [isSyncingAssets, setIsSyncingAssets] = useState(false);
     
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState<any[]>([]); // DB Clients
     const [verificationResults, setVerificationResults] = useState<Record<string, VerificationResult>>({});
     const [selectedClientKey, setSelectedClientKey] = useState<string>("");
+    
+    // 1. Define a state variable at the top of your component to hold pending assets
+    const [pendingAssets, setPendingAssets] = useState<any[]>([]);
 
-    // 1. Handle File Upload & Processing
+    // 2. The updated function to process and store assets in an array
+
+    const handleMissingAssetsBatch = async (discrepancies: DiscrepancyRow[]) => {
+        // 1. Get unique ISINs only
+        const uniqueMissing = discrepancies.filter((v, i, a) => 
+            v.web_balance === 0 && a.findIndex(t => t.isin === v.isin) === i
+        );
+
+        if (uniqueMissing.length === 0) return [];
+
+        const assetsToSync: any[] = [];
+        const chunkSize = 5; // Process in small batches of 5 to prevent API lag
+
+        for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
+            const chunk = uniqueMissing.slice(i, i + chunkSize);
+            
+            const chunkResults = await Promise.all(chunk.map(async (item) => {
+                try {
+                    // Try ISIN only first (faster/more accurate). Fallback to name ONLY if ISIN fails.
+                    const details = await getTickerDetailsFromYahoo(item.isin);
+                    const finalDetails = details || await getTickerDetailsFromYahoo(item.stock_name);
+                    
+                    if (finalDetails?.symbol) {
+                        return {
+                            ticker: finalDetails.symbol.split('.')[0].toUpperCase(),
+                            stock_name: item.stock_name,
+                            isin: item.isin,
+                            current_price: finalDetails.price || 0,
+                            last_updated: new Date().toISOString()
+                        };
+                    }
+                } catch (err) {
+                    console.warn(`Speed skip: Could not fetch ${item.isin}`);
+                }
+                return null;
+            }));
+
+            assetsToSync.push(...chunkResults.filter(Boolean));
+            
+            // Brief pause between chunks (200ms) to let the event loop breathe
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        return assetsToSync;
+    };
+
+    // Helper function for the background sync
+    const performBulkSync = async (data) => {
+        if (!data || data.length === 0) return;
+
+        const { error } = await supabase
+            .from('assets')
+            .upsert(data, { 
+                onConflict: 'isin',
+                ignoreDuplicates: false // Set to false so we update the PRICE if the asset exists
+            });
+
+        if (error) {
+            console.error("Database Sync Error:", error.message);
+        } else {
+            console.log(`✅ Database Updated: ${data.length} assets synced via ISIN.`);
+        }
+    };
+    
+
+    
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -91,13 +161,14 @@ export default function VerificationPage() {
                     cols[4] = Balance Qty
                     */
                     if (cols.length >= 5) {
+                        const rawName = cols[1] || "Unknown Stock";
                         parsedData.push({
-                            dp_id: currentClientId, // Using extracted Client ID from earlier
-                            client_name: "",         // Not strictly needed as we match by dp_id
-                            ticker: "",              // Fill with name or ID if ticker isn't in this row
+                            dp_id: currentClientId,
+                            client_name: "",         
+                            ticker: rawName, // Ensure ticker isn't empty here
                             isin: cols[0],
-                            stock_name: cols[1],
-                            balance: parseFloat(cols[4]) || 0
+                            stock_name: rawName, // Ensure stock_name isn't empty here
+                            balance: parseFloat(cols[4].replace(/,/g, '')) || 0
                         });
                     }
                 }
@@ -116,9 +187,11 @@ export default function VerificationPage() {
                 csvMap.get(row.dp_id)?.push(row);
             });
 
+            // 1. Create a master list of all discrepancies across all clients
+            const allDiscrepancies: DiscrepancyRow[] = [];
+
             // Iterate through known DB clients to check against CSV
             for (const client of dbClients || []) {
-                const tradingId = client.trading_id;
                 const dp_id = client.dp_id;
                 const clientName = client.client_name;
                 
@@ -157,23 +230,30 @@ export default function VerificationPage() {
                     const dbEntry = dbMap.get(isin);
                     const dbQty = dbEntry?.qty || 0;
 
-                    // If mismatch found
                     if (Math.abs(csvQty - dbQty) > 0.001) {
-                        // Find metadata from either source
+                        // Find the data we parsed from the file
                         const csvMeta = clientCsvRows.find(r => r.isin === isin);
                         
+                        // // If it's missing from DB, sync it to the assets table
+                        // if (!dbEntry && csvMeta) {
+                        //     handleMissingAsset(csvMeta.isin, csvMeta.stock_name);
+                        // }
+
                         discrepancies.push({
                             client_name: clientName,
                             dp_id: dp_id,
                             isin: isin,
-                            stock_name: dbEntry?.name || csvMeta?.stock_name || "Unknown",
-                            ticker: dbEntry?.ticker || csvMeta?.ticker || "Unknown",
+                            // PRIORITIZE: Use the name from the file if DB is empty to remove "Unknown"
+                            stock_name: dbEntry?.name || csvMeta?.stock_name || "New Asset",
+                            ticker: dbEntry?.ticker || csvMeta?.stock_name || "NEW", 
                             dp_balance: csvQty,
                             web_balance: dbQty,
-                            difference: dbQty - csvQty // Website - DP
+                            difference: dbQty - csvQty
                         });
                     }
                 });
+
+                discrepancies.forEach(d => allDiscrepancies.push(d));
 
                 if (discrepancies.length === 0) {
                     // Perfect Match! Update Last Verified in DB immediately
@@ -195,14 +275,42 @@ export default function VerificationPage() {
                     };
                 }
             }
-            
+
+            // 1. Render the table IMMEDIATELY so the user sees something
             setVerificationResults(results);
+            setLoading(false); // Stop the main loading spinner
+
+            // 2. Start the background sync for MISSING assets only
+            const missingAssets = allDiscrepancies.filter(d => d.web_balance === 0);
+            
+            if (missingAssets.length > 0) {
+                setIsSyncingAssets(true); // START background sync UI
+                
+                try {
+                    const assetsToSync = await handleMissingAssetsBatch(missingAssets);
+                    if (assetsToSync.length > 0) {
+                        await performBulkSync(assetsToSync);
+
+                        setVerificationResults(prev => {
+                            const updated = { ...prev };
+                            assetsToSync.forEach(s => {
+                                Object.values(updated).forEach(res => {
+                                    res.discrepancies.forEach(d => {
+                                        if (d.isin === s.isin) d.ticker = s.ticker;
+                                    });
+                                });
+                            });
+                            return updated;
+                        });
+                    }
+                } finally {
+                    setIsSyncingAssets(false); // STOP background sync UI
+                }
+            }
 
         } catch (err: any) {
-            console.error(err);
-            alert("Error processing file: " + err.message);
-        } finally {
             setLoading(false);
+            alert(err.message);
         }
     };
 
@@ -327,6 +435,18 @@ export default function VerificationPage() {
                             )}
                         </div>
                     )}
+                </div>
+            )}
+            {isSyncingAssets && (
+                <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white border border-indigo-100 shadow-xl p-4 rounded-2xl animate-in slide-in-from-right-8">
+                    <div className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600"></span>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-900">Syncing Market Data</span>
+                        <span className="text-[11px] text-slate-500">Fetching tickers & live prices...</span>
+                    </div>
                 </div>
             )}
         </div>
