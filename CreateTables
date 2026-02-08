@@ -233,7 +233,7 @@ BEGIN
             SET 
                 -- Inventory Management
                 balance_qty = (p_record ->> 'balance_qty')::NUMERIC,
-                sale_ids    = ARRAY(SELECT jsonb_array_elements_text(p_record -> 'sale_ids')),
+                sale_ids = ARRAY(SELECT jsonb_array_elements_text(p_record -> 'sale_ids')::UUID),
                 
                 -- Core Editable Fields
                 date         = (p_record ->> 'date')::DATE,
@@ -252,8 +252,7 @@ BEGIN
             custom_id, 
             purchase_trx_id, 
             client_name, 
-            client_id,
-            ticker,      
+            client_id,    
             date, 
             sale_qty, 
             rate, 
@@ -269,7 +268,6 @@ BEGIN
             (value ->> 'purchase_trx_id')::UUID,
             (value ->> 'client_name'),
             (value ->> 'client_id')::UUID,
-            (value ->> 'ticker'),
             (value ->> 'date')::DATE,
             (value ->> 'sale_qty')::NUMERIC, 
             (value ->> 'rate')::NUMERIC,
