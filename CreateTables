@@ -202,14 +202,21 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function: Atomic Ledger Update
--- Handles complex transaction edits (Delete old, Update purchase balance, Insert new)
+-- Purpose: Handles complex transaction edits in a single transaction.
+--          1. Deletes old sales (splits) if re-processing is needed.
+--          2. Updates purchase records (balance, linkage, and core details).
+--          3. Inserts new recalculated sale records.
+-- Input:   JSONB object with optional keys: 'sales_to_delete', 'purchases_to_update', 'sales_to_insert'.
+
 CREATE OR REPLACE FUNCTION atomic_ledger_update(payload JSONB)
 RETURNS VOID AS $$
 DECLARE
     p_record JSONB;
+    s_record JSONB;
     id_to_delete TEXT;
 BEGIN
     -- 1. DELETE Old Sales (Splits)
+    -- Expects an array of 'custom_id' strings to remove entire sale batches.
     IF payload ? 'sales_to_delete' THEN
         FOR id_to_delete IN SELECT jsonb_array_elements_text(payload -> 'sales_to_delete')
         LOOP
@@ -218,30 +225,41 @@ BEGIN
     END IF;
 
     -- 2. UPDATE Purchases
+    -- Updates inventory balance/linkage AND core editable fields.
     IF payload ? 'purchases_to_update' THEN
         FOR p_record IN SELECT * FROM jsonb_array_elements(payload -> 'purchases_to_update')
         LOOP
             UPDATE purchases 
             SET 
+                -- Inventory Management
                 balance_qty = (p_record ->> 'balance_qty')::NUMERIC,
-                sale_ids = ARRAY(SELECT jsonb_array_elements_text(p_record -> 'sale_ids'))
+                sale_ids    = ARRAY(SELECT jsonb_array_elements_text(p_record -> 'sale_ids')),
+                
+                -- Core Editable Fields
+                date         = (p_record ->> 'date')::DATE,
+                purchase_qty = (p_record ->> 'purchase_qty')::NUMERIC,
+                rate         = (p_record ->> 'rate')::NUMERIC,
+                comments     = (p_record ->> 'comments')
             WHERE trx_id = (p_record ->> 'trx_id')::UUID;
         END LOOP;
     END IF;
 
     -- 3. INSERT New Sales
+    -- Inserts re-calculated sale splits.
     IF payload ? 'sales_to_insert' THEN
         INSERT INTO sales (
             trx_id, 
             custom_id, 
             purchase_trx_id, 
             client_name, 
+            client_id,
             ticker,      
             date, 
-            qty,         -- Maps input 'sale_qty' to DB column 'qty'
+            sale_qty, 
             rate, 
             profit_stored, 
             adjusted_profit_stored,
+            long_term,
             user_id,
             comments
         )
@@ -250,19 +268,37 @@ BEGIN
             (value ->> 'custom_id'),
             (value ->> 'purchase_trx_id')::UUID,
             (value ->> 'client_name'),
+            (value ->> 'client_id')::UUID,
             (value ->> 'ticker'),
             (value ->> 'date')::DATE,
             (value ->> 'sale_qty')::NUMERIC, 
             (value ->> 'rate')::NUMERIC,
             (value ->> 'profit_stored')::NUMERIC,
             (value ->> 'adjusted_profit_stored')::NUMERIC,
+            (value ->> 'long_term')::BOOLEAN,
             (value ->> 'user_id')::UUID,
             (value ->> 'comments')
         FROM jsonb_array_elements(payload -> 'sales_to_insert');
     END IF;
+
+    -- 4. UPDATE Existing Sales
+    -- This handles re-calculating profit or updating details for specific sales
+    IF payload ? 'sales_to_update' THEN
+        FOR s_record IN SELECT * FROM jsonb_array_elements(payload -> 'sales_to_update')
+        LOOP
+            UPDATE sales 
+            SET 
+                profit_stored          = (s_record ->> 'profit_stored')::NUMERIC,
+                adjusted_profit_stored = (s_record ->> 'adjusted_profit_stored')::NUMERIC,
+                rate                   = (s_record ->> 'rate')::NUMERIC,
+                sale_qty               = (s_record ->> 'sale_qty')::NUMERIC,
+                date                   = (s_record ->> 'date')::DATE,
+                comments               = (s_record ->> 'comments')
+            WHERE trx_id = (s_record ->> 'trx_id')::UUID;
+        END LOOP;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
-
 
 -- =========================================================
 -- 6. TRIGGERS

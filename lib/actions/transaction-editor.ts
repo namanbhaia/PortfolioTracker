@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { isLongTerm } from '@/components/helper/utility';
+import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
 
 // ==========================================
 // 1. Interfaces
@@ -12,7 +12,7 @@ export interface Purchase {
   ticker: string;
   date: string;
   rate: number;
-  purchase_qty: number; 
+  purchase_qty: number;
   comments: string;
   sale_ids: string[];
   client_id: string;
@@ -21,36 +21,36 @@ export interface Purchase {
 
 export interface Sale {
   trx_id: string;
-  custom_id: string;
-  purchase_trx_id: string | null;
-  client_name: string;
-  ticker: string;
-  date: string;
-  sale_qty: number;
-  rate: number;
   user_id: string;
-  profit_stored: number;
+  purchase_trx_id: string | null;
+  date: string;
+  rate: number;
+  sale_qty: number;
   comments: string;
   long_term: boolean;
+  custom_id: string;
+  client_name: string;
+  profit_stored: number;
   client_id: string;
   adjusted_profit_stored: number;
+  ticker: string;
 }
 
 export interface SaleIntent {
   trx_id?: string;
-  custom_id: string; 
-  purchase_trx_id: string | null;
-  client_name: string;
-  ticker: string;
-  date: string;
-  sale_qty: number;
-  rate: number;
   user_id: string;
-  profit_stored: number;
+  purchase_trx_id: string | null;
+  date: string;
+  rate: number;
+  sale_qty: number;
   comments: string;
   long_term: boolean;
+  custom_id: string;
+  client_name: string;
+  profit_stored: number;
   client_id: string;
   adjusted_profit_stored: number;
+  ticker: string;
 }
 
 // ==========================================
@@ -58,61 +58,138 @@ export interface SaleIntent {
 // ==========================================
 
 export class TransactionEditor {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(private supabase: SupabaseClient) { }
 
   private generateUUID(): string {
     return crypto.randomUUID();
   }
 
+  /**
+   * CORE LOGIC: Reprocesses the ledger based on specific impact dates.
+   * * LOGIC:
+   * 1. Sale Impact: Fetch Sales >= Date. Find their linked purchases. Fetch Purchases >= Earliest Linked Date.
+   * 2. Purchase Impact: Fetch Purchases >= Date. Find Sales linked to ANY of those purchases.
+   */
   private async reprocessLedger(
     clientName: string,
     ticker: string,
-    impactDate: string,
-    overrides?: Map<string, SaleIntent>
+    impact: { saleImpactDate?: string | Date; purchaseImpactDate?: string | Date },
+    saleOverrides?: Map<string, SaleIntent>,
+    purchaseOverrides?: Map<string, Purchase>
   ) {
+    let rawPurchases: any[] = [];
+    let rawSales: any[] = [];
+
     // ---------------------------------------------------------
-    // A. FETCH DATA
+    // A. FETCH DATA (Branching Logic)
     // ---------------------------------------------------------
-    
-    // FETCH PURCHASES
-    const { data: rawPurchases, error: pError } = await this.supabase
-      .from('purchases')
-      .select('*, clients(client_id)') // Use Left Join to be safe
-      .eq('client_name', clientName)
-      .eq('ticker', ticker)
-      .or(`date.gte.${impactDate},balance_qty.gt.0`)
-      .order('date', { ascending: true });
 
-    if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+    if (impact.saleImpactDate) {
+        // === BRANCH 1: SALE EDIT LOGIC ===
+        // "Find all sales after the salesImpactDate. Find earliest purchase that these sales refer to."
+        
+        // 1. Fetch Target Sales
+        const { data: sales, error: sError } = await this.supabase
+            .from('sales')
+            .select('*, purchases!inner(date, ticker)')
+            .eq('client_name', clientName)
+            .eq('purchases.ticker', ticker)
+            .gte('date', impact.saleImpactDate)
+            .order('date', { ascending: true });
 
-    // FETCH SALES
-    // FIX: Join purchases!inner to filter by ticker and get client_id via purchase path
-    const { data: rawSales, error: sError } = await this.supabase
-      .from('sales')
-      .select('*, purchases!inner(date, ticker, clients(client_id))') 
-      .eq('client_name', clientName)
-      .eq('purchases.ticker', ticker) // Filter via the joined table
-      .gte('date', impactDate)
-      .order('date', { ascending: true });
+        if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
+        rawSales = sales || [];
 
-    if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
+        // 2. Find Earliest Linked Purchase Date
+        // We look at all the purchases these sales consumed.
+        let earliestPurchaseDate = new Date().toISOString(); 
+        let hasLinkedPurchases = false;
+
+        rawSales.forEach(s => {
+            if (s.purchases?.date) {
+                hasLinkedPurchases = true;
+                if (new Date(s.purchases.date) < new Date(earliestPurchaseDate)) {
+                    earliestPurchaseDate = s.purchases.date;
+                }
+            }
+        });
+
+        // If no sales exist or they aren't linked, fallback to the saleImpactDate itself
+        const purchaseFetchDate = hasLinkedPurchases ? earliestPurchaseDate : impact.saleImpactDate;
+
+        // 3. List all purchases after that date (OR bal >= 0)
+        const { data: purchases, error: pError } = await this.supabase
+            .from('purchases')
+            .select('*')
+            .eq('client_name', clientName)
+            .eq('ticker', ticker)
+            .gte('date', purchaseFetchDate)
+            .order('date', { ascending: true });
+
+        if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+        rawPurchases = purchases || [];
+
+    } else if (impact.purchaseImpactDate) {
+        // === BRANCH 2: PURCHASE EDIT LOGIC ===
+        // "Find all purchases after that date. Then find all sales linked to these purchases."
+
+        // 1. Fetch Target Purchases
+        const { data: purchases, error: pError } = await this.supabase
+            .from('purchases')
+            .select('*')
+            .eq('client_name', clientName)
+            .eq('ticker', ticker)
+            .gte('date', impact.purchaseImpactDate)
+            .order('date', { ascending: true });
+
+        if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+        rawPurchases = purchases || [];
+
+        // 2. Identify all Sale IDs linked to these purchases
+        // We extract the IDs from the authoritative 'sale_ids' array on the purchase records
+        const linkedSaleIds = new Set<string>();
+        (rawPurchases || []).forEach((p: any) => {
+             if (p.sale_ids && Array.isArray(p.sale_ids)) {
+                 p.sale_ids.forEach((id: string) => linkedSaleIds.add(id));
+             }
+        });
+
+        if (linkedSaleIds.size > 0) {
+            // 3. Fetch Sales using the specific IDs found in the purchases
+            const { data: sales, error: sError } = await this.supabase
+                .from('sales')
+                .select('*, purchases!inner(date, ticker)')
+                .eq('client_name', clientName)
+                .in('trx_id', Array.from(linkedSaleIds))
+                .order('date', { ascending: true });
+
+            if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
+            rawSales = sales || [];
+        }
+    }
 
     // ---------------------------------------------------------
     // B. MAP DB TO INTERFACES
     // ---------------------------------------------------------
 
-    let purchases: Purchase[] = (rawPurchases || []).map((p: any) => ({
+    let purchases: Purchase[] = rawPurchases.map((p: any) => ({
       ...p,
-      client_id: p.client_id || p.clients?.client_id,
       sale_ids: p.sale_ids || [],
       balance_qty: Number(p.balance_qty)
     }));
 
-    const salesRows: Sale[] = (rawSales || []).map((s: any) => ({
+    if (purchaseOverrides) {
+        purchases = purchases.map(p => {
+            if (purchaseOverrides.has(p.trx_id)) {
+                // Merge DB data with Override data
+                return { ...p, ...purchaseOverrides.get(p.trx_id)! };
+            }
+            return p;
+        });
+    }
+
+    const salesRows: Sale[] = rawSales.map((s: any) => ({
       ...s,
-      // FIX: Access nested client_id via purchase if direct link is missing
-      client_id: s.client_id || s.purchases?.clients?.client_id,
-      // FIX: Map ticker from purchase
       ticker: s.purchases?.ticker || ticker,
       long_term: s.purchases?.date ? isLongTerm(s.purchases.date, s.date) : false
     }));
@@ -120,16 +197,16 @@ export class TransactionEditor {
     // ---------------------------------------------------------
     // C. UNLINK STEP
     // ---------------------------------------------------------
-    
+
     const customIdsToReprocess = new Set<string>();
-    
+
     salesRows.forEach(s => customIdsToReprocess.add(s.custom_id));
-    if (overrides) {
-        for (const cid of overrides.keys()) customIdsToReprocess.add(cid);
+    if (saleOverrides) {
+      for (const cid of saleOverrides.keys()) customIdsToReprocess.add(cid);
     }
 
     const salesTrxIdsToUnlink = new Set(
-        salesRows.filter(s => customIdsToReprocess.has(s.custom_id)).map(s => s.trx_id)
+      salesRows.filter(s => customIdsToReprocess.has(s.custom_id)).map(s => s.trx_id)
     );
 
     purchases = purchases.map(p => {
@@ -153,27 +230,27 @@ export class TransactionEditor {
     const salesOrdersMap = new Map<string, SaleIntent>();
 
     salesRows.forEach(split => {
-      if (overrides?.has(split.custom_id)) return;
+      if (saleOverrides?.has(split.custom_id)) return;
 
       if (!salesOrdersMap.has(split.custom_id)) {
         salesOrdersMap.set(split.custom_id, {
           ...split,
-          sale_qty: 0, 
-          profit_stored: 0, 
-          adjusted_profit_stored: 0 
+          sale_qty: 0,
+          profit_stored: 0,
+          adjusted_profit_stored: 0
         });
       }
       const order = salesOrdersMap.get(split.custom_id)!;
       order.sale_qty += split.sale_qty;
     });
 
-    if (overrides) {
-        for (const [cid, intent] of overrides.entries()) {
-            salesOrdersMap.set(cid, intent);
-        }
+    if (saleOverrides) {
+      for (const [cid, intent] of saleOverrides.entries()) {
+        salesOrdersMap.set(cid, intent);
+      }
     }
 
-    const sortedOrders = Array.from(salesOrdersMap.values()).sort((a, b) => 
+    const sortedOrders = Array.from(salesOrdersMap.values()).sort((a, b) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
@@ -181,33 +258,52 @@ export class TransactionEditor {
     // E. REMAP STEP (FIFO Execution)
     // ---------------------------------------------------------
     const salesToInsert: Sale[] = [];
-    const purchasesToUpdate = new Map<string, Purchase>(); 
+    const purchasesToUpdate = new Map<string, Purchase>();
+
+    // This ensures that if we edited a purchase Qty but NO sales were triggered/changed,
+    // the purchase update is still saved to the DB.
+    if (purchaseOverrides) {
+        for (const [id, p] of purchaseOverrides.entries()) {
+            purchasesToUpdate.set(id, p);
+        }
+    }
+
+    // Fetch Grandfathered Rate once (assuming all same ticker in this batch)
+    const cutoffPrice = await getGrandfatheredRate(this.supabase, ticker);
 
     for (const order of sortedOrders) {
       let qtyRemaining = order.sale_qty;
 
-      const eligiblePurchases = purchases.filter(p => 
+      const eligiblePurchases = purchases.filter(p =>
         (p.balance_qty > 0) && (new Date(p.date) <= new Date(order.date))
       );
 
       const totalAvailable = eligiblePurchases.reduce((sum, p) => sum + p.balance_qty, 0);
       if (totalAvailable < qtyRemaining) {
-         throw new Error(`Insufficient balance for Sale ${order.custom_id}. Needed ${qtyRemaining}, Found ${totalAvailable}`);
+        throw new Error(`Insufficient balance for Sale ${order.custom_id}. Needed ${qtyRemaining}, Found ${totalAvailable}`);
       }
 
       for (const p of eligiblePurchases) {
         if (qtyRemaining <= 0) break;
 
         const take = Math.min(p.balance_qty, qtyRemaining);
-        
+
         p.balance_qty -= take;
-        
+
         const newSplitId = this.generateUUID();
         p.sale_ids.push(newSplitId);
-        
+
         purchasesToUpdate.set(p.trx_id, { ...p });
 
-        const profit = (order.rate - p.rate) * take;
+        // Calculate both Standard and Adjusted Profit
+        const { profit, adjusted_profit } = calculateProfitMetrics(
+          p.rate,         // Buy Price
+          p.date,         // Buy Date
+          order.rate,     // Sale Price
+          cutoffPrice,    // Grandfathered Rate
+          take            // Qty
+        );
+
         const isLT = isLongTerm(p.date, order.date);
 
         salesToInsert.push({
@@ -220,7 +316,7 @@ export class TransactionEditor {
           sale_qty: take,
           rate: order.rate,
           profit_stored: profit,
-          adjusted_profit_stored: profit, 
+          adjusted_profit_stored: adjusted_profit,
           user_id: order.user_id,
           comments: order.comments,
           long_term: isLT,
@@ -250,179 +346,305 @@ export class TransactionEditor {
   // ==========================================
 
   async editPurchaseRate(trx_id: string, newRate: number) {
-    const { error } = await this.supabase
+    // 1. Fetch the full Purchase record
+    const { data: purchase, error: pError } = await this.supabase
       .from('purchases')
-      .update({ rate: newRate })
-      .eq('trx_id', trx_id);
-    
-    if (error) throw error;
-
-    const { data: linkedSales } = await this.supabase
-      .from('sales')
       .select('*')
-      .eq('purchase_trx_id', trx_id);
+      .eq('trx_id', trx_id)
+      .single();
 
-    if (linkedSales && linkedSales.length > 0) {
-      for (const sale of linkedSales) {
-        // Recalculate based on new base rate
-        const newProfit = (sale.rate - newRate) * sale.sale_qty; 
-        await this.supabase
-          .from('sales')
-          .update({ 
-            profit_stored: newProfit, 
-            adjusted_profit_stored: newProfit 
-          })
-          .eq('trx_id', sale.trx_id);
+    if (pError || !purchase) throw new Error("Purchase record not found.");
+
+    // Fetch grandfathered rate once using the purchase ticker
+    const cutoffPrice = await getGrandfatheredRate(this.supabase, purchase.ticker);
+
+    const salesToUpdate: any[] = [];
+
+    // 2. Fetch only the sales linked via the purchase's sale_ids column
+    if (purchase.sale_ids && purchase.sale_ids.length > 0) {
+      const { data: linkedSales } = await this.supabase
+        .from('sales')
+        .select('*')
+        .in('trx_id', purchase.sale_ids);
+
+      if (linkedSales && linkedSales.length > 0) {
+        // 3. Recalculate profit for each linked sale
+        for (const sale of linkedSales) {
+
+          // Calculate both Standard and Adjusted Profit
+          const { profit, adjusted_profit } = calculateProfitMetrics(
+            newRate,            // The NEW Purchase Rate
+            purchase.date,      // Purchase Date (Required for < 2018 check)
+            sale.rate,          // Sale Rate
+            cutoffPrice,        // The Grandfathered/Cutoff Rate
+            sale.sale_qty       // Quantity
+          );
+
+          salesToUpdate.push({
+            ...sale,
+            profit_stored: profit,
+            adjusted_profit_stored: adjusted_profit
+          });
+        }
       }
     }
+
+    // 4. Construct Payload
+    const purchasesToUpdate = [{
+      ...purchase,
+      rate: newRate
+    }];
+
+    const payload = {
+      purchases_to_update: purchasesToUpdate,
+      sales_to_update: salesToUpdate.length > 0 ? salesToUpdate : undefined
+    };
+
+    // 5. Atomic Commit
+    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
+    if (error) throw new Error(`Failed to update rate and recalculate sales: ${error.message}`);
   }
 
   async editSaleRate(custom_id: string, newRate: number) {
+    // 1. Fetch splits with necessary purchase details (date & ticker needed for calc)
     const { data: splits } = await this.supabase
       .from('sales')
-      .select('*, purchases(rate)')
+      .select('*, purchases(rate, date, ticker)')
       .eq('custom_id', custom_id);
-    
-    if (!splits) return;
 
+    if (!splits || splits.length === 0) return;
+
+    // 2. Fetch Grandfathered Rate (once for the entire batch)
+    // We assume all splits in a custom_id belong to the same ticker
+    const ticker = splits[0].purchases?.ticker;
+    const cutoffPrice = ticker ? await getGrandfatheredRate(this.supabase, ticker) : null;
+
+    const salesToUpdate: any[] = [];
+
+    // 3. Recalculate Logic
     for (const split of splits) {
+      if (!split.purchases) continue; // Safety check
+
       const purchaseRate = split.purchases.rate;
-      const newProfit = (newRate - purchaseRate) * split.sale_qty;
-      
-      await this.supabase
-        .from('sales')
-        .update({ 
-          rate: newRate, 
-          profit_stored: newProfit, 
-          adjusted_profit_stored: newProfit 
-        })
-        .eq('trx_id', split.trx_id);
+      const purchaseDate = split.purchases.date;
+
+      // Calculate both Standard and Adjusted Profit
+      const { profit, adjusted_profit } = calculateProfitMetrics(
+        purchaseRate,   // Original Buy Price
+        purchaseDate,   // Original Buy Date
+        newRate,        // NEW Sale Price
+        cutoffPrice,    // Grandfathered Rate
+        split.sale_qty  // Quantity
+      );
+
+      salesToUpdate.push({
+        ...split,
+        rate: newRate,
+        profit_stored: profit,
+        adjusted_profit_stored: adjusted_profit
+      });
     }
-  }
 
-  async editSaleDate(custom_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
-    // FIX: Route through purchases to get client_id if needed
-    const { data: existing } = await this.supabase
-        .from('sales')
-        .select('*, purchases!inner(clients(client_id))')
-        .eq('custom_id', custom_id)
-        .limit(1)
-        .single();
-    
-    if(!existing) throw new Error("Sale not found");
-
-    const { data: allSplits } = await this.supabase.from('sales').select('sale_qty').eq('custom_id', custom_id);
-    const totalQty = allSplits?.reduce((acc, s) => acc + s.sale_qty, 0) || 0;
-
-    const intent: SaleIntent = {
-        custom_id: custom_id,
-        purchase_trx_id: null,
-        client_name: clientName,
-        ticker: ticker,
-        date: newDate, 
-        sale_qty: totalQty,
-        rate: existing.rate,
-        user_id: existing.user_id,
-        profit_stored: 0,
-        comments: existing.comments,
-        long_term: false, 
-        // FIX: Access nested client_id
-        client_id: existing.client_id || existing.purchases?.clients?.client_id,
-        adjusted_profit_stored: 0
+    // 4. Atomic Commit
+    const payload = {
+      sales_to_update: salesToUpdate
     };
 
-    const overrides = new Map<string, SaleIntent>();
-    overrides.set(custom_id, intent);
+    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
+    if (error) throw new Error(`Failed to update sale rate: ${error.message}`);
+  }
 
+  /**
+   * 3. Edit Sale Date
+   * Updates the date of a sale event (identified by custom_id).
+   * Since changing the date can affect FIFO order (Long Term/Short Term status)
+   * and which purchase lots are consumed, this triggers a full ledger re-process
+   * for the impacted period.
+   */
+  async editSaleDate(custom_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
+    // 1. Fetch one representative row for the sale to get metadata (rate, user_id, comments, client_id)
+    // We do not need deep joins because client_id is native to the sales table.
+    const { data: existing } = await this.supabase
+      .from('sales')
+      .select('*')
+      .eq('custom_id', custom_id)
+      .limit(1)
+      .single();
+
+    if (!existing) throw new Error("Sale not found");
+
+    // 2. Calculate the Total Quantity for this Sale Event
+    // A single sale might be split across multiple rows; we need the sum to recreate the intent.
+    const { data: allSplits } = await this.supabase
+      .from('sales')
+      .select('sale_qty')
+      .eq('custom_id', custom_id);
+
+    const totalQty = allSplits?.reduce((acc, s) => acc + s.sale_qty, 0) || 0;
+
+    // 3. Create the 'Intent' Object
+    // This represents the "New State" of the sale. ReprocessLedger will use this 
+    // to calculate how this single intent splits into new database rows based on available purchases.
+    const intent: SaleIntent = {
+      user_id: existing.user_id,
+      purchase_trx_id: null, // Will be recalculated by FIFO logic
+      date: newDate,
+      rate: existing.rate,
+      sale_qty: totalQty,
+      comments: existing.comments,
+      long_term: false,      // Will be recalculated based on new date
+      custom_id: custom_id,
+      client_name: clientName,
+      profit_stored: 0,      // Will be recalculated
+      client_id: existing.client_id, // Direct access from sales table
+      adjusted_profit_stored: 0,
+      ticker: ticker
+    };
+
+    // 4. Trigger Reprocessing
+    // We override the existing sale records for this custom_id with our new Intent.
+    // The ledger logic handles deleting the old rows and inserting the new ones atomically.
+    const saleOverrides = new Map<string, SaleIntent>();
+    saleOverrides.set(custom_id, intent);
+
+    // Determine the "Impact Date": the earlier of the Old Date or New Date.
+    // We must re-calculate balances starting from that point to ensure data integrity.
     const impactDate = new Date(newDate) < new Date(originalDate) ? newDate : originalDate;
-    await this.reprocessLedger(clientName, ticker, impactDate, overrides);
+    
+    await this.reprocessLedger(clientName, ticker, { saleImpactDate: impactDate }, saleOverrides, undefined);
   }
 
   async editPurchaseDate(trx_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
-    await this.supabase.from('purchases').update({ date: newDate }).eq('trx_id', trx_id);
+    // 1. Fetch the full Purchase record
+    const { data: p, error } = await this.supabase
+      .from('purchases')
+      .select('*')
+      .eq('trx_id', trx_id)
+      .single();
 
+    if (error || !p) throw new Error("Purchase record not found.");
+
+    // 2. Create Override Object (In-Memory Only)
+    // We update the date on the object, but we DO NOT commit to DB yet.
+    // reprocessLedger will handle the commit as part of the atomic transaction.
+    const modifiedPurchase: Purchase = {
+        ...p,
+        date: newDate,
+        // Ensure arrays/types are correct for the interface
+        sale_ids: p.sale_ids || [], 
+        client_id: p.client_id,
+        balance_qty: Number(p.balance_qty)
+    };
+
+    const purchaseOverrides = new Map<string, Purchase>();
+    purchaseOverrides.set(trx_id, modifiedPurchase);
+
+    // 3. Calculate Impact Date: Smaller of (Old Date, New Date)
+    // We need to reprocess from the earlier of the two dates to ensure FIFO integrity.
     const impactDate = new Date(newDate) < new Date(originalDate) ? newDate : originalDate;
-    await this.reprocessLedger(clientName, ticker, impactDate);
+
+    // 4. Trigger Reprocess with Overrides
+    // Pass 'purchaseOverrides' as the 5th argument.
+    await this.reprocessLedger(
+        clientName, 
+        ticker, 
+        { purchaseImpactDate: impactDate }, 
+        undefined, // No sale overrides
+        purchaseOverrides // Purchase overrides
+    );
   }
 
   async editPurchaseQty(trx_id: string, newQty: number, clientName: string, ticker: string, originalDate: string) {
-    // 1. Get the current purchase state
+    // 1. Get the current purchase state (Fetch '*' because we need the full object for the override)
     const { data: p, error } = await this.supabase
-        .from('purchases')
-        .select('purchase_qty, balance_qty')
-        .eq('trx_id', trx_id)
-        .single();
-    
+      .from('purchases')
+      .select('*') 
+      .eq('trx_id', trx_id)
+      .single();
+
     if (error || !p) throw new Error("Purchase record not found.");
 
-    // 2. Fetch Cumulative Balance for this Ticker/Client
-    // We need to ensure that reducing this batch's size doesn't make the entire portfolio insolvent.
+    // 2. Fetch Cumulative Balance (Validation)
     const { data: allHoldings, error: hError } = await this.supabase
-        .from('purchases')
-        .select('balance_qty')
-        .eq('client_name', clientName)
-        .eq('ticker', ticker)
-        .gt('balance_qty', 0);
+      .from('purchases')
+      .select('balance_qty')
+      .eq('client_name', clientName)
+      .eq('ticker', ticker)
+      .gt('balance_qty', 0);
 
     if (hError) throw new Error("Failed to validate cumulative balance.");
 
     const totalPortfolioBalance = allHoldings.reduce((sum, h) => sum + Number(h.balance_qty), 0);
-    
-    // 3. Calculate Delta
-    // If I had 10 (Sold 2, Bal 8) and change to 7. 
-    // Old Qty: 10. New Qty: 7. Delta: -3.
-    // Total Portfolio Bal: 8 (assuming only this lot). 
-    // New Total Bal = 8 + (-3) = 5. (Valid, >= 0).
-    const delta = newQty - p.purchase_qty;
+
+    // 3. Calculate Delta and Validate
+    const currentQty = Number(p.purchase_qty); // Ensure number
+    const currentBal = Number(p.balance_qty);  // Ensure number
+    const delta = newQty - currentQty;
 
     if (totalPortfolioBalance + delta < 0) {
-         throw new Error(`Cannot reduce quantity. Needed reduction: ${Math.abs(delta)}, Available Portfolio Balance: ${totalPortfolioBalance}`);
+      throw new Error(`Cannot reduce quantity. Needed reduction: ${Math.abs(delta)}, Available Portfolio Balance: ${totalPortfolioBalance}`);
     }
 
-    // 4. Update the Purchase
-    // We adjust balance by the same delta. ReprocessLedger will handle shifting sales if this lot runs dry.
-    const newBalance = p.balance_qty + delta;
-    
-    await this.supabase
-        .from('purchases')
-        .update({ purchase_qty: newQty, balance_qty: newBalance })
-        .eq('trx_id', trx_id);
+    // 4. Create Override Object (Do NOT update DB yet)
+    // We calculate the new balance relative to the current state. 
+    // reprocessLedger will add back any "unlinked" sales to this balance during processing.
+    const newBalance = currentBal + delta;
 
-    // 5. Reprocess
-    await this.reprocessLedger(clientName, ticker, originalDate);
+    const modifiedPurchase: Purchase = {
+        ...p,
+        purchase_qty: newQty,
+        balance_qty: newBalance,
+        // Ensure arrays/types are correct for the interface
+        sale_ids: p.sale_ids || [], 
+        client_id: p.client_id
+    };
+
+    const purchaseOverrides = new Map<string, Purchase>();
+    purchaseOverrides.set(trx_id, modifiedPurchase);
+
+    // 5. Reprocess with Overrides
+    // Pass the overrides map as the 5th argument
+    await this.reprocessLedger(
+        clientName, 
+        ticker, 
+        { purchaseImpactDate: originalDate }, 
+        undefined, // No sale overrides
+        purchaseOverrides // Purchase overrides
+    );
   }
 
   async editSaleQty(custom_id: string, newQty: number, clientName: string, ticker: string, date: string) {
-    // FIX: Route through purchases to get client_id
+    // 1. Fetch sales details
+    // Optimization: client_id is natively on sales table
     const { data: existing } = await this.supabase
-        .from('sales')
-        .select('*, purchases!inner(clients(client_id))')
-        .eq('custom_id', custom_id)
-        .limit(1)
-        .single();
-    
-    if(!existing) throw new Error("Sale not found");
+      .from('sales')
+      .select('*')
+      .eq('custom_id', custom_id)
+      .limit(1)
+      .single();
+
+    if (!existing) throw new Error("Sale not found");
 
     const intent: SaleIntent = {
-        custom_id: custom_id,
-        purchase_trx_id: null,
-        client_name: clientName,
-        ticker: ticker,
-        date: existing.date,
-        sale_qty: newQty, 
-        rate: existing.rate,
-        user_id: existing.user_id,
-        profit_stored: 0,
-        comments: existing.comments,
-        long_term: false,
-        // FIX: Access nested client_id
-        client_id: existing.client_id || existing.purchases?.clients?.client_id,
-        adjusted_profit_stored: 0
+      custom_id: custom_id,
+      purchase_trx_id: null,
+      client_name: clientName,
+      ticker: ticker,
+      date: existing.date,
+      sale_qty: newQty,
+      rate: existing.rate,
+      user_id: existing.user_id,
+      profit_stored: 0,
+      comments: existing.comments,
+      long_term: false,
+      client_id: existing.client_id,
+      adjusted_profit_stored: 0
     };
 
-    const overrides = new Map<string, SaleIntent>();
-    overrides.set(custom_id, intent);
+    const saleOverrides = new Map<string, SaleIntent>();
+    saleOverrides.set(custom_id, intent);
 
-    await this.reprocessLedger(clientName, ticker, date, overrides);
+    // Trigger Sale Impact Logic
+    await this.reprocessLedger(clientName, ticker, { saleImpactDate: date }, saleOverrides);
   }
 }
