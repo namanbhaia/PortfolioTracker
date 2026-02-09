@@ -46,7 +46,7 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
                     id, 
                     newQty, 
                     original.client_name, 
-                    original.ticker, 
+                    data.ticker, 
                     original.date
                 );
             }
@@ -58,7 +58,7 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
                     newDate, 
                     original.date, 
                     original.client_name, 
-                    original.ticker
+                    data.ticker
                 );
             }
 
@@ -80,6 +80,14 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
                 await editor.editSaleRate(customId, newRate);
             }
 
+            // Fetch all splits to calculate the current TOTAL quantity for this sale event
+            const { data: splits } = await supabase
+                .from('sales')
+                .select('sale_qty')
+                .eq('custom_id', customId);
+
+            const currentTotalQty = splits?.reduce((sum, s) => sum + s.sale_qty, 0) || 0;
+
             // B. Quantity Change
             // Note: original.qty might be the split qty. The editor expects the TOTAL sale qty for the batch.
             // However, the form usually edits the specific record. 
@@ -87,12 +95,12 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
             // If your UI edits just this split, the logic below assumes 'newQty' is the intended TOTAL for the sale batch
             // OR we assume the user is updating the specific split and we need to aggregate.
             // *Based on transaction-editor.ts editSaleQty implementation*, it overrides the whole batch with newQty.
-            if (newQty !== original.sale_qty) {
+            if (newQty !== currentTotalQty) {
                  await editor.editSaleQty(
                      customId, 
                      newQty, 
                      original.client_name, 
-                     original.ticker, 
+                     data.ticker, 
                      original.date
                  );
             }
@@ -104,7 +112,7 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
                     newDate, 
                     original.date, 
                     original.client_name, 
-                    original.ticker
+                    data.ticker
                 );
             }
 
