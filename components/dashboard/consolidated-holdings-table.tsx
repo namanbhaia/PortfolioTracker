@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import TickerCell from '@/components/ui/ticker-cell';
 
 type SortConfig = {
     key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent';
@@ -78,10 +79,7 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
             <tbody className="divide-y divide-slate-100">
                 {sortedData.map((row) => (
                     <tr key={row.ticker} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-3 py-3">
-                            <div className="font-bold text-blue-700">{row.ticker}</div>
-                            <div className="text-[10px] text-gray-400">{row.isin}</div>
-                        </td>
+                        <TickerCell ticker={row.ticker} isin={row.isin} />
                         <td className="px-4 py-4 font-medium text-slate-700">{row.stock_name}</td>
                         <td className="px-4 py-4 text-right font-mono">{row.total_qty}</td>
                         <td className="px-4 py-4 text-right font-mono">₹{row.avg_purchase_price.toFixed(2)}</td>

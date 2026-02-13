@@ -6,6 +6,7 @@ import { searchTransactions } from '@/lib/actions/search-transactions';
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from '@/components/ui/transaction-table';
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
+import TickerCell from '@/components/ui/ticker-cell';
 import EditTransactionSimple from '@/components/ui/edit-transaction-sheet';
 import HoldingsFilter from '@/components/ui/holdings-filters'; // Import the new filter [cite: holdings-filters.tsx]
 
@@ -25,23 +26,23 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     const hasParams = Object.keys(resolvedParams).some(k => resolvedParams[k]);
     if (hasParams) {
         const formData = new FormData();
-        
+
         // 2. Map 'client_ids' from filter URL to 'client_name' for searchTransactions backend
         if (resolvedParams.client_ids && clients) {
             const ids = resolvedParams.client_ids.split(',');
             const names = clients
                 .filter(c => ids.includes(c.client_id))
                 .map(c => c.client_name);
-            
+
             // Append names so the existing search action finds them
             names.forEach(n => formData.append('client_name', n));
         }
 
         // Pass standard filters directly
         ['trx_id', 'ticker', 'start_date', 'end_date'].forEach(k => {
-             if (resolvedParams[k]) formData.append(k, resolvedParams[k]);
+            if (resolvedParams[k]) formData.append(k, resolvedParams[k]);
         });
-        
+
         const result = await searchTransactions(formData);
         if (result.error) searchError = result.error;
         else { purchases = result.purchases || []; sales = result.sales || []; }
@@ -56,15 +57,15 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 </div>
             </header>
 
-           {/* 3. NEW FILTER SECTION (Row Layout) */}
+            {/* 3. NEW FILTER SECTION (Row Layout) */}
             <div className="flex flex-col xl:flex-row items-center gap-4 w-full">
-                
+
                 {/* Left: The Main Filtering Bar (Flexible Width) */}
                 <div className="flex-grow w-full xl:w-auto">
-                    <HoldingsFilter 
+                    <HoldingsFilter
                         availableClients={clients || []}
-                        showLongTermToggle={false} 
-                        showBalanceToggle={false} 
+                        showLongTermToggle={false}
+                        showBalanceToggle={false}
                     />
                 </div>
 
@@ -74,14 +75,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 {/* Right: Direct UUID Lookup (Fixed Width) */}
                 <div className="w-full md:w-96 shrink-0">
                     <form className="relative w-full">
-                        <Input 
-                            name="trx_id" 
-                            placeholder="Direct UUID Lookup..." 
-                            defaultValue={resolvedParams.trx_id || ''} 
+                        <Input
+                            name="trx_id"
+                            placeholder="Direct UUID Lookup..."
+                            defaultValue={resolvedParams.trx_id || ''}
                             className="pr-10 pl-4 bg-white border-slate-200 shadow-sm rounded-xl h-[58px]" // Matches height of filter bar
                         />
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-2"
                         >
                             <Search size={18} />
@@ -121,17 +122,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                 <TableBody>
                                     {purchases.map(row => (
                                         <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-indigo-50/20' : 'text-slate-400'}`}>
-                                             <TableCell className="px-3 py-3">
+                                            <TableCell className="px-3 py-3">
                                                 <TrxIdCell id={row.trx_id} />
                                             </TableCell>
                                             <TableCell className="p-3">
                                                 <div className="font-semibold text-gray-900">{row.client_name}</div>
                                                 <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
                                             </TableCell>
-                                            <TableCell className="px-3 py-3">
-                                                <div className="text-blue-700">{row.ticker}</div>
-                                                <div className="text-[10px] text-gray-400">{row.isin}</div>
-                                            </TableCell>
+                                            <TickerCell ticker={row.ticker} isin={row.isin} />
                                             <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
                                             <TableCell className="px-3 py-3 whitespace-nowrap">
                                                 {new Date(row.date).toLocaleDateString('en-IN')}
@@ -183,7 +181,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         const plPercent = (Number(row.profit) / (Number(row.purchase_rate) * Number(row.sale_qty))) * 100;
                                         return (
                                             <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-rose-50/20' : 'text-slate-400'}`}>
-                                                  <TableCell className="px-3 py-3">
+                                                <TableCell className="px-3 py-3">
                                                     <TrxIdCell id={row.trx_id} />
                                                 </TableCell>
                                                 <TableCell className="px-4 py-3 font-mono text-[10px]">{row.custom_id || '--'}</TableCell>
@@ -191,10 +189,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                     <div className="font-semibold text-gray-900">{row.client_name}</div>
                                                     <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
                                                 </TableCell>
-                                                <TableCell className="px-3 py-3">
-                                                    <div className="text-blue-700">{row.ticker}</div>
-                                                    <div className="text-[10px] text-gray-400">{row.isin}</div>
-                                                </TableCell>
+                                                <TickerCell ticker={row.ticker} isin={row.isin} />
                                                 <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
                                                 <TableCell className="px-4 py-3"><TrxIdCell id={row.purchase_trx_id} /></TableCell>
                                                 <TableCell className="px-4 py-3 text-xs">{new Date(row.sale_date).toLocaleDateString('en-IN')}</TableCell>

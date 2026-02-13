@@ -1,6 +1,8 @@
 ﻿import Link from 'next/link';
+
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
+import TickerCell from '@/components/ui/ticker-cell';
 
 // Define the valid sortable columns for internal component use
 type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'long_term';
@@ -97,10 +99,7 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                                 <div className="font-semibold text-gray-900">{row.client_name}</div>
                                 <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
                             </td>
-                            <td className="px-3 py-3">
-                                <div className="font-bold text-blue-700">{row.ticker}</div>
-                                <div className="text-[10px] text-gray-400">{row.isin}</div>
-                            </td>
+                            <TickerCell ticker={row.ticker} isin={row.isin} />
                             <td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
                             <td className="px-3 py-3 whitespace-nowrap">
                                 {new Date(row.purchase_date).toLocaleDateString('en-IN')}

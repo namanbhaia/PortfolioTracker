@@ -1,6 +1,8 @@
 import Link from "next/link";
+
 import TrxIdCell from "@/components/ui/trx-id-cell";
 import CommentCell from "@/components/ui/comment-cell";
+import TickerCell from "@/components/ui/ticker-cell";
 
 /**
  * @file components/dashboard/holdings-table.tsx
@@ -35,7 +37,7 @@ export default function HoldingsTable({ holdings, params }: HoldingsTableProps) 
 	 * @returns {string} - The URL search string for the sort action.
 	 */
 	const currentSort = params.sort;
-    const currentOrder = params.order;
+	const currentOrder = params.order;
 	const getSortLink = (field: SortField) => {
 		const newOrder = currentSort === field && currentOrder === "asc" ? "desc" : "asc";
 		return `?sort=${field}&order=${newOrder}`;
@@ -129,10 +131,7 @@ export default function HoldingsTable({ holdings, params }: HoldingsTableProps) 
 								</div>
 							</td>
 							{/* Ticker and ISIN */}
-							<td className="px-3 py-3">
-								<div className="font-bold text-blue-700">{row.ticker}</div>
-								<div className="text-[10px] text-gray-400">{row.isin}</div>
-							</td>
+							<TickerCell ticker={row.ticker} isin={row.isin} />
 							<td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
 							{/* Purchase Date */}
 							<td className="px-3 py-3 whitespace-nowrap">{new Date(row.date).toLocaleDateString("en-IN")}</td>
