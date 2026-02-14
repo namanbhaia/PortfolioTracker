@@ -203,9 +203,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                         </span>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className={`px-4 py-3 text-right ${Number(row.pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</TableCell>
-                                                <TableCell className={`px-4 py-3 text-right text-[10px] ${Number(row.pl_percent) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{plPercent.toFixed(1)}%</TableCell>
-                                                <TableCell className={`px-4 py-3 text-right ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.profit).toLocaleString()}</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right ${Number(row.pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.pl).toLocaleString()}</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right text-[10px] ${Number(row.pl_percentage) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{row.pl_percentage.toFixed(1)}%</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.adjusted_pl).toLocaleString()}</TableCell>
                                                 <TableCell className="px-3 py-3">
                                                     <CommentCell comment={row.comments} />
                                                 </TableCell>

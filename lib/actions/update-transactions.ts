@@ -11,7 +11,7 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
 
     const editor = new TransactionEditor(supabase);
     const table = type === 'purchase' ? 'purchases' : 'sales';
-    
+
     // 1. Fetch Original Record to compare changes and get context
     // We need client_name, ticker, and original dates for the re-process logic
     const { data: original, error: fetchError } = await supabase
@@ -41,12 +41,12 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
 
             // B. Quantity Change (Complex Validation)
             // Note: We check if newQty is different. 
-            if (newQty !== original.qty && newQty !== original.purchase_qty) {
+            if (newQty !== original.purchase_qty) {
                 await editor.editPurchaseQty(
-                    id, 
-                    newQty, 
-                    original.client_name, 
-                    data.ticker, 
+                    id,
+                    newQty,
+                    original.client_name,
+                    data.ticker,
                     original.date
                 );
             }
@@ -54,10 +54,10 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
             // C. Date Change (Reprocesses Ledger)
             if (newDate !== original.date) {
                 await editor.editPurchaseDate(
-                    id, 
-                    newDate, 
-                    original.date, 
-                    original.client_name, 
+                    id,
+                    newDate,
+                    original.date,
+                    original.client_name,
                     data.ticker
                 );
             }
@@ -96,22 +96,22 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
             // OR we assume the user is updating the specific split and we need to aggregate.
             // *Based on transaction-editor.ts editSaleQty implementation*, it overrides the whole batch with newQty.
             if (newQty !== currentTotalQty) {
-                 await editor.editSaleQty(
-                     customId, 
-                     newQty, 
-                     original.client_name, 
-                     data.ticker, 
-                     original.date
-                 );
+                await editor.editSaleQty(
+                    customId,
+                    newQty,
+                    original.client_name,
+                    data.ticker,
+                    original.date
+                );
             }
 
             // C. Date Change
             if (newDate !== original.date) {
                 await editor.editSaleDate(
-                    customId, 
-                    newDate, 
-                    original.date, 
-                    original.client_name, 
+                    customId,
+                    newDate,
+                    original.date,
+                    original.client_name,
                     data.ticker
                 );
             }
