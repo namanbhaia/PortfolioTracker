@@ -17,6 +17,7 @@ export interface Purchase {
   sale_ids: string[];
   client_id: string;
   balance_qty: number;
+  created_at: string;
 }
 
 export interface Sale {
@@ -34,6 +35,7 @@ export interface Sale {
   client_id: string;
   adjusted_profit_stored: number;
   ticker: string;
+  created_at: string;
 }
 
 export interface SaleIntent {
@@ -51,6 +53,7 @@ export interface SaleIntent {
   client_id: string;
   adjusted_profit_stored: number;
   ticker: string;
+  created_at: string;
 }
 
 // ==========================================
@@ -85,87 +88,91 @@ export class TransactionEditor {
     // ---------------------------------------------------------
 
     if (impact.saleImpactDate) {
-        // === BRANCH 1: SALE EDIT LOGIC ===
-        // "Find all sales after the salesImpactDate. Find earliest purchase that these sales refer to."
-        
-        // 1. Fetch Target Sales
+      // === BRANCH 1: SALE EDIT LOGIC ===
+      // "Find all sales after the salesImpactDate. Find earliest purchase that these sales refer to."
+
+      // 1. Fetch Target Sales
+      const { data: sales, error: sError } = await this.supabase
+        .from('sales')
+        .select('*, purchases!inner(date, ticker)')
+        .eq('client_name', clientName)
+        .eq('purchases.ticker', ticker)
+        .gte('date', impact.saleImpactDate)
+        .order('date', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
+      rawSales = sales || [];
+
+      // 2. Find Earliest Linked Purchase Date
+      // We look at all the purchases these sales consumed.
+      let earliestPurchaseDate = new Date().toISOString();
+      let hasLinkedPurchases = false;
+
+      rawSales.forEach(s => {
+        if (s.purchases?.date) {
+          hasLinkedPurchases = true;
+          if (new Date(s.purchases.date) < new Date(earliestPurchaseDate)) {
+            earliestPurchaseDate = s.purchases.date;
+          }
+        }
+      });
+
+      // If no sales exist or they aren't linked, fallback to the saleImpactDate itself
+      const purchaseFetchDate = hasLinkedPurchases ? earliestPurchaseDate : impact.saleImpactDate;
+
+      // 3. List all purchases after that date (OR bal >= 0)
+      const { data: purchases, error: pError } = await this.supabase
+        .from('purchases')
+        .select('*')
+        .eq('client_name', clientName)
+        .eq('ticker', ticker)
+        .gte('date', purchaseFetchDate)
+        .order('date', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+      rawPurchases = purchases || [];
+
+    } else if (impact.purchaseImpactDate) {
+      // === BRANCH 2: PURCHASE EDIT LOGIC ===
+      // "Find all purchases after that date. Then find all sales linked to these purchases."
+
+      // 1. Fetch Target Purchases
+      const { data: purchases, error: pError } = await this.supabase
+        .from('purchases')
+        .select('*')
+        .eq('client_name', clientName)
+        .eq('ticker', ticker)
+        .gte('date', impact.purchaseImpactDate)
+        .order('date', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+      rawPurchases = purchases || [];
+
+      // 2. Identify all Sale IDs linked to these purchases
+      // We extract the IDs from the authoritative 'sale_ids' array on the purchase records
+      const linkedSaleIds = new Set<string>();
+      (rawPurchases || []).forEach((p: any) => {
+        if (p.sale_ids && Array.isArray(p.sale_ids)) {
+          p.sale_ids.forEach((id: string) => linkedSaleIds.add(id));
+        }
+      });
+
+      if (linkedSaleIds.size > 0) {
+        // 3. Fetch Sales using the specific IDs found in the purchases
         const { data: sales, error: sError } = await this.supabase
-            .from('sales')
-            .select('*, purchases!inner(date, ticker)')
-            .eq('client_name', clientName)
-            .eq('purchases.ticker', ticker)
-            .gte('date', impact.saleImpactDate)
-            .order('date', { ascending: true });
+          .from('sales')
+          .select('*, purchases!inner(date, ticker)')
+          .eq('client_name', clientName)
+          .in('trx_id', Array.from(linkedSaleIds))
+          .order('date', { ascending: true })
+          .order('created_at', { ascending: true });
 
         if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
         rawSales = sales || [];
-
-        // 2. Find Earliest Linked Purchase Date
-        // We look at all the purchases these sales consumed.
-        let earliestPurchaseDate = new Date().toISOString(); 
-        let hasLinkedPurchases = false;
-
-        rawSales.forEach(s => {
-            if (s.purchases?.date) {
-                hasLinkedPurchases = true;
-                if (new Date(s.purchases.date) < new Date(earliestPurchaseDate)) {
-                    earliestPurchaseDate = s.purchases.date;
-                }
-            }
-        });
-
-        // If no sales exist or they aren't linked, fallback to the saleImpactDate itself
-        const purchaseFetchDate = hasLinkedPurchases ? earliestPurchaseDate : impact.saleImpactDate;
-
-        // 3. List all purchases after that date (OR bal >= 0)
-        const { data: purchases, error: pError } = await this.supabase
-            .from('purchases')
-            .select('*')
-            .eq('client_name', clientName)
-            .eq('ticker', ticker)
-            .gte('date', purchaseFetchDate)
-            .order('date', { ascending: true });
-
-        if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
-        rawPurchases = purchases || [];
-
-    } else if (impact.purchaseImpactDate) {
-        // === BRANCH 2: PURCHASE EDIT LOGIC ===
-        // "Find all purchases after that date. Then find all sales linked to these purchases."
-
-        // 1. Fetch Target Purchases
-        const { data: purchases, error: pError } = await this.supabase
-            .from('purchases')
-            .select('*')
-            .eq('client_name', clientName)
-            .eq('ticker', ticker)
-            .gte('date', impact.purchaseImpactDate)
-            .order('date', { ascending: true });
-
-        if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
-        rawPurchases = purchases || [];
-
-        // 2. Identify all Sale IDs linked to these purchases
-        // We extract the IDs from the authoritative 'sale_ids' array on the purchase records
-        const linkedSaleIds = new Set<string>();
-        (rawPurchases || []).forEach((p: any) => {
-             if (p.sale_ids && Array.isArray(p.sale_ids)) {
-                 p.sale_ids.forEach((id: string) => linkedSaleIds.add(id));
-             }
-        });
-
-        if (linkedSaleIds.size > 0) {
-            // 3. Fetch Sales using the specific IDs found in the purchases
-            const { data: sales, error: sError } = await this.supabase
-                .from('sales')
-                .select('*, purchases!inner(date, ticker)')
-                .eq('client_name', clientName)
-                .in('trx_id', Array.from(linkedSaleIds))
-                .order('date', { ascending: true });
-
-            if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
-            rawSales = sales || [];
-        }
+      }
     }
 
     // ---------------------------------------------------------
@@ -179,13 +186,20 @@ export class TransactionEditor {
     }));
 
     if (purchaseOverrides) {
-        purchases = purchases.map(p => {
-            if (purchaseOverrides.has(p.trx_id)) {
-                // Merge DB data with Override data
-                return { ...p, ...purchaseOverrides.get(p.trx_id)! };
-            }
-            return p;
-        });
+      purchases = purchases.map(p => {
+        if (purchaseOverrides.has(p.trx_id)) {
+          // Merge DB data with Override data
+          return { ...p, ...purchaseOverrides.get(p.trx_id)! };
+        }
+        return p;
+      });
+
+      // CRITICAL: Re-sort purchases because overrides might have changed dates
+      purchases.sort((a, b) => {
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+      });
     }
 
     const salesRows: Sale[] = rawSales.map((s: any) => ({
@@ -198,17 +212,33 @@ export class TransactionEditor {
     // C. UNLINK STEP
     // ---------------------------------------------------------
 
+    // 1. Identify which sales we are reprocessing (Existing DB rows + New Overrides)
     const customIdsToReprocess = new Set<string>();
+    const salesTrxIdsToUnlink = new Set<string>();
 
-    salesRows.forEach(s => customIdsToReprocess.add(s.custom_id));
+    salesRows.forEach(s => {
+      customIdsToReprocess.add(s.custom_id);
+      salesTrxIdsToUnlink.add(s.trx_id);
+    });
+
     if (saleOverrides) {
-      for (const cid of saleOverrides.keys()) customIdsToReprocess.add(cid);
+      for (const [cid, intent] of saleOverrides.entries()) {
+        customIdsToReprocess.add(cid);
+        if (intent.trx_id) salesTrxIdsToUnlink.add(intent.trx_id);
+      }
     }
 
-    const salesTrxIdsToUnlink = new Set(
-      salesRows.filter(s => customIdsToReprocess.has(s.custom_id)).map(s => s.trx_id)
-    );
+    // 2. Initialize Map to track modified purchases
+    const purchasesToUpdate = new Map<string, Purchase>();
 
+    // Pre-populate with overrides
+    if (purchaseOverrides) {
+      for (const [id, p] of purchaseOverrides.entries()) {
+        purchasesToUpdate.set(id, p);
+      }
+    }
+
+    // 3. Unlink Phase: Restore balance to purchases by removing linked sales
     purchases = purchases.map(p => {
       const currentSaleIds = p.sale_ids || [];
       const validSaleIds = currentSaleIds.filter(id => !salesTrxIdsToUnlink.has(id));
@@ -217,11 +247,18 @@ export class TransactionEditor {
         .filter(s => s.purchase_trx_id === p.trx_id && salesTrxIdsToUnlink.has(s.trx_id))
         .reduce((sum, s) => sum + s.sale_qty, 0);
 
-      return {
+      const updatedPurchase = {
         ...p,
         sale_ids: validSaleIds,
         balance_qty: p.balance_qty + restoredQty
       };
+
+      // CRITICAL: If we changed the balance or sale_ids, we MUST mark this purchase for update.
+      if (restoredQty > 0 || validSaleIds.length !== currentSaleIds.length) {
+        purchasesToUpdate.set(updatedPurchase.trx_id, updatedPurchase);
+      }
+
+      return updatedPurchase;
     });
 
     // ---------------------------------------------------------
@@ -250,23 +287,21 @@ export class TransactionEditor {
       }
     }
 
-    const sortedOrders = Array.from(salesOrdersMap.values()).sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const sortedOrders = Array.from(salesOrdersMap.values()).sort((a, b) => {
+      const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      // Use created_at if available in SaleIntent, default to 0
+      const aCreated = (a as any).created_at || 0;
+      const bCreated = (b as any).created_at || 0;
+      return new Date(aCreated).getTime() - new Date(bCreated).getTime();
+    });
 
     // ---------------------------------------------------------
     // E. REMAP STEP (FIFO Execution)
     // ---------------------------------------------------------
     const salesToInsert: Sale[] = [];
-    const purchasesToUpdate = new Map<string, Purchase>();
 
-    // This ensures that if we edited a purchase Qty but NO sales were triggered/changed,
-    // the purchase update is still saved to the DB.
-    if (purchaseOverrides) {
-        for (const [id, p] of purchaseOverrides.entries()) {
-            purchasesToUpdate.set(id, p);
-        }
-    }
+    // purchasesToUpdate is already active and tracking changes.
 
     // Fetch Grandfathered Rate once (assuming all same ticker in this batch)
     const cutoffPrice = await getGrandfatheredRate(this.supabase, ticker);
@@ -320,7 +355,8 @@ export class TransactionEditor {
           user_id: order.user_id,
           comments: order.comments,
           long_term: isLT,
-          client_id: order.client_id
+          client_id: order.client_id,
+          created_at: order.created_at,
         });
 
         qtyRemaining -= take;
@@ -331,7 +367,7 @@ export class TransactionEditor {
     // F. COMMIT
     // ---------------------------------------------------------
     const payload = {
-      sales_to_delete: Array.from(customIdsToReprocess),
+      sales_to_delete: Array.from(salesTrxIdsToUnlink),
       purchases_to_update: Array.from(purchasesToUpdate.values()),
       sales_to_insert: salesToInsert
     };
@@ -498,7 +534,8 @@ export class TransactionEditor {
       profit_stored: 0,      // Will be recalculated
       client_id: existing.client_id, // Direct access from sales table
       adjusted_profit_stored: 0,
-      ticker: ticker
+      ticker: ticker,
+      created_at: existing.created_at,
     };
 
     // 4. Trigger Reprocessing
@@ -510,7 +547,7 @@ export class TransactionEditor {
     // Determine the "Impact Date": the earlier of the Old Date or New Date.
     // We must re-calculate balances starting from that point to ensure data integrity.
     const impactDate = new Date(newDate) < new Date(originalDate) ? newDate : originalDate;
-    
+
     await this.reprocessLedger(clientName, ticker, { saleImpactDate: impactDate }, saleOverrides, undefined);
   }
 
@@ -528,12 +565,12 @@ export class TransactionEditor {
     // We update the date on the object, but we DO NOT commit to DB yet.
     // reprocessLedger will handle the commit as part of the atomic transaction.
     const modifiedPurchase: Purchase = {
-        ...p,
-        date: newDate,
-        // Ensure arrays/types are correct for the interface
-        sale_ids: p.sale_ids || [], 
-        client_id: p.client_id,
-        balance_qty: Number(p.balance_qty)
+      ...p,
+      date: newDate,
+      // Ensure arrays/types are correct for the interface
+      sale_ids: p.sale_ids || [],
+      client_id: p.client_id,
+      balance_qty: Number(p.balance_qty)
     };
 
     const purchaseOverrides = new Map<string, Purchase>();
@@ -546,11 +583,11 @@ export class TransactionEditor {
     // 4. Trigger Reprocess with Overrides
     // Pass 'purchaseOverrides' as the 5th argument.
     await this.reprocessLedger(
-        clientName, 
-        ticker, 
-        { purchaseImpactDate: impactDate }, 
-        undefined, // No sale overrides
-        purchaseOverrides // Purchase overrides
+      clientName,
+      ticker,
+      { purchaseImpactDate: impactDate },
+      undefined, // No sale overrides
+      purchaseOverrides // Purchase overrides
     );
   }
 
@@ -558,7 +595,7 @@ export class TransactionEditor {
     // 1. Get the current purchase state (Fetch '*' because we need the full object for the override)
     const { data: p, error } = await this.supabase
       .from('purchases')
-      .select('*') 
+      .select('*')
       .eq('trx_id', trx_id)
       .single();
 
@@ -591,12 +628,12 @@ export class TransactionEditor {
     const newBalance = currentBal + delta;
 
     const modifiedPurchase: Purchase = {
-        ...p,
-        purchase_qty: newQty,
-        balance_qty: newBalance,
-        // Ensure arrays/types are correct for the interface
-        sale_ids: p.sale_ids || [], 
-        client_id: p.client_id
+      ...p,
+      purchase_qty: newQty,
+      balance_qty: newBalance,
+      // Ensure arrays/types are correct for the interface
+      sale_ids: p.sale_ids || [],
+      client_id: p.client_id
     };
 
     const purchaseOverrides = new Map<string, Purchase>();
@@ -605,11 +642,11 @@ export class TransactionEditor {
     // 5. Reprocess with Overrides
     // Pass the overrides map as the 5th argument
     await this.reprocessLedger(
-        clientName, 
-        ticker, 
-        { purchaseImpactDate: originalDate }, 
-        undefined, // No sale overrides
-        purchaseOverrides // Purchase overrides
+      clientName,
+      ticker,
+      { purchaseImpactDate: originalDate },
+      undefined, // No sale overrides
+      purchaseOverrides // Purchase overrides
     );
   }
 
@@ -638,7 +675,8 @@ export class TransactionEditor {
       comments: existing.comments,
       long_term: false,
       client_id: existing.client_id,
-      adjusted_profit_stored: 0
+      adjusted_profit_stored: 0,
+      created_at: existing.created_at
     };
 
     const saleOverrides = new Map<string, SaleIntent>();
