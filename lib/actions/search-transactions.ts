@@ -102,6 +102,10 @@ export async function searchTransactions(formData: FormData) {
     if (start_date) { pQuery = pQuery.gte('date', start_date); sQuery = sQuery.gte('sale_date', start_date); }
     if (end_date) { pQuery = pQuery.lte('date', end_date); sQuery = sQuery.lte('sale_date', end_date); }
 
+    // Apply Sorting (Date Descending)
+    pQuery = pQuery.order('date', { ascending: true });
+    sQuery = sQuery.order('sale_date', { ascending: true });
+
     const [pRes, sRes] = await Promise.all([pQuery, sQuery]);
 
     return {

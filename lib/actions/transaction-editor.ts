@@ -94,7 +94,7 @@ export class TransactionEditor {
       // 1. Fetch Target Sales
       const { data: sales, error: sError } = await this.supabase
         .from('sales')
-        .select('*, purchases!inner(date, ticker)')
+        .select('*, purchases!inner(date, ticker, created_at)')
         .eq('client_name', clientName)
         .eq('purchases.ticker', ticker)
         .gte('date', impact.saleImpactDate)
@@ -107,13 +107,25 @@ export class TransactionEditor {
       // 2. Find Earliest Linked Purchase Date
       // We look at all the purchases these sales consumed.
       let earliestPurchaseDate = new Date().toISOString();
+      let earliestPurchaseCreatedAt = new Date().toISOString();
       let hasLinkedPurchases = false;
 
       rawSales.forEach(s => {
         if (s.purchases?.date) {
           hasLinkedPurchases = true;
-          if (new Date(s.purchases.date) < new Date(earliestPurchaseDate)) {
+          const pDate = new Date(s.purchases.date);
+          const earliestDate = new Date(earliestPurchaseDate);
+
+          if (pDate < earliestDate) {
             earliestPurchaseDate = s.purchases.date;
+            earliestPurchaseCreatedAt = s.purchases.created_at || new Date(0).toISOString();
+          } else if (pDate.getTime() === earliestDate.getTime()) {
+            const pCreated = new Date(s.purchases.created_at || 0);
+            const earliestCreated = new Date(earliestPurchaseCreatedAt);
+            if (pCreated < earliestCreated) {
+              earliestPurchaseDate = s.purchases.date;
+              earliestPurchaseCreatedAt = s.purchases.created_at;
+            }
           }
         }
       });
@@ -498,25 +510,17 @@ export class TransactionEditor {
    * for the impacted period.
    */
   async editSaleDate(custom_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
-    // 1. Fetch one representative row for the sale to get metadata (rate, user_id, comments, client_id)
-    // We do not need deep joins because client_id is native to the sales table.
-    const { data: existing } = await this.supabase
-      .from('sales')
-      .select('*')
-      .eq('custom_id', custom_id)
-      .limit(1)
-      .single();
-
-    if (!existing) throw new Error("Sale not found");
-
-    // 2. Calculate the Total Quantity for this Sale Event
-    // A single sale might be split across multiple rows; we need the sum to recreate the intent.
+    // 1. Fetch all splits for this sale event
+    // We need both the metadata (from any row) and the sum of quantities (from all rows)
     const { data: allSplits } = await this.supabase
       .from('sales')
-      .select('sale_qty')
+      .select('*')
       .eq('custom_id', custom_id);
 
-    const totalQty = allSplits?.reduce((acc, s) => acc + s.sale_qty, 0) || 0;
+    if (!allSplits || allSplits.length === 0) throw new Error("Sale not found");
+
+    const existing = allSplits[0];
+    const totalQty = allSplits.reduce((acc, s) => acc + s.sale_qty, 0);
 
     // 3. Create the 'Intent' Object
     // This represents the "New State" of the sale. ReprocessLedger will use this 
