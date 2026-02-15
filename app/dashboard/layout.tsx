@@ -2,6 +2,7 @@ import Sidebar from '@/components/dashboard/sidebar';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { UserProvider } from '@/components/helper/user-context'
+import Screensaver from '@/components/dashboard/screensaver';
 
 export default async function DashboardLayout({
     children,
@@ -34,6 +35,7 @@ export default async function DashboardLayout({
             }>
 
             <div className="flex h-screen bg-slate-50 overflow-hidden">
+                <Screensaver idleTimeout={300000} /> {/* 10 Minutes */}
                 {/* 3. Pass data to Sidebar */}
                 <Sidebar user={user} profile={profile} />
 
