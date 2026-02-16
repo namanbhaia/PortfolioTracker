@@ -244,6 +244,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     <label className="text-xs font-bold uppercase text-slate-500">Sale Date</label>
                     <input
                         type="date"
+                        autoComplete="off"
                         defaultValue={getTodayDate()}
                         {...register("sale_date")}
                         className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
@@ -255,6 +256,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     <input
                         type="number"
                         step="0.01"
+                        autoComplete="off"
                         {...register("sale_rate")}
                         placeholder="0.00"
                         className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
@@ -265,6 +267,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     <label className="text-xs font-bold uppercase text-slate-500">Sale Quantity</label>
                     <input
                         type="number"
+                        autoComplete="off"
                         {...register("sale_qty")}
                         placeholder="0"
                         className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"

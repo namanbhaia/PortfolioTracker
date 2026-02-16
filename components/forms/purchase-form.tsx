@@ -106,7 +106,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Ticker</label>
-                    <input {...register("ticker")} placeholder="Ticker" className="w-full p-2.5 bg-slate-50 border rounded-lg" />
+                    <input {...register("ticker")} autoComplete="off" placeholder="Ticker" className="w-full p-2.5 bg-slate-50 border rounded-lg" />
                 </div>
             </div>
 
@@ -121,47 +121,50 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                 </div>
             </div>
 
-           <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Purchase Date</label>
-                    <input 
-                        type="date" 
-                        {...register("purchase_date")} 
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500" 
+                    <input
+                        type="date"
+                        autoComplete="off"
+                        {...register("purchase_date")}
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                     />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Purchase Rate (₹)</label>
-                    <input 
-                        type="number" 
-                        step="0.01" 
-                        {...register("purchase_rate")} 
-                        placeholder="0.00" 
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500" 
+                    <input
+                        type="number"
+                        step="0.01"
+                        autoComplete="off"
+                        {...register("purchase_rate")}
+                        placeholder="0.00"
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                     />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500">Purchase Quantity</label>
-                    <input 
-                        type="number" 
-                        {...register("purchase_qty")} 
-                        placeholder="0" 
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500" 
+                    <input
+                        type="number"
+                        autoComplete="off"
+                        {...register("purchase_qty")}
+                        placeholder="0"
+                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                     />
                 </div>
             </div>
 
             <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-500">Notes</label>
-                <textarea 
-                    {...register("comments")} 
-                    placeholder="Strategy, conviction, etc..." 
-                    className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500" 
+                <textarea
+                    {...register("comments")}
+                    placeholder="Strategy, conviction, etc..."
+                    className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500"
                 />
             </div>
-            <SubmitButton 
-                isPending={loading} 
-                label="Confirm Purchase" 
+            <SubmitButton
+                isPending={loading}
+                label="Confirm Purchase"
                 classname="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
                 loadingText='Recording Purchase'
             />

@@ -94,6 +94,7 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
                                     <input
                                         name="date"
                                         type="date"
+                                        autoComplete="off"
                                         className="w-full border-slate-200 rounded-xl p-2.5 pl-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                                         defaultValue={
                                             initialDate && !isNaN(new Date(initialDate).getTime())
@@ -112,6 +113,7 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
                                         name="rate"
                                         type="number"
                                         step="0.01"
+                                        autoComplete="off"
                                         value={liveRate}
                                         onChange={(e) => setLiveRate(Number(e.target.value))}
                                         className="w-full border border-slate-200 rounded-lg p-2.5 pl-7 text-sm outline-none bg-white font-normal text-slate-900"
@@ -129,6 +131,7 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
                                     name="qty"
                                     type="number"
                                     step="any"
+                                    autoComplete="off"
                                     value={liveQty}
                                     onChange={(e) => setLiveQty(Number(e.target.value))}
                                     className="w-full border border-slate-200 rounded-lg p-2.5 text-sm outline-none bg-white font-normal text-slate-900"

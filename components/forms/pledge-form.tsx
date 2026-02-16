@@ -182,6 +182,7 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                             <label className="text-xs font-bold uppercase text-slate-500">Quantity</label>
                             <input
                                 type="number"
+                                autoComplete="off"
                                 {...register("qty", { required: true })}
                                 placeholder="Qty"
                                 className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"

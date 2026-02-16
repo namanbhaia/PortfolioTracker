@@ -60,6 +60,7 @@ export default function ProfilePage() {
                                 <>
                                     <input
                                         value={newName}
+                                        autoComplete="off"
                                         onChange={(e) => setNewName(e.target.value)}
                                         className="flex-1 p-2 border rounded-md outline-none ring-primary/20 focus:ring-2 text-sm"
                                     />

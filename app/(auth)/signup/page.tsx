@@ -113,6 +113,7 @@ export default function SignupPage() {
                                 <input
                                     type="text"
                                     required
+                                    autoComplete="off"
                                     value={tradingId}
                                     onChange={(e) => setTradingId(e.target.value)}
                                     placeholder="e.g. TRD-12345"
@@ -129,6 +130,7 @@ export default function SignupPage() {
                                 <input
                                     type="text"
                                     required
+                                    autoComplete="off"
                                     value={dpId}
                                     onChange={(e) => setDpId(e.target.value)}
                                     placeholder="e.g. IN123456"
