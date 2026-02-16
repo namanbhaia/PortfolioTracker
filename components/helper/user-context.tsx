@@ -9,29 +9,32 @@ interface UserContextType {
     user: User | null;
     profile: any; // Using the 'profiles' table data
     clients: any[]; // Using the 'clients' table data
+    screensaverClickOnly: boolean;
+    setScreensaverClickOnly: (val: boolean) => void;
     loading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider = ({ 
-    children, 
-    initialUser, 
-    initialProfile, 
-    initialClients 
-}: { 
+export const UserProvider = ({
+    children,
+    initialUser,
+    initialProfile,
+    initialClients
+}: {
     children: React.ReactNode,
     initialUser: User | null,
     initialProfile: any,
     initialClients: any[]
 }) => {
     const supabase = useMemo(() => createClient(), []);
-    
+
     // Initialize state with data passed from the Server Layout
     const [user, setUser] = useState<User | null>(initialUser);
     const [profile, setProfile] = useState<any>(initialProfile);
     const [clients, setClients] = useState<any[]>(initialClients);
-    
+    const [screensaverClickOnly, setScreensaverClickOnly] = useState(initialProfile?.screensaver_click_only || false);
+
     // Loading is false immediately if the server provided data
     const [loading, setLoading] = useState(!initialProfile);
 
@@ -42,6 +45,7 @@ export const UserProvider = ({
                 setUser(null);
                 setProfile(null);
                 setClients([]);
+                setScreensaverClickOnly(false);
             } else if (session?.user) {
                 setUser(session.user);
             }
@@ -56,6 +60,7 @@ export const UserProvider = ({
             const syncData = async () => {
                 const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
                 setProfile(p);
+                setScreensaverClickOnly(p?.screensaver_click_only || false);
                 if (p?.client_ids) {
                     const { data: c } = await supabase.from('clients').select('*').in('client_id', p.client_ids);
                     setClients(c || []);
@@ -65,7 +70,7 @@ export const UserProvider = ({
         }
     }, [user?.id, supabase]);
 
-    const value = { user, profile, clients, loading };
+    const value = { user, profile, clients, screensaverClickOnly, setScreensaverClickOnly, loading };
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 

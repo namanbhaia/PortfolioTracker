@@ -26,6 +26,7 @@ CREATE TABLE profiles (
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
+    screensaver_click_only BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 

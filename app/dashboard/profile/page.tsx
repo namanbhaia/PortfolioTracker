@@ -1,14 +1,15 @@
 ﻿"use client";
 
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Check, Pencil, Loader2 } from 'lucide-react';
+import { User, Mail, Check, Pencil, Loader2, ShieldCheck } from 'lucide-react';
 import { updateProfileName } from '@/lib/actions/update-profile-name';
+import { updateScreensaverPreference } from '@/lib/actions/update-screensaver-preference';
 import ProfileClientsTable from '@/components/dashboard/profile-clients-table';
 import { useUser } from '@/components/helper/user-context';
 
 export default function ProfilePage() {
     // 1. Consume data from the central context
-    const { profile, clients, loading } = useUser();
+    const { profile, clients, screensaverClickOnly, setScreensaverClickOnly, loading } = useUser();
 
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -99,7 +100,44 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            {/* SECTION 2: LINKED CLIENTS TABLE */}
+            {/* SECTION 2: PRIVACY SETTINGS */}
+            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                <div className="p-4 border-b bg-slate-50/50 flex items-center gap-2 font-semibold text-slate-700">
+                    <ShieldCheck size={18} /> Privacy Settings
+                </div>
+                <div className="p-6">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <label className="text-sm font-medium text-slate-900">Click to Dismiss Screensaver</label>
+                            <p className="text-xs text-slate-500">When enabled, the screensaver will only be dismissed by a click.</p>
+                        </div>
+                        <button
+                            onClick={async () => {
+                                setSaving(true);
+                                try {
+                                    const nextValue = !screensaverClickOnly;
+                                    await updateScreensaverPreference(nextValue);
+                                    setScreensaverClickOnly(nextValue);
+                                } catch (e) {
+                                    alert("Error updating preference");
+                                } finally {
+                                    setSaving(false);
+                                }
+                            }}
+                            disabled={saving}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${screensaverClickOnly ? 'bg-indigo-600' : 'bg-slate-200'
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${screensaverClickOnly ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 3: LINKED CLIENTS TABLE */}
             <ProfileClientsTable clients={clients || []} />
         </div>
     );

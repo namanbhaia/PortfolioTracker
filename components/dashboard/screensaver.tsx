@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Background } from "@/components/ui/background";
+import { useUser } from '@/components/helper/user-context';
 
 export default function Screensaver({ idleTimeout = 300000 }) {
+    const { screensaverClickOnly } = useUser();
     const [isActive, setIsActive] = useState(false);
 
     const deactivate = () => setIsActive(false);
@@ -13,7 +15,9 @@ export default function Screensaver({ idleTimeout = 300000 }) {
     useEffect(() => {
         let timer: NodeJS.Timeout;
         const resetTimer = () => {
-            deactivate();
+            if (!screensaverClickOnly) {
+                deactivate();
+            }
             clearTimeout(timer);
             timer = setTimeout(activate, idleTimeout);
         };
@@ -31,7 +35,7 @@ export default function Screensaver({ idleTimeout = 300000 }) {
             window.removeEventListener('activate-screensaver', activate);
             clearTimeout(timer);
         };
-    }, [activate, idleTimeout]);
+    }, [activate, idleTimeout, screensaverClickOnly]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
