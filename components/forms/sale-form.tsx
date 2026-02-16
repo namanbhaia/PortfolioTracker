@@ -10,6 +10,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [openPurchases, setOpenPurchases] = useState<any[]>([]);
+    const [pledgedItems, setPledgedItems] = useState<any[]>([]);
+    const [pledgeWarning, setPledgeWarning] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, watch, setValue } = useForm();
 
@@ -30,27 +32,32 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         }
     }, [saleClient, clients, setValue]);
 
-    // Fetch Sellable lots
+    // Fetch Sellable lots and Pledges
     useEffect(() => {
-        async function fetchLots() {
+        async function fetchData() {
             if (!saleClient) {
                 setOpenPurchases([]);
+                setPledgedItems([]);
                 return;
             }
 
-            const { data, error } = await supabase
-                .from('client_holdings')
-                .select('*')
-                .eq('client_name', saleClient.trim())
-                .gt('balance_qty', 0);
+            const [holdingsRes, pledgesRes] = await Promise.all([
+                supabase
+                    .from('client_holdings')
+                    .select('*')
+                    .eq('client_name', saleClient.trim())
+                    .gt('balance_qty', 0),
+                supabase
+                    .from('pledges')
+                    .select('ticker, pledged_qty')
+                    .eq('client_name', saleClient.trim())
+            ]);
 
-            if (error) {
-                console.error("Error fetching holdings:", error);
-                return;
-            }
+            if (holdingsRes.error) console.error("Error fetching holdings:", holdingsRes.error);
+            if (pledgesRes.error) console.error("Error fetching pledges:", pledgesRes.error);
 
             // Logic to make balance_qty cumulative by ticker
-            const aggregated = (data || []).reduce((acc: any[], current: any) => {
+            const aggregated = (holdingsRes.data || []).reduce((acc: any[], current: any) => {
                 const existing = acc.find(item => item.ticker === current.ticker);
                 if (existing) {
                     // Sum the quantities for the same ticker
@@ -63,8 +70,9 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             }, [])
                 .sort((a, b) => a.ticker.localeCompare(b.ticker)); // Alphabetical Sort;
             setOpenPurchases(aggregated);
+            setPledgedItems(pledgesRes.data || []);
         }
-        fetchLots();
+        fetchData();
     }, [saleClient, supabase]);
 
     const onSaleSubmit = async (data: any) => {
@@ -162,6 +170,17 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 remainingQty -= qtyFromThisLot;
             }
 
+            // 8. Automatic Unpledging check
+            const pledgedAmt = pledgedItems.find(p => p.ticker === tickerName)?.pledged_qty || 0;
+            const availableUnpledged = totalAvailable - pledgedAmt;
+
+            if (saleQtyRequested > availableUnpledged) {
+                const deficit = saleQtyRequested - availableUnpledged;
+                const { unpledgeShares } = await import('@/lib/actions/pledge-actions');
+                await unpledgeShares(clientName, tickerName, deficit);
+                setPledgeWarning(`Sold shares were pledged. System has automatically un-pledged ${deficit} shares for ${tickerName}.`);
+            }
+
             setSuccess(true);
             reset();
 
@@ -206,11 +225,17 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 </label>
                 <select {...register("purchase_trx_id")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
                     <option value="">Select share to sell</option>
-                    {openPurchases.map((lot: any) => (
-                        <option key={lot.ticker} value={lot.trx_id}>
-                            {lot.ticker} (Avail: {lot.balance_qty})
-                        </option>
-                    ))}
+                    {openPurchases.map((lot: any) => {
+                        const pledgedQty = pledgedItems.find(p => p.ticker === lot.ticker)?.pledged_qty || 0;
+                        const label = pledgedQty > 0
+                            ? `${lot.ticker} (Avail: ${lot.balance_qty}, Pledged: ${pledgedQty}/${lot.balance_qty})`
+                            : `${lot.ticker} (Avail: ${lot.balance_qty})`;
+                        return (
+                            <option key={lot.ticker} value={lot.trx_id}>
+                                {label}
+                            </option>
+                        );
+                    })}
                 </select>
             </div>
 
@@ -262,6 +287,31 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 classname="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
                 loadingText='Recording Sale'
             />
+
+            {pledgeWarning && (
+                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl relative animate-in fade-in zoom-in duration-300">
+                    <div className="flex items-start gap-3 pr-8">
+                        <div className="mt-0.5">
+                            <svg className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625l6.281-10.875zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold">Automatic Un-pledge Executed</p>
+                            <p className="text-xs mt-1">{pledgeWarning}</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setPledgeWarning(null)}
+                        className="absolute top-4 right-4 text-amber-900/50 hover:text-amber-900 transition-colors"
+                    >
+                        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            )}
         </form>
     );
 }
