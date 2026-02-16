@@ -309,6 +309,48 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function: Migrate BSE to NSE Tickers
+-- Purpose: Automatically replaces BSE tickers (numeric) with NSE equivalents (alphanumeric) 
+--          based on ISIN matching for all currently held positions.
+-- Logic:   1. Identifies unique BSE tickers in current holdings.
+--          2. Finds NSE ticker with same ISIN in assets table.
+--          3. Updates purchases and merges pledges.
+CREATE OR REPLACE FUNCTION migrate_bse_to_nse()
+RETURNS void AS $$
+DECLARE
+    r RECORD;
+    v_nse_ticker TEXT;
+BEGIN
+    FOR r IN (
+        SELECT DISTINCT ticker, isin
+        FROM client_holdings
+        WHERE ticker ~ '^[0-9]+$'
+    ) LOOP
+        SELECT ticker INTO v_nse_ticker
+        FROM assets
+        WHERE isin = r.isin
+          AND ticker ~ '[A-Za-z]'
+        LIMIT 1;
+
+        IF v_nse_ticker IS NOT NULL THEN
+            UPDATE purchases 
+            SET ticker = v_nse_ticker 
+            WHERE ticker = r.ticker;
+
+            INSERT INTO pledges (client_name, ticker, pledged_qty, created_at)
+            SELECT client_name, v_nse_ticker, pledged_qty, now()
+            FROM pledges
+            WHERE ticker = r.ticker
+            ON CONFLICT (client_name, ticker)
+            DO UPDATE SET pledged_qty = pledges.pledged_qty + EXCLUDED.pledged_qty;
+
+            DELETE FROM pledges WHERE ticker = r.ticker;
+        END IF;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- =========================================================
 -- 6. TRIGGERS
 -- =========================================================
@@ -362,4 +404,12 @@ SELECT cron.schedule(
       }'::jsonb
     );
   $$
+);
+
+-- Schedule: Migrate BSE to NSE Tickers
+-- Runs every Sunday at Noon
+SELECT cron.schedule(
+    'migrate-bse-to-nse-job',
+    '0 12 * * 0',
+    'SELECT migrate_bse_to_nse()'
 );
