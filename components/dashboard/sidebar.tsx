@@ -17,7 +17,8 @@ import {
     ChevronRight,
     BadgeDollarSign,
     FileCheck,
-    FileSpreadsheet
+    FileSpreadsheet,
+    ShieldCheck
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -34,6 +35,7 @@ const navItems = [
     { name: 'Sales History', href: '/dashboard/sales', icon: History },
     { name: 'Transactions Lookup', href: '/dashboard/transactions-lookup', icon: Search },
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
+    { name: 'Pledging', href: '/dashboard/pledging', icon: ShieldCheck },
     { name: 'Verification', href: '/dashboard/verification', icon: FileCheck },
 ];
 
@@ -46,8 +48,8 @@ const secondaryItems = [
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
     // 1. Declare ALL hooks at the top level
     const [mounted, setMounted] = useState(false);
-    const pathname = usePathname(); 
-    const router = useRouter();     
+    const pathname = usePathname();
+    const router = useRouter();
     const supabase = createClient();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -73,13 +75,12 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
     const displayEmail = user?.email || '';
 
     return (
-        <aside 
-            className={`relative h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${
-                isCollapsed ? 'w-20' : 'w-64'
-            }`}
+        <aside
+            className={`relative h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
+                }`}
         >
             {/* FLOATING TOGGLE BUTTON */}
-            <button 
+            <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="absolute -right-3 top-10 z-50 bg-indigo-600 text-white rounded-full p-1 border-2 border-slate-900 hover:bg-indigo-500 transition-all shadow-xl hover:scale-110 active:scale-95"
                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
@@ -88,17 +89,17 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
             </button>
 
             {/* Brand Logo Section */}
-            
+
             <div className="p-6 mb-2 flex items-center gap-3 text-white overflow-hidden">
                 <Link href="/dashboard" className="flex items-center gap-3 group">
                     <div className="shrink-0 transition-transform group-hover:scale-105 active:scale-95">
                         {/* This "/" points directly to your "public" folder. 
                             Next.js automatically serves everything inside "public" at the root URL.
                         */}
-                        <img 
-                            src="/images/logo_2.png" 
-                            alt="PortfolioTracker Logo" 
-                            className="h-8 w-8 rounded-lg object-contain" 
+                        <img
+                            src="/images/logo_2.png"
+                            alt="PortfolioTracker Logo"
+                            className="h-8 w-8 rounded-lg object-contain"
                         />
                     </div>
                     {!isCollapsed && (
@@ -123,15 +124,14 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                             key={item.name}
                             href={item.href}
                             title={isCollapsed ? item.name : ""}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
-                                isActive 
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                                    : 'hover:bg-slate-800 hover:text-slate-100'
-                            }`}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${isActive
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                : 'hover:bg-slate-800 hover:text-slate-100'
+                                }`}
                         >
-                            <item.icon 
-                                size={20} 
-                                className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`} 
+                            <item.icon
+                                size={20}
+                                className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}
                             />
                             {!isCollapsed && <span className="truncate">{item.name}</span>}
                         </Link>
@@ -157,11 +157,10 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
             <div className={`p-4 border-t border-slate-800 ${isCollapsed ? 'px-2' : 'px-4'}`}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className={`flex items-center gap-3 rounded-xl transition-all outline-none ${
-                            isCollapsed 
-                                ? 'p-2 justify-center hover:bg-slate-800 w-full' 
-                                : 'p-3 w-full bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800'
-                        }`}>
+                        <button className={`flex items-center gap-3 rounded-xl transition-all outline-none ${isCollapsed
+                            ? 'p-2 justify-center hover:bg-slate-800 w-full'
+                            : 'p-3 w-full bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800'
+                            }`}>
                             <div className="bg-indigo-500/20 p-2 rounded-lg shrink-0">
                                 <UserCircle size={20} className="text-indigo-400" />
                             </div>
@@ -173,10 +172,10 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                             )}
                         </button>
                     </DropdownMenuTrigger>
-                    
-                    <DropdownMenuContent 
-                        className="w-56 bg-slate-800 border-slate-700 text-slate-200" 
-                        side={isCollapsed ? "right" : "top"} 
+
+                    <DropdownMenuContent
+                        className="w-56 bg-slate-800 border-slate-700 text-slate-200"
+                        side={isCollapsed ? "right" : "top"}
                         align={isCollapsed ? "start" : "center"}
                     >
                         <DropdownMenuItem asChild>

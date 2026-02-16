@@ -84,6 +84,16 @@ CREATE TABLE sales (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- 6. PLEDGES (The Pledge Ledger)
+-- Ledger for Pledging/Unpledging Transactions
+CREATE TABLE pledges (
+    client_name TEXT REFERENCES clients(client_name) ON DELETE CASCADE,
+    ticker TEXT REFERENCES assets(ticker),
+    pledged_qty NUMERIC NOT NULL CHECK (pledged_qty >= 0),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    PRIMARY KEY (client_name, ticker) 
+);
+
 
 -- =========================================================
 -- 3. INDEXES & SEQUENCES

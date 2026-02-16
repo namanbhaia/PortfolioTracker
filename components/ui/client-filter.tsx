@@ -14,12 +14,12 @@ interface ClientMultiSelectProps {
   className?: string; // Allow custom classes
 }
 
-export function ClientMultiSelect({ 
-  clients, 
-  selectedKeys, 
-  onChange, 
+export function ClientMultiSelect({
+  clients,
+  selectedKeys,
+  onChange,
   identifier = 'client_name',
-  className = "" 
+  className = ""
 }: ClientMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -99,12 +99,12 @@ export function ClientFilter({ currentSelection }: { currentSelection: string[] 
 
   return (
     <div className="w-full md:w-48">
-        <ClientMultiSelect 
-            clients={clients}
-            selectedKeys={currentSelection}
-            onChange={handleToggle}
-            identifier="client_name"
-        />
+      <ClientMultiSelect
+        clients={clients}
+        selectedKeys={currentSelection}
+        onChange={handleToggle}
+        identifier="client_name"
+      />
     </div>
   );
 }

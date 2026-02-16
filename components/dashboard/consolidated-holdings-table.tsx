@@ -5,7 +5,7 @@ import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import TickerCell from '@/components/ui/ticker-cell';
 
 type SortConfig = {
-    key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent';
+    key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged';
     direction: 'asc' | 'desc';
 } | null;
 
@@ -36,7 +36,7 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
         return sortableItems;
     }, [consolidatedRows, sortConfig]);
 
-    const requestSort = (key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent') => {
+    const requestSort = (key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged') => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
@@ -63,10 +63,13 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
                         <div className="flex items-center">Stock Name <SortIcon column="stock_name" /></div>
                     </th>
                     <th className="px-4 py-4 text-right">Qty</th>
+                    <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('total_pledged')}>
+                        <div className="flex items-center justify-end">Pledged <SortIcon column="total_pledged" /></div>
+                    </th>
                     <th className="px-4 py-4 text-right">Avg. Price</th>
                     <th className="px-4 py-4 text-right">Purchase Val</th>
                     <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('total_market_value')}>
-                        <div className="flex items-center justify-end">Market Val <SortIcon column="pl" /></div>
+                        <div className="flex items-center justify-end">Market Val <SortIcon column="total_market_value" /></div>
                     </th>
                     <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('pl')}>
                         <div className="flex items-center justify-end">P/L <SortIcon column="pl" /></div>
@@ -82,6 +85,7 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
                         <TickerCell ticker={row.ticker} isin={row.isin} />
                         <td className="px-4 py-4 font-medium text-slate-700">{row.stock_name}</td>
                         <td className="px-4 py-4 text-right font-mono">{row.total_qty}</td>
+                        <td className="px-4 py-4 text-right font-mono text-amber-600 font-bold">{row.total_pledged || '-'}</td>
                         <td className="px-4 py-4 text-right font-mono">₹{row.avg_purchase_price.toFixed(2)}</td>
                         <td className="px-4 py-4 text-right font-semibold">₹{row.total_purchase_value.toLocaleString('en-IN')}</td>
                         <td className="px-4 py-4 text-right font-bold text-slate-900">₹{row.total_market_value.toLocaleString('en-IN')}</td>

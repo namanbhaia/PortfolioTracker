@@ -64,12 +64,18 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 		query = query.in("client_name", selectedNames);
 	}
 
-	// Execute the query.
-	const { data: rawHoldings, error } = await query;
+	// Fetch the query.
+	const [rawHoldingsResult, pledgeLedgerResult] = await Promise.all([
+		query,
+		supabase.from("pledges").select("*").in("client_name", selectedNames.length > 0 ? selectedNames : (await supabase.from("clients").select("client_name").in("client_id", profile.client_ids)).data?.map(c => c.client_name) || [])
+	]);
+
+	const rawHoldings = rawHoldingsResult.data;
+	const pledgeLedger = pledgeLedgerResult.data;
 
 	// Log any errors to the server console for debugging.
-	if (error) {
-		console.error("Dashboard Fetch Error:", error.message);
+	if (rawHoldingsResult.error) {
+		console.error("Dashboard Fetch Error:", rawHoldingsResult.error.message);
 	}
 
 	// --- 5. Aggregate Data by Ticker ---
@@ -87,6 +93,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 				total_purchase_value: 0,
 				market_rate: Number(curr.market_rate),
 				total_market_value: 0,
+				total_pledged: 0,
 			};
 		}
 
@@ -100,6 +107,13 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 
 		return acc;
 	}, {});
+
+	// Add pledged totals from pledges
+	(pledgeLedger || []).forEach(pledge => {
+		if (aggregatedMap[pledge.ticker]) {
+			aggregatedMap[pledge.ticker].total_pledged += Number(pledge.pledged_qty);
+		}
+	});
 
 	// Convert the aggregated map into an array and calculate derived metrics like P/L.
 	const consolidatedRows = Object.values(aggregatedMap)
@@ -123,84 +137,84 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 	const totalPL = currentTotalValue - totalInvested;
 	const plPercentage = totalInvested > 0 ? totalPL / totalInvested : 0;
 
-    return (
-        <div className="p-6 space-y-8 mx-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Executive Summary</h1>
-                    <p className="text-sm text-slate-500">
-                        Consolidated overview for <span className="font-semibold text-indigo-600">{profile.full_name}</span>
-                    </p>
-                </div>
+	return (
+		<div className="p-6 space-y-8 mx-auto">
+			<header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+				<div>
+					<h1 className="text-3xl font-bold tracking-tight text-slate-900">Executive Summary</h1>
+					<p className="text-sm text-slate-500">
+						Consolidated overview for <span className="font-semibold text-indigo-600">{profile.full_name}</span>
+					</p>
+				</div>
 
-                <div className="flex items-center gap-3">
-                    <RefreshButton/>
-                    <ClientFilter
-                        currentSelection={selectedNames}
-                    />
-                </div>
-            </header>
+				<div className="flex items-center gap-3">
+					<RefreshButton />
+					<ClientFilter
+						currentSelection={selectedNames}
+					/>
+				</div>
+			</header>
 
-            {/* SUMMARY CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Total Invested</CardTitle>
-                        <Wallet className="h-4 w-4 text-slate-400" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
-                    </CardContent>
-                </Card>
+			{/* SUMMARY CARDS */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Total Invested</CardTitle>
+						<Wallet className="h-4 w-4 text-slate-400" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">₹{totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+					</CardContent>
+				</Card>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Current Value</CardTitle>
-                        <PieChart className="h-4 w-4 text-indigo-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-indigo-600">₹{currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
-                    </CardContent>
-                </Card>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Current Value</CardTitle>
+						<PieChart className="h-4 w-4 text-indigo-500" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold text-indigo-600">₹{currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+					</CardContent>
+				</Card>
 
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Possible P/L</CardTitle>
-                        <TrendingUp className={`h-4 w-4 ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ₹{totalPL.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                        </div>
-                        <p className={`text-xs font-bold flex items-center mt-1 ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {totalPL >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                            {plPercentage.toFixed(2)}%
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
+				<Card>
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Possible P/L</CardTitle>
+						<TrendingUp className={`h-4 w-4 ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+					</CardHeader>
+					<CardContent>
+						<div className={`text-2xl font-bold ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+							₹{totalPL.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+						</div>
+						<p className={`text-xs font-bold flex items-center mt-1 ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+							{totalPL >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+							{plPercentage.toFixed(2)}%
+						</p>
+					</CardContent>
+				</Card>
+			</div>
 
-            {/* CONSOLIDATED HOLDINGS TABLE */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Union of Family Holdings</h3>
-                    <span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-1 rounded-md">
-                        {consolidatedRows.length} TICKERS
-                    </span>
-                </div>
+			{/* CONSOLIDATED HOLDINGS TABLE */}
+			<div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+				<div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+					<h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Union of Family Holdings</h3>
+					<span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-1 rounded-md">
+						{consolidatedRows.length} TICKERS
+					</span>
+				</div>
 
-                <div className="overflow-x-auto">
-                    <ConsolidatedHoldingsTable consolidatedRows={consolidatedRows || []} />
+				<div className="overflow-x-auto">
+					<ConsolidatedHoldingsTable consolidatedRows={consolidatedRows || []} />
 
-                    {consolidatedRows.length === 0 && (
-                        <tr>
-                            <td colSpan={9} className="py-20 text-center text-slate-400 italic">
-                                No holdings found for the selected accounts.
-                            </td>
-                        </tr>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+					{consolidatedRows.length === 0 && (
+						<tr>
+							<td colSpan={9} className="py-20 text-center text-slate-400 italic">
+								No holdings found for the selected accounts.
+							</td>
+						</tr>
+					)}
+				</div>
+			</div>
+		</div>
+	);
 }
