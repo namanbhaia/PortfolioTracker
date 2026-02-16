@@ -20,10 +20,15 @@ export default function Screensaver({ idleTimeout = 300000 }) {
 
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
         events.forEach(event => document.addEventListener(event, resetTimer));
+
+        // Listen for manual activation trigger
+        window.addEventListener('activate-screensaver', activate);
+
         timer = setTimeout(activate, idleTimeout);
 
         return () => {
             events.forEach(event => document.removeEventListener(event, resetTimer));
+            window.removeEventListener('activate-screensaver', activate);
             clearTimeout(timer);
         };
     }, [activate, idleTimeout]);

@@ -91,23 +91,26 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
             {/* Brand Logo Section */}
 
             <div className="p-6 mb-2 flex items-center gap-3 text-white overflow-hidden">
-                <Link href="/dashboard" className="flex items-center gap-3 group">
-                    <div className="shrink-0 transition-transform group-hover:scale-105 active:scale-95">
-                        {/* This "/" points directly to your "public" folder. 
-                            Next.js automatically serves everything inside "public" at the root URL.
-                        */}
+                <div
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('activate-screensaver'));
+                    }}
+                    className="flex items-center gap-3 group cursor-pointer"
+                    title="Privacy Mode: Hide sensitive info"
+                >
+                    <div className="shrink-0 transition-transform group-hover:scale-110 active:scale-90 duration-300">
                         <img
                             src="/images/logo_2.png"
-                            alt="PortfolioTracker Logo"
-                            className="h-8 w-8 rounded-lg object-contain"
+                            alt="MLB Portfolio Tracker Logo"
+                            className="h-8 w-8 rounded-lg object-contain drop-shadow-[0_0_8px_rgba(79,70,229,0.3)]"
                         />
                     </div>
                     {!isCollapsed && (
-                        <span className="font-bold text-lg tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
-                            PortfolioTracker
+                        <span className="font-bold text-lg tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300 group-hover:text-indigo-400 transition-colors">
+                            MLBPortfolioTracker
                         </span>
                     )}
-                </Link>
+                </div>
             </div>
 
             {/* Primary Navigation */}

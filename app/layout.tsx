@@ -5,8 +5,11 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Portfolio Tracker",
+    title: "MLB Portfolio Tracker",
     description: "Wealth Management Dashboard",
+    icons: {
+        icon: "/images/logo_2.png",
+    },
 };
 
 export default function RootLayout({
