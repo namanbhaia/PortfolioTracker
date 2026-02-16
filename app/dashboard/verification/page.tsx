@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { UploadCloud, FileCheck } from 'lucide-react';
-import { getTickerDetailsFromYahoo } from '@/lib/actions/find-ticker';
+import { getTickerDetailsFromYahoo } from '@/lib/actions/yahoo/find-ticker';
 import {
     CsvRow,
     VerificationResult,
