@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
 
 // Snappy, liquid orb component
@@ -85,6 +85,7 @@ const TinyParticle = ({
 export const Background = () => {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
+    const [isMounted, setIsMounted] = useState(false);
 
     // High-response spring configuration (snappy & fluid)
     const springConfig = { damping: 30, stiffness: 350 };
@@ -92,6 +93,7 @@ export const Background = () => {
     const smoothY = useSpring(mouseY, springConfig);
 
     useEffect(() => {
+        setIsMounted(true);
         const handleMouseMove = (e: MouseEvent) => {
             // Center relative tracking for orbs/particles
             mouseX.set(e.clientX - window.innerWidth / 2);
@@ -126,7 +128,7 @@ export const Background = () => {
     return (
         <div className="fixed inset-0 -z-10 overflow-hidden bg-white">
             {/* Liquid Orbs Layer */}
-            {orbs.map((orb, i) => (
+            {isMounted && orbs.map((orb, i) => (
                 <LiquidOrb
                     key={`orb-${i}`}
                     size={orb.size}
@@ -139,7 +141,7 @@ export const Background = () => {
             ))}
 
             {/* Tiny Particles Layer */}
-            {particles.map((p) => (
+            {isMounted && particles.map((p) => (
                 <TinyParticle key={`particle-${p.id}`} p={p} mouseX={smoothX} mouseY={smoothY} />
             ))}
 
