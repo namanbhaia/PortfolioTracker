@@ -8,10 +8,11 @@ import { getTickerDetailsFromYahoo } from '@/lib/actions/find-ticker';
 // Types for our data structures
 interface CsvRow {
     dp_id: string;
-    client_name: string; // From CSV (might differ)
+    client_name: string;
     ticker: string;
     isin: string;
     stock_name: string;
+    holding_type: 'PLEDGE' | 'BENEFICIARY' | string;
     balance: number;
 }
 
@@ -36,12 +37,12 @@ interface DiscrepancyRow {
 export default function VerificationPage() {
     const supabase = createClient();
     const [isSyncingAssets, setIsSyncingAssets] = useState(false);
-    
+
     const [loading, setLoading] = useState(false);
     const [clients, setClients] = useState<any[]>([]); // DB Clients
     const [verificationResults, setVerificationResults] = useState<Record<string, VerificationResult>>({});
     const [selectedClientKey, setSelectedClientKey] = useState<string>("");
-    
+
     // 1. Define a state variable at the top of your component to hold pending assets
     const [pendingAssets, setPendingAssets] = useState<any[]>([]);
 
@@ -49,7 +50,7 @@ export default function VerificationPage() {
 
     const handleMissingAssetsBatch = async (discrepancies: DiscrepancyRow[]) => {
         // 1. Get unique ISINs only
-        const uniqueMissing = discrepancies.filter((v, i, a) => 
+        const uniqueMissing = discrepancies.filter((v, i, a) =>
             v.web_balance === 0 && a.findIndex(t => t.isin === v.isin) === i
         );
 
@@ -60,16 +61,16 @@ export default function VerificationPage() {
 
         for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
             const chunk = uniqueMissing.slice(i, i + chunkSize);
-            
+
             const chunkResults = await Promise.all(chunk.map(async (item) => {
                 try {
                     // Try ISIN only first (faster/more accurate). Fallback to name ONLY if ISIN fails.
                     const details = await getTickerDetailsFromYahoo(item.isin);
                     const finalDetails = details || await getTickerDetailsFromYahoo(item.stock_name);
-                    
+
                     if (finalDetails?.symbol) {
                         return {
-                            ticker: finalDetails.symbol.split('.')[0].toUpperCase(),
+                            ticker: (finalDetails.symbol as any).split('.')[0].toUpperCase(),
                             stock_name: item.stock_name,
                             isin: item.isin,
                             current_price: finalDetails.price || 0,
@@ -83,7 +84,7 @@ export default function VerificationPage() {
             }));
 
             assetsToSync.push(...chunkResults.filter(Boolean));
-            
+
             // Brief pause between chunks (200ms) to let the event loop breathe
             await new Promise(resolve => setTimeout(resolve, 200));
         }
@@ -92,12 +93,12 @@ export default function VerificationPage() {
     };
 
     // Helper function for the background sync
-    const performBulkSync = async (data) => {
+    const performBulkSync = async (data: any[]) => {
         if (!data || data.length === 0) return;
 
         const { error } = await supabase
             .from('assets')
-            .upsert(data, { 
+            .upsert(data, {
                 onConflict: 'isin',
                 ignoreDuplicates: false // Set to false so we update the PRICE if the asset exists
             });
@@ -108,21 +109,21 @@ export default function VerificationPage() {
             console.log(`✅ Database Updated: ${data.length} assets synced via ISIN.`);
         }
     };
-    
 
-    
+
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         setLoading(true);
-        
+
         try {
             // A. Fetch current DB Data (Clients & Holdings)
             const { data: dbHoldings, error: holdingsError } = await supabase
                 .from('client_holdings')
                 .select('client_name, dp_id, trading_id, ticker, isin, stock_name, balance_qty');
-            
+
             const { data: dbClients, error: clientsError } = await supabase
                 .from('clients')
                 .select('client_name, dp_id, trading_id, last_verified');
@@ -154,21 +155,23 @@ export default function VerificationPage() {
                 // 2. Detect ISIN Row (The actual data)
                 if (isinRegex.test(trimmed)) {
                     const cols = trimmed.split(',').map(c => c.trim());
-                    
-                    /* Based on your provided format:
+
+                    /* Updated indices based on user request:
                     cols[0] = ISIN
                     cols[1] = Stock Name
-                    cols[4] = Balance Qty
+                    cols[2] = Holding Type ("PLEDGE" or "BENEFICIARY")
+                    cols[3] = Balance Qty
                     */
-                    if (cols.length >= 5) {
+                    if (cols.length >= 4) {
                         const rawName = cols[1] || "Unknown Stock";
                         parsedData.push({
                             dp_id: currentClientId,
-                            client_name: "",         
-                            ticker: rawName, // Ensure ticker isn't empty here
+                            client_name: "",
+                            ticker: rawName,
                             isin: cols[0],
-                            stock_name: rawName, // Ensure stock_name isn't empty here
-                            balance: parseFloat(cols[4].replace(/,/g, '')) || 0
+                            stock_name: rawName,
+                            holding_type: cols[2].toUpperCase(),
+                            balance: parseFloat(cols[3].replace(/,/g, '')) || 0
                         });
                     }
                 }
@@ -187,37 +190,43 @@ export default function VerificationPage() {
                 csvMap.get(row.dp_id)?.push(row);
             });
 
-            // 1. Create a master list of all discrepancies across all clients
+            // 1. Create a master list of all discrepancies and pledge updates across all clients
             const allDiscrepancies: DiscrepancyRow[] = [];
+            const pledgeUpdates: any[] = [];
 
             // Iterate through known DB clients to check against CSV
             for (const client of dbClients || []) {
                 const dp_id = client.dp_id;
                 const clientName = client.client_name;
-                
+
                 // If this client isn't in the CSV, skip
                 // if (!csvMap.has(tradingId)) continue;
                 if (!csvMap.has(dp_id)) continue;
 
                 const clientCsvRows = csvMap.get(dp_id) || [];
-                
+
                 // Aggregate CSV Holdings for this client (Key: ISIN)
-                const csvHoldings = new Map<string, number>();
+                // Stores total balance and specific pledged amount
+                const csvHoldings = new Map<string, { total: number, pledged: number }>();
                 clientCsvRows.forEach(r => {
-                    const current = csvHoldings.get(r.isin) || 0;
-                    csvHoldings.set(r.isin, current + r.balance);
+                    const existing = csvHoldings.get(r.isin) || { total: 0, pledged: 0 };
+                    existing.total += r.balance;
+                    if (r.holding_type === "PLEDGE") {
+                        existing.pledged += r.balance;
+                    }
+                    csvHoldings.set(r.isin, existing);
                 });
 
                 // Aggregate DB Holdings for this client (Key: ISIN)
                 const clientDbRows = dbHoldings?.filter(h => h.dp_id === dp_id) || [];
                 const dbMap = new Map<string, { qty: number, ticker: string, name: string }>();
-                
+
                 clientDbRows.forEach(r => {
                     const current = dbMap.get(r.isin)?.qty || 0;
-                    dbMap.set(r.isin, { 
+                    dbMap.set(r.isin, {
                         qty: current + r.balance_qty,
-                        ticker: r.ticker, 
-                        name: r.stock_name 
+                        ticker: r.ticker,
+                        name: r.stock_name
                     });
                 });
 
@@ -225,15 +234,26 @@ export default function VerificationPage() {
                 const discrepancies: DiscrepancyRow[] = [];
                 const allIsins = new Set([...Array.from(csvHoldings.keys()), ...Array.from(dbMap.keys())]);
 
-                allIsins.forEach(isin => {
-                    const csvQty = csvHoldings.get(isin) || 0;
+                for (const isin of Array.from(allIsins)) {
+                    const csvData = csvHoldings.get(isin) || { total: 0, pledged: 0 };
+                    const csvQty = csvData.total;
                     const dbEntry = dbMap.get(isin);
                     const dbQty = dbEntry?.qty || 0;
 
-                    if (Math.abs(csvQty - dbQty) > 0.001) {
-                        // Find the data we parsed from the file
+                    const match = Math.abs(csvQty - dbQty) < 0.001;
+
+                    // COLLECT PLEDGE UPDATES if balance matches
+                    if (match && dbQty > 0 && dbEntry?.ticker) {
+                        pledgeUpdates.push({
+                            client_name: clientName,
+                            ticker: dbEntry.ticker,
+                            pledged_qty: csvData.pledged
+                        });
+                    }
+
+                    if (!match) {
                         const csvMeta = clientCsvRows.find(r => r.isin === isin);
-                        
+
                         // // If it's missing from DB, sync it to the assets table
                         // if (!dbEntry && csvMeta) {
                         //     handleMissingAsset(csvMeta.isin, csvMeta.stock_name);
@@ -243,15 +263,14 @@ export default function VerificationPage() {
                             client_name: clientName,
                             dp_id: dp_id,
                             isin: isin,
-                            // PRIORITIZE: Use the name from the file if DB is empty to remove "Unknown"
                             stock_name: dbEntry?.name || csvMeta?.stock_name || "New Asset",
-                            ticker: dbEntry?.ticker || csvMeta?.stock_name || "NEW", 
+                            ticker: dbEntry?.ticker || csvMeta?.stock_name || "NEW",
                             dp_balance: csvQty,
                             web_balance: dbQty,
                             difference: dbQty - csvQty
                         });
                     }
-                });
+                }
 
                 discrepancies.forEach(d => allDiscrepancies.push(d));
 
@@ -261,19 +280,25 @@ export default function VerificationPage() {
                         .from('clients')
                         .update({ last_verified: new Date().toISOString() })
                         .eq('dp_id', dp_id);
-                    
-                    results[clientName] = { 
-                        status: 'MATCH', 
+
+                    results[clientName] = {
+                        status: 'MATCH',
                         db_client_name: clientName,
-                        discrepancies: [] 
+                        discrepancies: []
                     };
                 } else {
-                    results[clientName] = { 
-                        status: 'MISMATCH', 
-                        db_client_name: clientName, 
-                        discrepancies 
+                    results[clientName] = {
+                        status: 'MISMATCH',
+                        db_client_name: clientName,
+                        discrepancies
                     };
                 }
+            }
+
+            // BATCH UPDATE PLEDGES (Single Upsert + Single Cleanup Delete)
+            if (pledgeUpdates.length > 0) {
+                await supabase.from('pledges').upsert(pledgeUpdates, { onConflict: 'client_name, ticker' });
+                await supabase.from('pledges').delete().eq('pledged_qty', 0);
             }
 
             // 1. Render the table IMMEDIATELY so the user sees something
@@ -282,10 +307,10 @@ export default function VerificationPage() {
 
             // 2. Start the background sync for MISSING assets only
             const missingAssets = allDiscrepancies.filter(d => d.web_balance === 0);
-            
+
             if (missingAssets.length > 0) {
                 setIsSyncingAssets(true); // START background sync UI
-                
+
                 try {
                     const assetsToSync = await handleMissingAssetsBatch(missingAssets);
                     if (assetsToSync.length > 0) {
@@ -337,8 +362,8 @@ export default function VerificationPage() {
                     <h3 className="font-bold text-lg">Upload Holdings CSV</h3>
                     <p className="text-sm text-slate-400">Expected columns: dp_id, client_name, ticker, isin, name, balance</p>
                 </div>
-                <input 
-                    type="file" 
+                <input
+                    type="file"
                     accept=".csv"
                     onChange={handleFileUpload}
                     className="block w-full max-w-xs text-sm text-slate-500
@@ -357,7 +382,7 @@ export default function VerificationPage() {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                     <div className="flex items-center gap-4">
                         <label className="font-bold text-slate-700">View Results For:</label>
-                        <select 
+                        <select
                             className="p-2.5 bg-white border border-slate-200 rounded-lg min-w-[250px]"
                             value={selectedClientKey}
                             onChange={(e) => setSelectedClientKey(e.target.value)}
@@ -374,14 +399,14 @@ export default function VerificationPage() {
                     {/* Result Display Logic */}
                     {selectedResult && (
                         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                            
+
                             {/* CASE 1: MATCH */}
                             {selectedResult.status === 'MATCH' && (
                                 <div className="p-12 flex flex-col items-center text-center gap-4 text-emerald-600">
                                     <CheckCircle size={64} />
                                     <h2 className="text-2xl font-bold text-slate-900">All Clear!</h2>
                                     <p className="text-slate-600 max-w-md">
-                                        Holdings match perfectly between Website and DP Manager. 
+                                        Holdings match perfectly between Website and DP Manager.
                                         <br />
                                         Timestamp updated successfully.
                                     </p>
