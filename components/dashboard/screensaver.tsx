@@ -22,8 +22,16 @@ export default function Screensaver({ idleTimeout = 300000 }) {
             timer = setTimeout(activate, idleTimeout);
         };
 
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.code === 'Space') {
+                e.preventDefault();
+                activate();
+            }
+        };
+
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
         events.forEach(event => document.addEventListener(event, resetTimer));
+        document.addEventListener('keydown', handleKeyDown);
 
         // Listen for manual activation trigger
         window.addEventListener('activate-screensaver', activate);
@@ -32,6 +40,7 @@ export default function Screensaver({ idleTimeout = 300000 }) {
 
         return () => {
             events.forEach(event => document.removeEventListener(event, resetTimer));
+            document.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('activate-screensaver', activate);
             clearTimeout(timer);
         };
