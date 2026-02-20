@@ -53,6 +53,7 @@ CREATE TABLE assets (
 
 -- 4. PURCHASES (The "In" Ledger)
 -- Log of all buy transactions
+-- Date is expected in yyyy-mm-dd format
 CREATE TABLE purchases (
     trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) NOT NULL,
@@ -125,6 +126,8 @@ SELECT
     a.ticker,
     a.stock_name,
     a.isin,
+
+   (p.date <= (CURRENT_DATE - INTERVAL '1 year')) as long_term,
     
     -- Purchase Details
     p.date,
@@ -418,3 +421,26 @@ SELECT cron.schedule(
     '0 12 * * 0',
     'SELECT migrate_bse_to_nse()'
 );
+
+
+
+-- =========================================================
+-- 7. UPDATE ASSETS TABLE FROM PURCHASE SHEET TICKERS
+-- Created TABLE temp_updates with ticker and current_price from purchase
+-- =========================================================
+
+
+WITH deduplicated_csv AS (
+  -- This picks exactly ONE row per ticker from your temp table
+  SELECT DISTINCT ON (ticker) 
+    ticker, 
+    current_price
+  FROM temp_updates
+  ORDER BY ticker, current_price DESC -- If duplicates exist, it picks the highest price
+)
+UPDATE assets
+SET 
+  current_price = deduplicated_csv.current_price,
+  last_updated = NOW()
+FROM deduplicated_csv
+WHERE assets.ticker = deduplicated_csv.ticker;
