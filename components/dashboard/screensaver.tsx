@@ -23,7 +23,10 @@ export default function Screensaver({ idleTimeout = 300000 }) {
         };
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.ctrlKey && e.code === 'Space') {
+            // Support Ctrl+Space (Windows) and Cmd+Space (Mac)
+            const isShortcut = (e.ctrlKey || e.metaKey) && e.code === 'Space';
+
+            if (isShortcut) {
                 e.preventDefault();
                 activate();
             }
