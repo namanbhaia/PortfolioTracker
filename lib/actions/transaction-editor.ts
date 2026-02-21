@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
+import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
 
 // ==========================================
 // 1. Interfaces
@@ -34,6 +34,7 @@ export interface Sale {
   profit_stored: number;
   client_id: string;
   adjusted_profit_stored: number;
+  is_square_off: boolean;
   ticker: string;
   created_at: string;
 }
@@ -52,6 +53,7 @@ export interface SaleIntent {
   profit_stored: number;
   client_id: string;
   adjusted_profit_stored: number;
+  is_square_off: boolean;
   ticker: string;
   created_at: string;
 }
@@ -217,7 +219,8 @@ export class TransactionEditor {
     const salesRows: Sale[] = rawSales.map((s: any) => ({
       ...s,
       ticker: s.purchases?.ticker || ticker,
-      long_term: s.purchases?.date ? isLongTerm(s.purchases.date, s.date) : false
+      long_term: s.purchases?.date ? isLongTerm(s.purchases.date, s.date) : false,
+      is_square_off: s.purchases?.date ? isSquareOff(s.purchases.date, s.date) : false
     }));
 
     // ---------------------------------------------------------
@@ -286,7 +289,8 @@ export class TransactionEditor {
           ...split,
           sale_qty: 0,
           profit_stored: 0,
-          adjusted_profit_stored: 0
+          adjusted_profit_stored: 0,
+          is_square_off: false
         });
       }
       const order = salesOrdersMap.get(split.custom_id)!;
@@ -352,6 +356,7 @@ export class TransactionEditor {
         );
 
         const isLT = isLongTerm(p.date, order.date);
+        const isSQ = isSquareOff(p.date, order.date);
 
         salesToInsert.push({
           trx_id: newSplitId,
@@ -367,6 +372,7 @@ export class TransactionEditor {
           user_id: order.user_id,
           comments: order.comments,
           long_term: isLT,
+          is_square_off: isSQ,
           client_id: order.client_id,
           created_at: order.created_at,
         });
@@ -431,7 +437,8 @@ export class TransactionEditor {
           salesToUpdate.push({
             ...sale,
             profit_stored: profit,
-            adjusted_profit_stored: adjusted_profit
+            adjusted_profit_stored: adjusted_profit,
+            is_square_off: isSquareOff(purchase.date, sale.date)
           });
         }
       }
@@ -489,7 +496,8 @@ export class TransactionEditor {
         ...split,
         rate: newRate,
         profit_stored: profit,
-        adjusted_profit_stored: adjusted_profit
+        adjusted_profit_stored: adjusted_profit,
+        is_square_off: isSquareOff(purchaseDate, split.date)
       });
     }
 
@@ -538,6 +546,7 @@ export class TransactionEditor {
       profit_stored: 0,      // Will be recalculated
       client_id: existing.client_id, // Direct access from sales table
       adjusted_profit_stored: 0,
+      is_square_off: false, // Reprocess will calc
       ticker: ticker,
       created_at: existing.created_at,
     };
@@ -680,6 +689,7 @@ export class TransactionEditor {
       long_term: false,
       client_id: existing.client_id,
       adjusted_profit_stored: 0,
+      is_square_off: false, // Reprocess will calc
       created_at: existing.created_at
     };
 

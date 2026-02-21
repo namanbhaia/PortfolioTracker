@@ -1,6 +1,6 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle } from 'lucide-react';
+import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle, Info } from 'lucide-react';
 import { Input } from '@/components/ui/transaction-input';
 import { searchTransactions } from '@/lib/actions/search-transactions';
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from '@/components/ui/transaction-table';
@@ -168,7 +168,21 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                         <TableHead className="px-4 text-right">Sale Qty</TableHead>
                                         <TableHead className="px-4 text-right">Sale Rate</TableHead>
                                         <TableHead className="px-4 text-right">Sale Value</TableHead>
-                                        <TableHead className="px-4 text-center">Long Term</TableHead>
+                                        <TableHead className="px-4 text-center">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <span>Term</span>
+                                                <div className="group relative">
+                                                    <Info size={12} className="text-slate-400 cursor-help" />
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-40 p-2 bg-slate-800 text-white text-[10px] rounded shadow-lg z-50 normal-case tracking-normal font-normal pointer-events-none">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2"><span className="text-green-400">✓</span> Long Term</div>
+                                                            <div className="flex items-center gap-2"><span className="text-red-400">✕</span> Short Term</div>
+                                                            <div className="flex items-center gap-2"><span className="text-amber-400">⚡</span> Square Off</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </TableHead>
                                         <TableHead className="px-4 text-right">P/L</TableHead>
                                         <TableHead className="px-4 text-right">P/L%</TableHead>
                                         <TableHead className="px-4 text-right">GF. P/L</TableHead>
@@ -198,9 +212,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <TableCell className="px-4 py-3 text-right text-slate-900">₹{Number(row.sale_value).toLocaleString()}</TableCell>
                                                 <TableCell className="px-3 py-3 text-center">
                                                     <div className="flex justify-center items-center">
-                                                        <span className={row.long_term ? 'text-green-600' : 'text-red-500'}>
-                                                            {row.long_term ? '✓' : '✕'}
-                                                        </span>
+                                                        {row.long_term ? (
+                                                            <span className="text-green-600 font-bold" title="Long Term">✓</span>
+                                                        ) : row.is_square_off ? (
+                                                            <span className="text-amber-500 font-bold" title="Square Off">⚡</span>
+                                                        ) : (
+                                                            <span className="text-red-500 font-bold" title="Short Term">✕</span>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className={`px-4 py-3 text-right ${Number(row.pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.pl).toLocaleString()}</TableCell>

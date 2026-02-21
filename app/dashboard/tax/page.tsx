@@ -32,17 +32,20 @@ export default async function TaxReportOverviewPage({
     if (hasDates) {
         const { data: sales } = await supabase
             .from('sales')
-            .select('client_id, profit_stored, long_term, adjusted_profit_stored')
+            .select('client_id, profit_stored, long_term, adjusted_profit_stored, is_square_off')
             .gte('date', startDate)
             .lte('date', endDate);
 
         sales?.forEach(sale => {
             if (!salesByClient[sale.client_id]) {
-                salesByClient[sale.client_id] = { stcg: 0, ltcg: 0, atlcg: 0, count: 0 };
+                salesByClient[sale.client_id] = { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
             }
             if (sale.long_term) {
                 salesByClient[sale.client_id].ltcg += Number(sale.profit_stored);
                 salesByClient[sale.client_id].altcg += Number(sale.adjusted_profit_stored);
+            }
+            else if (sale.is_square_off) {
+                salesByClient[sale.client_id].sqoff += Number(sale.profit_stored);
             }
             else salesByClient[sale.client_id].stcg += Number(sale.profit_stored);
             salesByClient[sale.client_id].count++;
@@ -58,11 +61,11 @@ export default async function TaxReportOverviewPage({
 
 
             <DateRangeFilter initialDates={{ startDate, endDate }} />
-    
+
             {hasDates ? (
                 <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {clients?.map((client) => {
-                        const stats = salesByClient[client.client_id] || { stcg: 0, ltcg: 0, altcg: 0, count: 0 };
+                        const stats = salesByClient[client.client_id] || { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
                         const params = new URLSearchParams({
                             client_ids: client.client_id,
                             start_date: startDate,
@@ -82,6 +85,12 @@ export default async function TaxReportOverviewPage({
 
                                     <div className="flex items-center gap-10">
                                         <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Square Off Profit</p>
+                                            <p className={`text-sm font-mono font-bold ${stats.sqoff >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                ₹{stats.sqoff.toLocaleString('en-IN')}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase">Short Term Profit</p>
                                             <p className={`text-sm font-mono font-bold ${stats.stcg >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                 ₹{stats.stcg.toLocaleString('en-IN')}
@@ -96,7 +105,7 @@ export default async function TaxReportOverviewPage({
                                         <div className="text-right">
                                             <p className="text-[10px] font-bold text-slate-400 uppercase">Adjusted Long Term Profit</p>
                                             <p className={`text-sm font-mono font-bold ${stats.altcg >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                ₹{stats.ltcg.toLocaleString('en-IN')}
+                                                ₹{stats.altcg.toLocaleString('en-IN')}
                                             </p>
                                         </div>
                                         <Link href={`/dashboard/sales?${params.toString()}`}>

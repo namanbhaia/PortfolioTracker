@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { SubmitButton } from '@/components/ui/submit-button';
-import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
+import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
 
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
@@ -149,6 +149,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         profit_stored: standardProfit,
                         adjusted_profit_stored: adjustedProfit,
                         long_term: isTrxLongTerm,
+                        is_square_off: isSquareOff(lot.date, saleDateStr),
                         user_id: user.id,
                         comments: data.comments ? `${data.comments} | ${sharedCustomId}` : sharedCustomId
                     }])

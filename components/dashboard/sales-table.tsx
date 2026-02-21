@@ -1,4 +1,5 @@
 ﻿import Link from 'next/link';
+import { Info } from 'lucide-react';
 
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
@@ -81,9 +82,21 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                         <th className="px-3 py-3 text-right">Grandfathered P/L</th>
                         {/* Sortable Header: Type (long_term) */}
                         <th className="px-3 py-3 text-center">
-                            <Link href={getSortLink('long_term')} className="hover:text-blue-600 flex items-center justify-center">
-                                Long Term <SortArrow field="long_term" />
-                            </Link>
+                            <div className="flex items-center justify-center gap-1">
+                                <Link href={getSortLink('long_term')} className="hover:text-blue-600 flex items-center">
+                                    Term <SortArrow field="long_term" />
+                                </Link>
+                                <div className="group relative">
+                                    <Info size={14} className="text-slate-400 cursor-help" />
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-lg z-50 pointer-events-none normal-case tracking-normal font-normal">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2 font-normal"><span className="text-green-400">✓</span> Long Term (&gt;365 days)</div>
+                                            <div className="flex items-center gap-2 font-normal"><span className="text-red-400">✕</span> Short Term (&lt;365 days)</div>
+                                            <div className="flex items-center gap-2 font-normal"><span className="text-amber-400">⚡</span> Square Off (Same Day)</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </th>
                         <th className="px-3 py-3">Comments</th>
                     </tr>
@@ -126,9 +139,13 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                             </td>
                             <td className="px-3 py-3 text-center">
                                 <div className="flex justify-center items-center">
-                                    <span className={row.long_term ? 'text-green-600' : 'text-red-500'}>
-                                        {row.long_term ? '✓' : '✕'}
-                                    </span>
+                                    {row.long_term ? (
+                                        <span className="text-green-600 font-bold" title="Long Term">✓</span>
+                                    ) : row.is_square_off ? (
+                                        <span className="text-amber-500 font-bold" title="Square Off">⚡</span>
+                                    ) : (
+                                        <span className="text-red-500 font-bold" title="Short Term">✕</span>
+                                    )}
                                 </div>
                             </td>
                             <td className="px-3 py-3">

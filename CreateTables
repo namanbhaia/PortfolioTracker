@@ -80,6 +80,7 @@ CREATE TABLE sales (
     profit_stored NUMERIC,
     adjusted_profit_stored NUMERIC,
     long_term BOOLEAN,
+    is_square_off BOOLEAN DEFAULT FALSE,
     custom_id TEXT,
     comments TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -173,6 +174,7 @@ SELECT
     ((s.profit_stored / p.rate) * 100) AS pl_percentage,
     s.adjusted_profit_stored AS adjusted_pl,
     s.long_term,
+    s.is_square_off,
     s.comments,
     s.user_id,
     s.custom_id
@@ -270,6 +272,7 @@ BEGIN
             profit_stored, 
             adjusted_profit_stored,
             long_term,
+            is_square_off,
             user_id,
             comments
         )
@@ -285,6 +288,7 @@ BEGIN
             (value ->> 'profit_stored')::NUMERIC,
             (value ->> 'adjusted_profit_stored')::NUMERIC,
             (value ->> 'long_term')::BOOLEAN,
+            (value ->> 'is_square_off')::BOOLEAN,
             (value ->> 'user_id')::UUID,
             (value ->> 'comments')
         FROM jsonb_array_elements(payload -> 'sales_to_insert');
@@ -302,6 +306,7 @@ BEGIN
                 rate                   = (s_record ->> 'rate')::NUMERIC,
                 sale_qty               = (s_record ->> 'sale_qty')::NUMERIC,
                 date                   = (s_record ->> 'date')::DATE,
+                is_square_off          = (s_record ->> 'is_square_off')::BOOLEAN,
                 comments               = (s_record ->> 'comments')
             WHERE trx_id = (s_record ->> 'trx_id')::UUID;
         END LOOP;

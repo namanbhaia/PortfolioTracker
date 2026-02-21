@@ -2,10 +2,10 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 // 1. Helper to get today's date in YYYY-MM-DD format (Local Timezone)
 export const getTodayDate = () => {
-    const date = new Date();
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
-    return localDate.toISOString().split('T')[0];
+  const date = new Date();
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+  return localDate.toISOString().split('T')[0];
 };
 
 /**
@@ -16,14 +16,27 @@ export const getTodayDate = () => {
  * @returns {boolean} - True if the holding period is greater than 365 days.
  */
 export const isLongTerm = (purchaseDate: string | Date, saleDate: string | Date = new Date()): boolean => {
-    // Normalize inputs to Date objects
-    const start = new Date(purchaseDate);
-    const end = new Date(saleDate);
+  // Normalize inputs to Date objects
+  const start = new Date(purchaseDate);
+  const end = new Date(saleDate);
 
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays > 365;
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays > 365;
+};
+
+/**
+ * @function isSquareOff
+ * @description Checks if a trade is a "Square Off" (bought and sold on the same day).
+ * @param {Date | string} purchaseDate 
+ * @param {Date | string} saleDate 
+ * @returns {boolean}
+ */
+export const isSquareOff = (purchaseDate: string | Date, saleDate: string | Date): boolean => {
+  const p = new Date(purchaseDate).toISOString().split('T')[0];
+  const s = new Date(saleDate).toISOString().split('T')[0];
+  return p === s;
 };
 
 /**
@@ -33,7 +46,7 @@ export const isLongTerm = (purchaseDate: string | Date, saleDate: string | Date 
  * @returns The cutoff price or null if not found/set
  */
 export async function getGrandfatheredRate(
-  supabase: SupabaseClient, 
+  supabase: SupabaseClient,
   ticker: string
 ): Promise<number | null> {
   const { data, error } = await supabase
