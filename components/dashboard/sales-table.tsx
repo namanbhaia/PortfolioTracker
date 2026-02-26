@@ -115,7 +115,7 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                             <TickerCell ticker={row.ticker} isin={row.isin} />
                             <td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
                             <td className="px-3 py-3 whitespace-nowrap">
-                                {new Date(row.purchase_date).toLocaleDateString('en-IN')}
+                                {new Date(row.purchase_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                             </td>
                             <td className="px-3 py-3 text-right">
                                 {(Number(row.purchase_qty) || 0).toLocaleString('en-IN')}
@@ -123,7 +123,7 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                             <td className="px-3 py-3 text-right">₹{Number(row.purchase_rate).toFixed(2)}</td>
                             <td className="px-3 py-3 text-right">₹{Number(row.purchase_value).toLocaleString('en-IN')}</td>
                             <td className="px-3 py-3 whitespace-nowrap">
-                                {new Date(row.sale_date).toLocaleDateString('en-IN')}
+                                {new Date(row.sale_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                             </td>
                             <td className="px-3 py-3 text-right">{Number(row.sale_qty)}</td>
                             <td className="px-3 py-3 text-right">₹{Number(row.sale_rate).toFixed(2)}</td>

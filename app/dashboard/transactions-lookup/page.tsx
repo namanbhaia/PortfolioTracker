@@ -132,7 +132,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                             <TickerCell ticker={row.ticker} isin={row.isin} />
                                             <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
                                             <TableCell className="px-3 py-3 whitespace-nowrap">
-                                                {new Date(row.date).toLocaleDateString('en-IN')}
+                                                {new Date(row.date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                                             </TableCell>
                                             <TableCell className="px-3 py-3 text-right">{Number(row.purchase_qty)}</TableCell>
                                             <TableCell className="px-3 py-3 text-right">₹{Number(row.rate).toFixed(2)}</TableCell>
@@ -206,7 +206,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <TickerCell ticker={row.ticker} isin={row.isin} />
                                                 <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
                                                 <TableCell className="px-4 py-3"><TrxIdCell id={row.purchase_trx_id} /></TableCell>
-                                                <TableCell className="px-4 py-3 text-xs">{new Date(row.sale_date).toLocaleDateString('en-IN')}</TableCell>
+                                                <TableCell className="px-4 py-3 text-xs">{new Date(row.sale_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right">{Number(row.sale_qty)}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right">₹{Number(row.sale_rate).toLocaleString()}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right text-slate-900">₹{Number(row.sale_value).toLocaleString()}</TableCell>

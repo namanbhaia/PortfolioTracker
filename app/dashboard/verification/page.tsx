@@ -31,7 +31,7 @@ export default function VerificationPage() {
         if (uniqueMissing.length === 0) return [];
 
         const assetsToSync: any[] = [];
-        const chunkSize = 5; // Process in small batches of 5 to prevent API lag
+        const chunkSize = 15; // Process in small batches of 15 to prevent API lag
 
         for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
             const chunk = uniqueMissing.slice(i, i + chunkSize);
@@ -67,7 +67,7 @@ export default function VerificationPage() {
 
     const performBulkSync = async (data: any[]) => {
         if (!data || data.length === 0) return;
-        const { error } = await supabase.from('assets').upsert(data, { onConflict: 'isin' });
+        const { error } = await supabase.from('assets').upsert(data, { onConflict: 'ticker' });
         if (error) console.error("Database Sync Error:", error.message);
     };
 
