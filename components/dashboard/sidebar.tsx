@@ -18,7 +18,8 @@ import {
     BadgeDollarSign,
     FileCheck,
     FileSpreadsheet,
-    ShieldCheck
+    ShieldCheck,
+    Wrench
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -42,7 +43,11 @@ const navItems = [
 const secondaryItems = [
     { name: 'Export Data', href: '/dashboard/export', icon: FileSpreadsheet },
     { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
-    { name: 'Info & Rules', href: '/dashboard/info', icon: Info }
+    { name: 'Info & Rules', href: '/dashboard/info', icon: Info },
+];
+
+const adminItems = [
+    { name: 'Admin Controls', href: '/dashboard/admin', icon: Wrench }
 ];
 
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
@@ -155,6 +160,33 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                     </Link>
                 ))}
             </div>
+
+            {/* Admin Section (Conditional) */}
+            {profile?.advanced_mode && (
+                <div className="px-3 space-y-1 mb-4">
+                    {!isCollapsed && (
+                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest px-3 mb-2 opacity-80 mt-2">
+                            Advanced Mode
+                        </p>
+                    )}
+                    {adminItems.map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${isActive
+                                        ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
+                                        : 'hover:bg-slate-800 hover:text-slate-100'
+                                    }`}
+                            >
+                                <item.icon size={18} className={`shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                                {!isCollapsed && <span className="truncate">{item.name}</span>}
+                            </Link>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* User Profile Footer */}
             <div className={`p-4 border-t border-slate-800 ${isCollapsed ? 'px-2' : 'px-4'}`}>

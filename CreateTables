@@ -27,6 +27,7 @@ CREATE TABLE profiles (
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
     screensaver_click_only BOOLEAN DEFAULT FALSE,
+    advanced_mode BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -46,7 +47,7 @@ CREATE TABLE clients (
 CREATE TABLE assets (
     ticker TEXT PRIMARY KEY,
     stock_name TEXT NOT NULL,
-    isin TEXT UNIQUE,
+    isin TEXT, -- Removed UNIQUE as requested
     current_price NUMERIC DEFAULT 0,
     last_updated TIMESTAMPTZ DEFAULT now()
 );
@@ -61,7 +62,7 @@ CREATE TABLE purchases (
     ticker TEXT REFERENCES assets(ticker),
     date DATE NOT NULL,
     rate NUMERIC NOT NULL,
-    qty NUMERIC NOT NULL CHECK (qty > 0),
+    purchase_qty NUMERIC NOT NULL CHECK (purchase_qty > 0),
     comments TEXT,
     sale_ids UUID[] DEFAULT '{}', -- Array to track partial sales linked to this purchase
     created_at TIMESTAMPTZ DEFAULT now()
@@ -217,6 +218,34 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Function: Bulk Asset Update
+-- Purpose: Atomic upsert for assets. If ISIN exists but ticker changed, 
+--          it cascades the update to purchases and pledges.
+CREATE OR REPLACE FUNCTION bulk_asset_update(payload JSONB)
+RETURNS VOID AS $$
+DECLARE
+    a_record JSONB;
+BEGIN
+    FOR a_record IN SELECT * FROM jsonb_array_elements(payload -> 'assets_to_upsert')
+    LOOP
+        INSERT INTO assets (ticker, stock_name, isin, current_price, last_updated)
+        VALUES (
+            (a_record ->> 'ticker'),
+            (a_record ->> 'stock_name'),
+            (a_record ->> 'isin'),
+            COALESCE((a_record ->> 'current_price')::NUMERIC, 0),
+            now()
+        )
+        ON CONFLICT (ticker) 
+        DO UPDATE SET 
+            isin = EXCLUDED.isin,
+            stock_name = EXCLUDED.stock_name,
+            current_price = CASE WHEN EXCLUDED.current_price > 0 THEN EXCLUDED.current_price ELSE assets.current_price END,
+            last_updated = now();
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Function: Atomic Ledger Update
 -- Purpose: Handles complex transaction edits in a single transaction.
 --          1. Deletes old sales (splits) if re-processing is needed.
@@ -229,8 +258,34 @@ RETURNS VOID AS $$
 DECLARE
     p_record JSONB;
     s_record JSONB;
+    p_insert JSONB;
     id_to_delete TEXT;
 BEGIN
+    -- 0. INSERT New Purchases
+    -- This handles bulk importing purchase transactions.
+    IF payload ? 'purchases_to_insert' THEN
+            INSERT INTO purchases (
+            user_id,
+            client_name,
+            ticker,
+            date,
+            rate,
+            purchase_qty,
+            balance_qty,
+            comments
+        )
+        SELECT 
+            (value ->> 'user_id')::UUID,
+            (value ->> 'client_name'),
+            (value ->> 'ticker'),
+            (value ->> 'date')::DATE,
+            (value ->> 'rate')::NUMERIC,
+            (value ->> 'purchase_qty')::NUMERIC,
+            (value ->> 'balance_qty')::NUMERIC,
+            (value ->> 'comments')
+        FROM jsonb_array_elements(payload -> 'purchases_to_insert');
+    END IF;
+
     -- 1. DELETE Old Sales (Splits)
     -- Expects an array of 'custom_id' strings to remove entire sale batches.
     IF payload ? 'sales_to_delete' THEN
