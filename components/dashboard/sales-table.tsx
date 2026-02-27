@@ -1,32 +1,23 @@
-﻿import Link from 'next/link';
-import { Info } from 'lucide-react';
+﻿import { Info } from 'lucide-react';
 
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
 import TickerCell from '@/components/ui/ticker-cell';
-
-// Define the valid sortable columns for internal component use
-type SortField = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'long_term';
+import SortArrow from '@/components/ui/sort-arrow';
+import type { SortFieldSales } from '@/app/dashboard/sales/sales-client-wrapper';
 
 interface SalesTableProps {
-    sales: any[];
-    params: {
-        sort?: string;
-        order?: string;
+    sales: Record<string, any>[];
+    sortConfig?: {
+        key: string;
+        direction: 'asc' | 'desc';
     };
+    onSort?: (key: SortFieldSales) => void;
 }
 
-export default function SalesTable({ sales, params }: SalesTableProps) {
-    // Helper function to create sort URLs
-    const getSortLink = (field: SortField) => {
-        const newOrder = params.sort === field && params.order === 'asc' ? 'desc' : 'asc';
-        return `?sort=${field}&order=${newOrder}`;
-    };
-
-    // Helper to render sort arrow
-    const SortArrow = ({ field }: { field: SortField }) => {
-        if (params.sort !== field) return <span className="text-gray-300 ml-1">↕</span>;
-        return params.order === 'asc' ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
+export default function SalesTable({ sales, sortConfig, onSort }: SalesTableProps) {
+    const handleSort = (field: SortFieldSales) => {
+        if (onSort) onSort(field);
     };
 
     return (
@@ -34,58 +25,50 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
             <table className="w-full text-xs text-left border-collapse">
                 <thead className="bg-gray-100 border-b uppercase text-gray-600 font-semibold">
                     <tr>
-                        {/* New ID Column */}
                         <th className="px-3 py-3 w-16">ID</th>
-                        {/* Sortable Header: Client Name */}
                         <th className="px-3 py-3">
-                            <Link href={getSortLink('client_name')} className="hover:text-blue-600 flex items-center">
-                                Client Info<SortArrow field="client_name" />
-                            </Link>
+                            <button onClick={() => handleSort('client_name')} className="hover:text-blue-600 flex items-center uppercase font-semibold">
+                                Client Info<SortArrow field="client_name" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            </button>
                         </th>
-                        {/* Sortable Header: Ticker */}
                         <th className="px-3 py-3">
-                            <Link href={getSortLink('ticker')} className="hover:text-blue-600 flex items-center">
-                                Ticker / ISIN <SortArrow field="ticker" />
-                            </Link>
+                            <button onClick={() => handleSort('ticker')} className="hover:text-blue-600 flex items-center uppercase font-semibold">
+                                Ticker / ISIN <SortArrow field="ticker" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            </button>
                         </th>
-                        {/* Sortable Header: Stock Name */}
                         <th className="px-3 py-3">
-                            <Link href={getSortLink('stock_name')} className="hover:text-blue-600 flex items-center">
-                                Stock Name <SortArrow field="stock_name" />
-                            </Link>
+                            <button onClick={() => handleSort('stock_name')} className="hover:text-blue-600 flex items-center uppercase font-semibold">
+                                Stock Name <SortArrow field="stock_name" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            </button>
                         </th>
                         <th className="px-3 py-3 text-right">Purchase Date</th>
                         <th className="px-3 py-3 text-right">Purchase Qty</th>
                         <th className="px-3 py-3 text-right">Purchase Rate</th>
                         <th className="px-3 py-3 text-right">Purchase Value</th>
-                        {/* Sortable Header: Date */}
                         <th className="px-3 py-3">
-                            <Link href={getSortLink('sale_date')} className="hover:text-blue-600 flex items-center">
-                                Date <SortArrow field="sale_date" />
-                            </Link>
+                            <button onClick={() => handleSort('sale_date')} className="hover:text-blue-600 flex items-center uppercase font-semibold">
+                                Date <SortArrow field="sale_date" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            </button>
                         </th>
                         <th className="px-3 py-3 text-right">Sale Qty</th>
                         <th className="px-3 py-3 text-right">Sale Rate</th>
                         <th className="px-3 py-3 text-right">Sale Value</th>
-                        {/* Sortable Header: P/L % */}
                         <th className="px-3 py-3 text-right">
-                            <Link href={getSortLink('pl_percent')} className="hover:text-blue-600 flex items-center justify-end">
-                                P/L % <SortArrow field="pl_percent" />
-                            </Link>
+                            <button onClick={() => handleSort('pl_percent')} className="hover:text-blue-600 flex items-center justify-end w-full uppercase font-semibold">
+                                P/L % <SortArrow field="pl_percent" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            </button>
                         </th>
-                        {/* Sortable Header: Total P/L */}
                         <th className="px-3 py-3 text-right">
-                            <Link href={getSortLink('pl')} className="hover:text-blue-600 flex items-center justify-end">
-                                Total P/L <SortArrow field="pl" />
-                            </Link>
+                            <button onClick={() => handleSort('pl')} className="hover:text-blue-600 flex items-center justify-end w-full uppercase font-semibold">
+                                Total P/L <SortArrow field="pl" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            </button>
                         </th>
                         <th className="px-3 py-3 text-right">Grandfathered P/L</th>
-                        {/* Sortable Header: Type (long_term) */}
                         <th className="px-3 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
-                                <Link href={getSortLink('long_term')} className="hover:text-blue-600 flex items-center">
-                                    Term <SortArrow field="long_term" />
-                                </Link>
+                                <button onClick={() => handleSort('long_term')} className="hover:text-blue-600 flex items-center uppercase font-semibold">
+                                    Term <SortArrow field="long_term" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                                </button>
                                 <div className="group relative">
                                     <Info size={14} className="text-slate-400 cursor-help" />
                                     <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden group-hover:block w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-lg z-50 pointer-events-none normal-case tracking-normal font-normal">
@@ -104,7 +87,6 @@ export default function SalesTable({ sales, params }: SalesTableProps) {
                 <tbody className="divide-y divide-gray-200">
                     {sales?.map((row) => (
                         <tr key={row.trx_id} className={`hover:bg-gray-50`}>
-                            {/* New ID Cell */}
                             <td className="px-3 py-3">
                                 <TrxIdCell id={row.trx_id} />
                             </td>

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
+import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
 
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const supabase = createClient();
@@ -184,6 +185,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             setSuccess(true);
             reset();
+            await revalidateDashboard();
 
         } catch (err) {
             const error = err as Error;

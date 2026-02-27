@@ -207,11 +207,9 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 					<ConsolidatedHoldingsTable consolidatedRows={consolidatedRows || []} />
 
 					{consolidatedRows.length === 0 && (
-						<tr>
-							<td colSpan={9} className="py-20 text-center text-slate-400 italic">
-								No holdings found for the selected accounts.
-							</td>
-						</tr>
+						<div className="py-20 text-center text-slate-400 italic">
+							No holdings found for the selected accounts.
+						</div>
 					)}
 				</div>
 			</div>

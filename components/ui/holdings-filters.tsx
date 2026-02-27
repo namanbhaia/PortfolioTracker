@@ -1,7 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React from 'react';
 import { Search, Calendar, X } from 'lucide-react';
 import { ClientMultiSelect } from './client-filter';
 
@@ -9,54 +8,54 @@ export default function HoldingsFilter({
     availableClients,
     showLongTermToggle = true,
     showBalanceToggle = true,
+
+    // NEW PROPS FOR LOCAL STATE
+    ticker, setTicker,
+    shareName, setShareName,
+    startDate, setStartDate,
+    endDate, setEndDate,
+    showAll, setShowAll,
+    longTerm, setLongTerm,
+    selectedClientIds, setSelectedClientIds
 }: {
-    availableClients: any[],
+    availableClients: Record<string, any>[],
     showLongTermToggle?: boolean,
-    showBalanceToggle?: boolean
+    showBalanceToggle?: boolean,
+
+    ticker?: string,
+    setTicker?: (val: string) => void,
+    shareName?: string,
+    setShareName?: (val: string) => void,
+    startDate?: string,
+    setStartDate?: (val: string) => void,
+    endDate?: string,
+    setEndDate?: (val: string) => void,
+    showAll?: boolean,
+    setShowAll?: (val: boolean) => void,
+    longTerm?: boolean | null,
+    setLongTerm?: (val: boolean | null) => void,
+    selectedClientIds?: string[],
+    setSelectedClientIds?: (val: string[]) => void
 }) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-
-    // Filter States
-    const [ticker, setTicker] = useState(searchParams.get('ticker') || '');
-    const [shareName, setShareName] = useState(searchParams.get('share_name') || '');
-    const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
-    const [endDate, setEndDate] = useState(searchParams.get('end_date') || '');
-
-    const showAll = searchParams.get('show_all') === 'true';
-    const selectedClientIds = searchParams.get('client_ids')?.split(',').filter(Boolean) || [];
-
-    const updateFilters = (updates: Record<string, string | null>) => {
-        const params = new URLSearchParams(searchParams.toString());
-        Object.entries(updates).forEach(([key, value]) => {
-            if (!value) params.delete(key);
-            else params.set(key, value);
-        });
-        router.push(`?${params.toString()}`);
-    };
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            updateFilters({
-                ticker: ticker.toUpperCase() || null,
-                share_name: shareName || null,
-                start_date: startDate || null,
-                end_date: endDate || null
-            });
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [ticker, shareName, startDate, endDate]);
 
     const handleClientChange = (id: string) => {
+        if (!setSelectedClientIds || !selectedClientIds) return;
+
         const next = selectedClientIds.includes(id)
             ? selectedClientIds.filter(cid => cid !== id)
             : [...selectedClientIds, id];
-        updateFilters({ client_ids: next.length > 0 ? next.join(',') : null });
+
+        setSelectedClientIds(next);
     };
 
     const clearAll = () => {
-        setTicker(''); setShareName(''); setStartDate(''); setEndDate('');
-        router.push('?');
+        setTicker?.('');
+        setShareName?.('');
+        setStartDate?.('');
+        setEndDate?.('');
+        setShowAll?.(false);
+        setLongTerm?.(null);
+        setSelectedClientIds?.([]);
     };
 
     return (
@@ -67,7 +66,7 @@ export default function HoldingsFilter({
                 {/* 1. Client Filter - Fixed Narrow Width */}
                 <ClientMultiSelect
                     clients={availableClients}
-                    selectedKeys={selectedClientIds}
+                    selectedKeys={selectedClientIds || []}
                     onChange={handleClientChange}
                     identifier="client_id"
                     className="w-full lg:w-48 shrink-0"
@@ -77,8 +76,8 @@ export default function HoldingsFilter({
                 <div className="relative w-full lg:w-48 shrink-0">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
                     <input
-                        value={ticker}
-                        onChange={(e) => setTicker(e.target.value)}
+                        value={ticker || ''}
+                        onChange={(e) => setTicker?.(e.target.value)}
                         placeholder="Ticker"
                         autoComplete="off"
                         className="w-full pl-8 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold uppercase outline-none focus:ring-2 ring-indigo-500"
@@ -88,8 +87,8 @@ export default function HoldingsFilter({
                 {/* 3. Share Name (Flexible Width) */}
                 <div className="relative flex-grow w-full">
                     <input
-                        value={shareName}
-                        onChange={(e) => setShareName(e.target.value)}
+                        value={shareName || ''}
+                        onChange={(e) => setShareName?.(e.target.value)}
                         placeholder="Security name..."
                         autoComplete="off"
                         className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500"
@@ -100,8 +99,8 @@ export default function HoldingsFilter({
                 {showLongTermToggle && (
                     <div className="flex p-1 bg-slate-100 rounded-xl shrink-0 overflow-x-auto max-w-full">
                         <button
-                            onClick={() => updateFilters({ long_term: 'true' })}
-                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${searchParams.get('long_term') === 'true'
+                            onClick={() => setLongTerm?.(true)}
+                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${longTerm === true
                                 ? 'bg-white shadow-sm text-indigo-600'
                                 : 'text-slate-500'
                                 }`}
@@ -109,8 +108,8 @@ export default function HoldingsFilter({
                             Long Term
                         </button>
                         <button
-                            onClick={() => updateFilters({ long_term: 'false' })}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${searchParams.get('long_term') === 'false'
+                            onClick={() => setLongTerm?.(false)}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${longTerm === false
                                 ? 'bg-white shadow-sm text-indigo-600'
                                 : 'text-slate-500'
                                 }`}
@@ -118,8 +117,8 @@ export default function HoldingsFilter({
                             Short Term
                         </button>
                         <button
-                            onClick={() => updateFilters({ long_term: null })}
-                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${!searchParams.get('long_term')
+                            onClick={() => setLongTerm?.(null)}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${longTerm === null
                                 ? 'bg-white shadow-sm text-indigo-600'
                                 : 'text-slate-500'
                                 }`}
@@ -133,16 +132,16 @@ export default function HoldingsFilter({
                 <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-xl">
                     <Calendar size={12} className="text-slate-400" />
                     <input
-                        type="date" value={startDate}
+                        type="date" value={startDate || ''}
                         autoComplete="off"
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={(e) => setStartDate?.(e.target.value)}
                         className="bg-transparent text-[10px] outline-none w-[95px]"
                     />
                     <span className="text-slate-300">-</span>
                     <input
-                        type="date" value={endDate}
+                        type="date" value={endDate || ''}
                         autoComplete="off"
-                        onChange={(e) => setEndDate(e.target.value)}
+                        onChange={(e) => setEndDate?.(e.target.value)}
                         className="bg-transparent text-[10px] outline-none w-[95px]"
                     />
                 </div>
@@ -151,13 +150,13 @@ export default function HoldingsFilter({
                 {showBalanceToggle && (
                     <div className="flex p-1 bg-slate-100 rounded-xl shrink-0">
                         <button
-                            onClick={() => updateFilters({ show_all: null })}
+                            onClick={() => setShowAll?.(false)}
                             className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!showAll ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
                         >
                             Active
                         </button>
                         <button
-                            onClick={() => updateFilters({ show_all: 'true' })}
+                            onClick={() => setShowAll?.(true)}
                             className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${showAll ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
                         >
                             All

@@ -1,35 +1,11 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import HoldingsFilters from '@/components/ui/holdings-filters';
-import HoldingsTable from '@/components/dashboard/holdings-table';
 import { RefreshButton } from '@/components/ui/refresh-button';
 import { SyncPricesButton } from '@/components/ui/sync-prices-button';
+import HoldingsClientWrapper from './holdings-client-wrapper';
 
-// Define the valid sortable columns based on your view
-type SortField = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'long_term';
-
-export default async function HoldingsPage({
-    searchParams,
-}: {
-    searchParams: {
-        ticker?: string;
-        share_name?: string;
-        client_name?: string;
-        show_all?: string;
-        start_date?: string;
-        end_date?: string;
-        long_term?: string;
-        sort?: string;
-        order?: string;
-        client_ids?: string;
-    };
-}) {
+export default async function HoldingsPage() {
     const supabase = await createClient();
-    const params = await searchParams;
-
-    // 1. Types & Default sorting
-    const sortField = (params.sort as SortField) || 'date';
-    const sortOrder = params.order === 'asc'; // true for ASC, false for DESC (default)
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return redirect('/login');
@@ -40,7 +16,7 @@ export default async function HoldingsPage({
         .eq('id', user.id)
         .single();
 
-    if (!profile?.client_ids?.length) return <div>No authorized clients.</div>;
+    if (!profile?.client_ids?.length) return <div className="p-4 text-slate-500">No authorized clients found. Please link a client in your profile.</div>;
 
     // Fetch client metadata for the dropdown
     const { data: availableClients } = await supabase
@@ -48,78 +24,32 @@ export default async function HoldingsPage({
         .select('client_id, client_name')
         .in('client_id', profile.client_ids);
 
-    // 2. Base Query
-    let query = supabase.from('client_holdings').select('*');
-
-    // 3. Security: Filter by Client IDs (Multiple select support)
-    let authorizedClientIds = profile.client_ids;
-    if (params.client_ids) {
-        const selectedClientIds = params.client_ids.split(',');
-        // Only filter by IDs the user actually has access to
-        authorizedClientIds = selectedClientIds.filter(id => profile.client_ids.includes(id));
-    }
-    query = query.in('client_id', authorizedClientIds);
-
-    // 4. Client Name (Exact match case-insensitive, if passed as string)
-    if (params.client_name) {
-        query = query.ilike('client_name', params.client_name);
-    }
-
-    // 5. Ticker (Exact match, case-insensitive)
-    if (params.ticker) {
-        query = query.ilike('ticker', params.ticker);
-    }
-
-    // 6. Share Name (Partial match)
-    if (params.share_name) {
-        query = query.ilike('stock_name', `%${params.share_name}%`);
-    }
-
-    // 7. Date Range
-    if (params.start_date) query = query.gte('date', params.start_date);
-    if (params.end_date) query = query.lte('date', params.end_date);
-
-    // 8. Balance Filtering (Default: Active Only)
-    if (params.show_all !== 'true') {
-        query = query.gt('balance_qty', 0);
-    }
-
-    if (params.long_term === 'true') {
-        query = query.eq('long_term', true);
-    } else if (params.long_term === 'false') {
-        query = query.eq('long_term', false);
-    }
-    // 10. Execute Query with Sorting
-    const { data: holdings, error } = await query.order(sortField, { ascending: sortOrder });
+    // Fetch all relevant holdings for the authorized clients at once
+    const { data: holdings, error } = await supabase
+        .from('client_holdings')
+        .select('*')
+        .in('client_id', profile.client_ids)
+        .order('date', { ascending: false });
 
     if (error) {
         console.error("Supabase Error:", error.message);
-        return <div className="p-4 text-red-500 bg-red-50 rounded-lg">Error loading portfolio data.</div>;
+        return <div className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200">Error loading portfolio data: {error.message}</div>;
     }
 
-    // Helper function to create sort URLs
-    const getSortLink = (field: SortField) => {
-        const newOrder = params.sort === field && params.order === 'asc' ? 'desc' : 'asc';
-        return `?sort=${field}&order=${newOrder}`;
-    };
-
-    // Helper to render sort arrow
-    const SortArrow = ({ field }: { field: SortField }) => {
-        if (params.sort !== field) return <span className="text-gray-300 ml-1">↕</span>;
-        return params.order === 'asc' ? <span className="ml-1">↑</span> : <span className="ml-1">↓</span>;
-    };
-
     return (
-        <div className="p-4 space-y-4">
-           <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="p-4 space-y-4 mx-auto">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Holdings</h1>
                 <div className="flex items-center gap-3">
                     <RefreshButton /><SyncPricesButton />
                 </div>
             </header>
-            <HoldingsFilters availableClients={availableClients || []} showLongTermToggle={true} showBalanceToggle={true} />
 
-            <HoldingsTable holdings={holdings || []} params={params} />
+            {/* The wrapper will handle all the local state for filtering and sorting */}
+            <HoldingsClientWrapper
+                initialHoldings={holdings || []}
+                availableClients={availableClients || []}
+            />
         </div>
     );
 }

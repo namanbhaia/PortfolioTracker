@@ -82,8 +82,8 @@ export class TransactionEditor {
     saleOverrides?: Map<string, SaleIntent>,
     purchaseOverrides?: Map<string, Purchase>
   ) {
-    let rawPurchases: any[] = [];
-    let rawSales: any[] = [];
+    let rawPurchases: Record<string, any>[] = [];
+    let rawSales: Record<string, any>[] = [];
 
     // ---------------------------------------------------------
     // A. FETCH DATA (Branching Logic)
@@ -168,7 +168,7 @@ export class TransactionEditor {
       // 2. Identify all Sale IDs linked to these purchases
       // We extract the IDs from the authoritative 'sale_ids' array on the purchase records
       const linkedSaleIds = new Set<string>();
-      (rawPurchases || []).forEach((p: any) => {
+      (rawPurchases || []).forEach((p: Record<string, any>) => {
         if (p.sale_ids && Array.isArray(p.sale_ids)) {
           p.sale_ids.forEach((id: string) => linkedSaleIds.add(id));
         }
@@ -193,11 +193,11 @@ export class TransactionEditor {
     // B. MAP DB TO INTERFACES
     // ---------------------------------------------------------
 
-    let purchases: Purchase[] = rawPurchases.map((p: any) => ({
+    let purchases: Purchase[] = rawPurchases.map((p: Record<string, any>) => ({
       ...p,
       sale_ids: p.sale_ids || [],
       balance_qty: Number(p.balance_qty)
-    }));
+    })) as Purchase[];
 
     if (purchaseOverrides) {
       purchases = purchases.map(p => {
@@ -216,12 +216,12 @@ export class TransactionEditor {
       });
     }
 
-    const salesRows: Sale[] = rawSales.map((s: any) => ({
+    const salesRows: Sale[] = rawSales.map((s: Record<string, any>) => ({
       ...s,
       ticker: s.purchases?.ticker || ticker,
       long_term: s.purchases?.date ? isLongTerm(s.purchases.date, s.date) : false,
       is_square_off: s.purchases?.date ? isSquareOff(s.purchases.date, s.date) : false
-    }));
+    })) as Sale[];
 
     // ---------------------------------------------------------
     // C. UNLINK STEP
@@ -307,8 +307,8 @@ export class TransactionEditor {
       const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateDiff !== 0) return dateDiff;
       // Use created_at if available in SaleIntent, default to 0
-      const aCreated = (a as any).created_at || 0;
-      const bCreated = (b as any).created_at || 0;
+      const aCreated = a.created_at || '0';
+      const bCreated = b.created_at || '0';
       return new Date(aCreated).getTime() - new Date(bCreated).getTime();
     });
 
@@ -412,7 +412,7 @@ export class TransactionEditor {
     // Fetch grandfathered rate once using the purchase ticker
     const cutoffPrice = await getGrandfatheredRate(this.supabase, purchase.ticker);
 
-    const salesToUpdate: any[] = [];
+    const salesToUpdate: Record<string, unknown>[] = [];
 
     // 2. Fetch only the sales linked via the purchase's sale_ids column
     if (purchase.sale_ids && purchase.sale_ids.length > 0) {
@@ -474,7 +474,7 @@ export class TransactionEditor {
     const ticker = splits[0].purchases?.ticker;
     const cutoffPrice = ticker ? await getGrandfatheredRate(this.supabase, ticker) : null;
 
-    const salesToUpdate: any[] = [];
+    const salesToUpdate: Record<string, unknown>[] = [];
 
     // 3. Recalculate Logic
     for (const split of splits) {

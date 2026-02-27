@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
  * Bulk updates or inserts asset records.
  * Uses the 'bulk_asset_update' SQL function for atomic processing and ticker/PK management.
  */
-export async function bulkAssetUpdateAction(assetsToUpsert: any[]) {
+export async function bulkAssetUpdateAction(assetsToUpsert: Record<string, unknown>[]) {
     const supabase = await createClient();
 
     const { error } = await supabase.rpc('bulk_asset_update', {
@@ -27,11 +27,11 @@ export async function bulkAssetUpdateAction(assetsToUpsert: any[]) {
  * Bulk processes purchase and sale records using the atomic_ledger_update function.
  */
 export async function bulkLedgerUpdateAction(payload: {
-    purchases_to_insert?: any[],
-    sales_to_insert?: any[],
-    purchases_to_update?: any[],
-    sales_to_delete?: any[],
-    sales_to_update?: any[]
+    purchases_to_insert?: Record<string, unknown>[],
+    sales_to_insert?: Record<string, unknown>[],
+    purchases_to_update?: Record<string, unknown>[],
+    sales_to_delete?: string[],
+    sales_to_update?: Record<string, unknown>[]
 }) {
     const supabase = await createClient();
 
