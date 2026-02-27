@@ -33,7 +33,7 @@ export default function ProfileClientsTable({ clients }: { clients: any[] }) {
                                     {client.last_verified ? (
                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                                             <Check size={12} />
-                                            {new Date(client.last_verified).toLocaleDateString()}
+                                            {new Date(client.last_verified).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                                         </span>
                                     ) : (
                                         <span className="text-xs text-slate-400 italic">Never</span>
