@@ -86,9 +86,7 @@ export default function HoldingsTable({ holdings, sortConfig, onSort }: Holdings
 							</td>
 							<TickerCell ticker={row.ticker} isin={row.isin} />
 							<td className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</td>
-							{/* Purchase Date */}
-							<td className="px-3 py-3 whitespace-nowrap">{new Date(row.date).toLocaleDateString("en-IN")}</td>
-							{/* Numeric Data (Right Aligned) */}
+							<td className="px-3 py-3 whitespace-nowrap">{new Date(row.date).toLocaleDateString("en-IN", { timeZone: 'UTC' })}</td>
 							<td className="px-3 py-3 text-right">{Number(row.purchase_qty)}</td>
 							<td className="px-3 py-3 text-right">₹{Number(row.rate).toFixed(2)}</td>
 							<td className="px-3 py-3 text-right">₹{Number(row.purchase_value).toLocaleString("en-IN")}</td>
