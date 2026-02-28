@@ -5,7 +5,7 @@ import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import TickerCell from '@/components/ui/ticker-cell';
 
 type SortConfig = {
-    key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged';
+    key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'dividend_yield';
     direction: 'asc' | 'desc';
 } | null;
 
@@ -36,7 +36,7 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
         return sortableItems;
     }, [consolidatedRows, sortConfig]);
 
-    const requestSort = (key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged') => {
+    const requestSort = (key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'dividend_yield') => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
@@ -71,6 +71,15 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
                     <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('total_market_value')}>
                         <div className="flex items-center justify-end">Market Val <SortIcon column="total_market_value" /></div>
                     </th>
+                    <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('beta')}>
+                        <div className="flex items-center justify-end">Beta <SortIcon column="beta" /></div>
+                    </th>
+                    <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('trailing_pe')}>
+                        <div className="flex items-center justify-end">P/E <SortIcon column="trailing_pe" /></div>
+                    </th>
+                    <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('dividend_yield')}>
+                        <div className="flex items-center justify-end">Yield % <SortIcon column="dividend_yield" /></div>
+                    </th>
                     <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('pl')}>
                         <div className="flex items-center justify-end">P/L <SortIcon column="pl" /></div>
                     </th>
@@ -89,6 +98,9 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consol
                         <td className="px-4 py-4 text-right font-mono">₹{row.avg_purchase_price.toFixed(2)}</td>
                         <td className="px-4 py-4 text-right font-semibold">₹{row.total_purchase_value.toLocaleString('en-IN')}</td>
                         <td className="px-4 py-4 text-right font-bold text-slate-900">₹{row.total_market_value.toLocaleString('en-IN')}</td>
+                        <td className="px-4 py-4 text-right font-mono text-slate-500">{row.beta?.toFixed(2) || '-'}</td>
+                        <td className="px-4 py-4 text-right font-mono text-slate-500">{row.trailing_pe?.toFixed(2) || '-'}</td>
+                        <td className="px-4 py-4 text-right font-mono text-indigo-600 font-semibold">{row.dividend_yield ? `${row.dividend_yield.toFixed(2)}%` : '-'}</td>
                         <td className={`px-4 py-4 text-right font-bold ${row.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             ₹{row.pl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </td>

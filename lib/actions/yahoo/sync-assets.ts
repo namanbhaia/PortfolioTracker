@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from '@/lib/supabase/server'; 
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import YahooFinance from 'yahoo-finance2';
 
@@ -32,7 +32,7 @@ export async function syncAssetsAction() {
       // 1. Map to Yahoo Tickers: If numeric, it's BSE (.BO), otherwise NSE (.NS)
       const tickersToFetch = chunk.map(a => {
         const t = a.ticker.toUpperCase();
-        if (t.includes('.') ) return t; // Already has suffix
+        if (t.includes('.')) return t; // Already has suffix
         const isBse = /^\d+$/.test(t); // Check if ticker is purely numeric
         return isBse ? `${t}.BO` : `${t}.NS`;
       });
@@ -51,6 +51,16 @@ export async function syncAssetsAction() {
             ticker: cleanTicker,
             stock_name: original?.stock_name,
             current_price: Number(q.regularMarketPrice),
+            beta: q.beta,
+            trailing_pe: q.trailingPE,
+            forward_pe: q.forwardPE,
+            peg_ratio: q.pegRatio,
+            dividend_yield: q.dividendYield,
+            fifty_day_avg: q.fiftyDayAverage,
+            two_hundred_day_avg: q.twoHundredDayAverage,
+            fifty_two_week_high: q.fiftyTwoWeekHigh,
+            fifty_two_week_low: q.fiftyTwoWeekLow,
+            market_cap: q.marketCap,
             last_updated: new Date().toISOString()
           };
         });

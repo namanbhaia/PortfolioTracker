@@ -49,6 +49,16 @@ CREATE TABLE assets (
     stock_name TEXT NOT NULL,
     isin TEXT, -- Removed UNIQUE as requested
     current_price NUMERIC DEFAULT 0,
+    beta NUMERIC,
+    trailing_pe NUMERIC,
+    forward_pe NUMERIC,
+    peg_ratio NUMERIC,
+    dividend_yield NUMERIC,
+    fifty_day_avg NUMERIC,
+    two_hundred_day_avg NUMERIC,
+    fifty_two_week_high NUMERIC,
+    fifty_two_week_low NUMERIC,
+    market_cap BIGINT,
     last_updated TIMESTAMPTZ DEFAULT now()
 );
 
@@ -140,6 +150,10 @@ SELECT
 
     -- Market Details
     a.current_price AS market_rate,
+    a.beta,
+    a.trailing_pe,
+    a.dividend_yield,
+    a.market_cap,
     (p.balance_qty * a.current_price) AS market_value,
 
     -- Calculations
@@ -228,12 +242,19 @@ DECLARE
 BEGIN
     FOR a_record IN SELECT * FROM jsonb_array_elements(payload -> 'assets_to_upsert')
     LOOP
-        INSERT INTO assets (ticker, stock_name, isin, current_price, last_updated)
+        INSERT INTO assets (
+            ticker, stock_name, isin, current_price, beta, trailing_pe, 
+            dividend_yield, market_cap, last_updated
+        )
         VALUES (
             (a_record ->> 'ticker'),
             (a_record ->> 'stock_name'),
             (a_record ->> 'isin'),
             COALESCE((a_record ->> 'current_price')::NUMERIC, 0),
+            (a_record ->> 'beta')::NUMERIC,
+            (a_record ->> 'trailing_pe')::NUMERIC,
+            (a_record ->> 'dividend_yield')::NUMERIC,
+            (a_record ->> 'market_cap')::BIGINT,
             now()
         )
         ON CONFLICT (ticker) 
@@ -241,6 +262,10 @@ BEGIN
             isin = EXCLUDED.isin,
             stock_name = EXCLUDED.stock_name,
             current_price = CASE WHEN EXCLUDED.current_price > 0 THEN EXCLUDED.current_price ELSE assets.current_price END,
+            beta = EXCLUDED.beta,
+            trailing_pe = EXCLUDED.trailing_pe,
+            dividend_yield = EXCLUDED.dividend_yield,
+            market_cap = EXCLUDED.market_cap,
             last_updated = now();
     END LOOP;
 END;

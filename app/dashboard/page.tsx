@@ -94,6 +94,9 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 				market_rate: Number(curr.market_rate),
 				total_market_value: 0,
 				total_pledged: 0,
+				beta: curr.beta,
+				trailing_pe: curr.trailing_pe,
+				dividend_yield: curr.dividend_yield,
 			};
 		}
 
