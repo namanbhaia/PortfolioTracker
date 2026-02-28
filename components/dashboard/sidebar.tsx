@@ -19,7 +19,8 @@ import {
     FileCheck,
     FileSpreadsheet,
     ShieldCheck,
-    Wrench
+    Wrench,
+    Lightbulb
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -38,6 +39,7 @@ const navItems = [
     { name: 'New Transaction', href: '/dashboard/ledger', icon: PlusCircle },
     { name: 'Pledging', href: '/dashboard/pledging', icon: ShieldCheck },
     { name: 'Verification', href: '/dashboard/verification', icon: FileCheck },
+    { name: 'Recommendations', href: '/dashboard/recommendations', icon: Lightbulb },
 ];
 
 const secondaryItems = [
@@ -176,8 +178,8 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                                 key={item.name}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${isActive
-                                        ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
-                                        : 'hover:bg-slate-800 hover:text-slate-100'
+                                    ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
+                                    : 'hover:bg-slate-800 hover:text-slate-100'
                                     }`}
                             >
                                 <item.icon size={18} className={`shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
