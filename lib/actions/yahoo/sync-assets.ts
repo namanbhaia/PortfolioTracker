@@ -61,6 +61,8 @@ export async function syncAssetsAction() {
             fifty_two_week_high: q.fiftyTwoWeekHigh,
             fifty_two_week_low: q.fiftyTwoWeekLow,
             market_cap: q.marketCap,
+            market_volume: q.regularMarketVolume,
+            avg_volume: q.averageDailyVolume3Month,
             last_updated: new Date().toISOString()
           };
         });

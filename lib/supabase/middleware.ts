@@ -31,8 +31,12 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // This will refresh the session if needed
-    await supabase.auth.getUser()
+    // 3. Refresh session if needed
+    try {
+        await supabase.auth.getUser()
+    } catch (e) {
+        console.error("Middleware Session Refresh Crash:", e)
+    }
 
     return response
 }

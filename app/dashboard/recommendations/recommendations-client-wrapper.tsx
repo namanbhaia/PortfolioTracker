@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings2, Sparkles, ReceiptText, LineChart, Users } from 'lucide-react';
+import { Settings2, Sparkles, ReceiptText, LineChart, Users, Activity } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,6 +17,7 @@ import { ClientMultiSelect } from '@/components/ui/client-filter';
 import GeminiTab from '@/components/recommendations/gemini-tab';
 import TaxLossTab from '@/components/recommendations/tax-loss-tab';
 import StatsTab from '@/components/recommendations/stats-tab';
+import TechnicalTab from '@/components/recommendations/technical-tab';
 
 export default function RecommendationsClientWrapper({
     initialHoldings,
@@ -36,7 +37,8 @@ export default function RecommendationsClientWrapper({
     const [enabledTabs, setEnabledTabs] = useState({
         ai: true,
         tax: true,
-        stats: true
+        stats: true,
+        technical: true
     });
 
     const [activeTab, setActiveTab] = useState("ai");
@@ -69,7 +71,7 @@ export default function RecommendationsClientWrapper({
         setEnabledTabs(prev => {
             const next = { ...prev, [tabKey]: !prev[tabKey] };
             // Don't allow all tabs to be disabled
-            if (!next.ai && !next.tax && !next.stats) {
+            if (!next.ai && !next.tax && !next.stats && !next.technical) {
                 return prev;
             }
             return next;
@@ -146,13 +148,21 @@ export default function RecommendationsClientWrapper({
                                 <LineChart className="mr-2 h-4 w-4 text-emerald-500" />
                                 Portfolio Health
                             </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                                checked={enabledTabs.technical}
+                                onCheckedChange={() => handleTabToggle('technical')}
+                                className="focus:bg-blue-50"
+                            >
+                                <Activity className="mr-2 h-4 w-4 text-blue-500" />
+                                Technical Insights
+                            </DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid h-auto lg:w-max grid-cols-2 lg:grid-cols-3 mb-6 bg-slate-100 border border-slate-200 text-slate-600 p-1 rounded-xl">
+                <TabsList className="flex flex-row h-auto w-full lg:w-max mb-6 bg-slate-100 border border-slate-200 text-slate-600 p-1 rounded-xl overflow-x-auto">
                     {enabledTabs.ai && (
                         <TabsTrigger
                             value="ai"
@@ -186,6 +196,17 @@ export default function RecommendationsClientWrapper({
                             </div>
                         </TabsTrigger>
                     )}
+                    {enabledTabs.technical && (
+                        <TabsTrigger
+                            value="technical"
+                            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:hover:bg-slate-200 rounded-lg py-2.5 px-6 transition-all"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Activity className="h-4 w-4" />
+                                <span>Technical Insights</span>
+                            </div>
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 {enabledTabs.ai && (
@@ -203,6 +224,12 @@ export default function RecommendationsClientWrapper({
                 {enabledTabs.stats && (
                     <TabsContent value="stats" className="focus-visible:outline-none focus-visible:ring-0 mt-0">
                         <StatsTab holdings={filteredHoldings} transactions={filteredTransactions} clients={availableClients} />
+                    </TabsContent>
+                )}
+
+                {enabledTabs.technical && (
+                    <TabsContent value="technical" className="focus-visible:outline-none focus-visible:ring-0 mt-0">
+                        <TechnicalTab holdings={filteredHoldings} />
                     </TabsContent>
                 )}
             </Tabs>

@@ -59,6 +59,8 @@ CREATE TABLE assets (
     fifty_two_week_high NUMERIC,
     fifty_two_week_low NUMERIC,
     market_cap BIGINT,
+    avg_volume NUMERIC,
+    market_volume NUMERIC,
     last_updated TIMESTAMPTZ DEFAULT now()
 );
 
@@ -154,6 +156,12 @@ SELECT
     a.trailing_pe,
     a.dividend_yield,
     a.market_cap,
+    a.fifty_day_avg,
+    a.two_hundred_day_avg,
+    a.fifty_two_week_high,
+    a.fifty_two_week_low,
+    a.market_volume,
+    a.avg_volume,
     (p.balance_qty * a.current_price) AS market_value,
 
     -- Calculations
