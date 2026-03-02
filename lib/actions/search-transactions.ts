@@ -23,6 +23,7 @@ export async function searchTransactions(formData: FormData) {
     const trx_id = formData.get('trx_id') as string;
     const client_name = formData.get('client_name') as string;
     const ticker = formData.get('ticker') as string;
+    const share_name = formData.get('share_name') as string;
     const start_date = formData.get('start_date') as string;
     const end_date = formData.get('end_date') as string;
 
@@ -88,8 +89,8 @@ export async function searchTransactions(formData: FormData) {
     }
 
     // Broad Search Protection
-    const onlyName = client_name && !ticker && !start_date && !end_date;
-    const onlyDates = !client_name && !ticker && start_date && end_date;
+    const onlyName = client_name && !ticker && !share_name && !start_date && !end_date;
+    const onlyDates = !client_name && !ticker && !share_name && start_date && end_date;
     if (onlyName || onlyDates) {
         return { error: "Search results too broad. Please refine your search." };
     }
@@ -99,6 +100,7 @@ export async function searchTransactions(formData: FormData) {
 
     if (client_name) { pQuery = pQuery.eq('client_name', client_name); sQuery = sQuery.eq('client_name', client_name); }
     if (ticker) { pQuery = pQuery.ilike('ticker', ticker); sQuery = sQuery.ilike('ticker', ticker); }
+    if (share_name) { pQuery = pQuery.ilike('stock_name', `%${share_name}%`); sQuery = sQuery.ilike('stock_name', `%${share_name}%`); }
     if (start_date) { pQuery = pQuery.gte('date', start_date); sQuery = sQuery.gte('sale_date', start_date); }
     if (end_date) { pQuery = pQuery.lte('date', end_date); sQuery = sQuery.lte('sale_date', end_date); }
 

@@ -8,7 +8,7 @@ import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
 import TickerCell from '@/components/ui/ticker-cell';
 import EditTransactionSimple from '@/components/ui/edit-transaction-sheet';
-import HoldingsFilter from '@/components/ui/holdings-filters'; // Import the new filter [cite: holdings-filters.tsx]
+import HoldingsFilter from '@/components/ui/holdings-filters';
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }) {
     const resolvedParams = await searchParams;
@@ -23,7 +23,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     let sales: any[] = [];
     let searchError: string | null = null;
 
-    const hasParams = Object.keys(resolvedParams).some(k => resolvedParams[k]);
+    const meaningfulParams = ['trx_id', 'ticker', 'share_name', 'client_ids', 'start_date', 'end_date'];
+    const hasParams = meaningfulParams.some(k => resolvedParams[k] && resolvedParams[k] !== '');
     if (hasParams) {
         const formData = new FormData();
 
@@ -39,7 +40,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         }
 
         // Pass standard filters directly
-        ['trx_id', 'ticker', 'start_date', 'end_date'].forEach(k => {
+        ['trx_id', 'ticker', 'share_name', 'start_date', 'end_date'].forEach(k => {
             if (resolvedParams[k]) formData.append(k, resolvedParams[k]);
         });
 
@@ -62,11 +63,19 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
                 {/* Left: The Main Filtering Bar (Flexible Width) */}
                 <div className="flex-grow w-full xl:w-auto">
-                    <HoldingsFilter
-                        availableClients={clients || []}
-                        showLongTermToggle={false}
-                        showBalanceToggle={false}
-                    />
+                    <form className="w-full">
+                        <HoldingsFilter
+                            availableClients={clients || []}
+                            showLongTermToggle={false}
+                            showBalanceToggle={false}
+                            ticker={resolvedParams.ticker}
+                            shareName={resolvedParams.share_name}
+                            startDate={resolvedParams.start_date}
+                            endDate={resolvedParams.end_date}
+                            selectedClientIds={resolvedParams.client_ids?.split(',')}
+                            resetPath="/dashboard/transactions-lookup"
+                        />
+                    </form>
                 </div>
 
                 {/* Middle: Separator */}

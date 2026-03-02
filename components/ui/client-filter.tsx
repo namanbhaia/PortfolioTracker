@@ -27,6 +27,7 @@ export function ClientMultiSelect({
     // REMOVED "md:w-64" from here. Now it defaults to 100% of parent width.
     <div className={`relative inline-block text-left w-full ${className}`}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm text-sm font-medium hover:bg-slate-50 transition-all"
       >
@@ -53,6 +54,7 @@ export function ClientMultiSelect({
                 return (
                   <button
                     key={client.client_id}
+                    type="button"
                     onClick={() => onChange(key)}
                     className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-lg transition-colors hover:bg-indigo-50"
                   >
