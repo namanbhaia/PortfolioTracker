@@ -4,13 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { getTodayDate } from '../helper/utility';
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from '@/components/ui/submit-button';
 import { upsertInAsset } from '@/lib/actions/update-assets-table';
 import { getStockSuggestion as getStockInformation } from '@/lib/actions/yahoo/find-ticker';
 import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
 
+const supabase = createClient();
+
 export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
-    const supabase = createClient();
     const [loading, setLoading] = useState(false);
 
     // This holds the data fetched from Yahoo Finance before it's saved to the DB
@@ -201,12 +203,26 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase text-slate-500">DP ID</label>
-                        <input {...register("dp_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                        <label htmlFor="dp_id" className="text-xs font-bold uppercase text-slate-500">DP ID</label>
+                        <input
+                            id="dp_id"
+                            {...register("dp_id")}
+                            placeholder="DP ID"
+                            className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed"
+                            readOnly
+                            data-testid="dp-id-input"
+                        />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
-                        <input {...register("trading_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                        <label htmlFor="trading_id" className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
+                        <input
+                            id="trading_id"
+                            {...register("trading_id")}
+                            placeholder="Trading ID"
+                            className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed"
+                            readOnly
+                            data-testid="trading-id-input"
+                        />
                     </div>
                 </div>
 

@@ -7,8 +7,9 @@ import { SubmitButton } from '@/components/ui/submit-button';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
 import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
 
+const supabase = createClient();
+
 export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
-    const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [openPurchases, setOpenPurchases] = useState<any[]>([]);
     const [pledgedItems, setPledgedItems] = useState<any[]>([]);
@@ -213,12 +214,26 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">DP ID</label>
-                    <input {...register("dp_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                    <label htmlFor="dp_id" className="text-xs font-bold uppercase text-slate-500">DP ID</label>
+                    <input
+                        id="dp_id"
+                        {...register("dp_id")}
+                        placeholder="DP ID"
+                        className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed"
+                        readOnly
+                        data-testid="dp-id-input"
+                    />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
-                    <input {...register("trading_id")} readOnly className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed" />
+                    <label htmlFor="trading_id" className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
+                    <input
+                        id="trading_id"
+                        {...register("trading_id")}
+                        placeholder="Trading ID"
+                        className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed"
+                        readOnly
+                        data-testid="trading-id-input"
+                    />
                 </div>
             </div>
 
