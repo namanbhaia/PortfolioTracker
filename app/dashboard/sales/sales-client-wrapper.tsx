@@ -4,23 +4,30 @@ import React, { useState, useMemo } from 'react';
 import HoldingsFilters from '@/components/ui/holdings-filters';
 import SalesTable from '@/components/dashboard/sales-table';
 
-export type SortFieldSales = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percent' | 'pl' | 'long_term';
+export type SortFieldSales = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percentage' | 'pl' | 'long_term';
 
 export default function SalesClientWrapper({
     initialSales,
-    availableClients
+    availableClients,
+    initialFilters
 }: {
     initialSales: Record<string, any>[],
-    availableClients: Record<string, any>[]
+    availableClients: Record<string, any>[],
+    initialFilters?: {
+        ticker?: string;
+        startDate?: string;
+        endDate?: string;
+        clientIds?: string[];
+    }
 }) {
-    // 1. Filter State Local to this component (instead of URL)
-    const [ticker, setTicker] = useState("");
+    // 1. Filter State Local to this component (initialized from initialFilters if present)
+    const [ticker, setTicker] = useState(initialFilters?.ticker || "");
     const [shareName, setShareName] = useState("");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [showAll, setShowAll] = useState(true); // Sales don't really have "active" by default in the same way, but keeping prop
-    const [longTerm, setLongTerm] = useState<boolean | null>(null);
-    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+    const [startDate, setStartDate] = useState(initialFilters?.startDate || "");
+    const [endDate, setEndDate] = useState(initialFilters?.endDate || "");
+    const [showAll, setShowAll] = useState(true);
+    const [longTerm, setLongTerm] = useState<boolean | null | 'square_off'>(null);
+    const [selectedClientIds, setSelectedClientIds] = useState<string[]>(initialFilters?.clientIds || []);
 
     const [sortConfig, setSortConfig] = useState<{ key: SortFieldSales, direction: 'asc' | 'desc' }>({
         key: 'sale_date',
@@ -45,15 +52,26 @@ export default function SalesClientWrapper({
         }
 
         if (startDate) {
-            result = result.filter(h => new Date(h.sale_date) >= new Date(startDate));
+            // Robust string comparison for YYYY-MM-DD
+            result = result.filter(h => h.sale_date >= startDate);
         }
 
         if (endDate) {
-            result = result.filter(h => new Date(h.sale_date) <= new Date(endDate));
+            result = result.filter(h => h.sale_date <= endDate);
         }
 
         if (longTerm !== null) {
-            result = result.filter(h => h.long_term === longTerm);
+            if (longTerm === 'square_off') {
+                result = result.filter(h => h.is_square_off === true);
+            } else {
+                // If filtering by Long Term (true) or Short Term (false)
+                // We typically exclude square-off from regular LT/ST if user wants to be specific,
+                // BUT in this schema long_term=true excludes square_off=true by definition of time.
+                // However, ST (false) includes square_off=true.
+                // If user clicks "Short Term", they might want ONLY non-square-off ST?
+                // For tax purposes, ST and Square Off are different.
+                result = result.filter(h => h.long_term === longTerm && (longTerm === true || h.is_square_off !== true));
+            }
         }
 
         // Apply sort
@@ -75,9 +93,11 @@ export default function SalesClientWrapper({
 
             // Date comparison (fallback if dates are strings but need Date logic)
             if (sortConfig.key === 'sale_date') {
-                const dateA = new Date(aVal).getTime() || 0;
-                const dateB = new Date(bVal).getTime() || 0;
-                return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
+                const dateA = aVal || "";
+                const dateB = bVal || "";
+                return sortConfig.direction === 'asc'
+                    ? dateA.localeCompare(dateB)
+                    : dateB.localeCompare(dateA);
             }
 
             // Boolean comparison (for long_term)

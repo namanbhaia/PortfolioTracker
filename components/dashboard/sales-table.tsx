@@ -54,8 +54,8 @@ export default function SalesTable({ sales, sortConfig, onSort }: SalesTableProp
                         <th className="px-3 py-3 text-right">Sale Rate</th>
                         <th className="px-3 py-3 text-right">Sale Value</th>
                         <th className="px-3 py-3 text-right">
-                            <button onClick={() => handleSort('pl_percent')} className="hover:text-blue-600 flex items-center justify-end w-full uppercase font-semibold">
-                                P/L % <SortArrow field="pl_percent" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
+                            <button onClick={() => handleSort('pl_percentage')} className="hover:text-blue-600 flex items-center justify-end w-full uppercase font-semibold">
+                                P/L % <SortArrow field="pl_percentage" currentSort={sortConfig?.key} currentOrder={sortConfig?.direction} />
                             </button>
                         </th>
                         <th className="px-3 py-3 text-right">
@@ -110,7 +110,7 @@ export default function SalesTable({ sales, sortConfig, onSort }: SalesTableProp
                             <td className="px-3 py-3 text-right">{Number(row.sale_qty)}</td>
                             <td className="px-3 py-3 text-right">₹{Number(row.sale_rate).toFixed(2)}</td>
                             <td className="px-3 py-3 text-right">₹{Number(row.sale_value).toLocaleString('en-IN')}</td>
-                            <td className={`px-3 py-3 text-right font-semibold ${row.pl_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            <td className={`px-3 py-3 text-right font-semibold ${row.pl_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {Number(row.pl_percentage).toFixed(2)}%
                             </td>
                             <td className={`px-3 py-3 text-right font-bold ${row.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>

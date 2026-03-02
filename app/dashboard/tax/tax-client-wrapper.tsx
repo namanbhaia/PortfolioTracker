@@ -1,0 +1,132 @@
+"use client";
+
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ChevronRight, LayoutList } from 'lucide-react';
+import { DateRangeFilter } from './date-range-filter';
+import Link from 'next/link';
+
+export default function TaxClientWrapper({
+    initialClients,
+    initialSales,
+    initialDates
+}: {
+    initialClients: any[],
+    initialSales: any[],
+    initialDates: { startDate: string, endDate: string }
+}) {
+    const [startDate, setStartDate] = useState(initialDates.startDate || "");
+    const [endDate, setEndDate] = useState(initialDates.endDate || "");
+
+    // Check if report should be shown
+    const hasDates = !!(startDate && endDate);
+
+    // Dynamic aggregation based on local date state
+    const salesByClient = useMemo(() => {
+        const result: Record<string, any> = {};
+        if (!hasDates) return result;
+
+        const filtered = initialSales.filter(sale =>
+            sale.date >= startDate && sale.date <= endDate
+        );
+
+        filtered.forEach(sale => {
+            if (!result[sale.client_id]) {
+                result[sale.client_id] = { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
+            }
+            if (sale.long_term) {
+                result[sale.client_id].ltcg += Number(sale.profit_stored);
+                result[sale.client_id].altcg += Number(sale.adjusted_profit_stored);
+            }
+            else if (sale.is_square_off) {
+                result[sale.client_id].sqoff += Number(sale.profit_stored);
+            }
+            else result[sale.client_id].stcg += Number(sale.profit_stored);
+            result[sale.client_id].count++;
+        });
+
+        return result;
+    }, [initialSales, startDate, endDate, hasDates]);
+
+    return (
+        <div className="space-y-8">
+            <DateRangeFilter
+                initialDates={{ startDate, endDate }}
+                onFilter={(start, end) => {
+                    setStartDate(start);
+                    setEndDate(end);
+                }}
+            />
+
+            {hasDates ? (
+                <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {initialClients?.map((client) => {
+                        const stats = salesByClient[client.client_id] || { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
+                        const params = new URLSearchParams({
+                            client_ids: client.client_id,
+                            start_date: startDate,
+                            end_date: endDate
+                        });
+                        return (
+                            <Card key={client.client_id} className="border-slate-200 hover:shadow-md transition-all">
+                                <CardContent className="p-5 flex items-center justify-between">
+                                    <div className="flex items-center gap-6">
+                                        <div>
+                                            <h3 className="font-bold text-slate-900">{client.client_name}</h3>
+                                            <p className="text-[11px] text-slate-500 uppercase font-medium tracking-wide">
+                                                {stats.count} Sales Found
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-10">
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Square Off Profit</p>
+                                            <p className={`text-sm font-mono font-bold ${stats.sqoff >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                ₹{stats.sqoff.toLocaleString('en-IN')}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Short Term Profit</p>
+                                            <p className={`text-sm font-mono font-bold ${stats.stcg >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                ₹{stats.stcg.toLocaleString('en-IN')}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Long Term Profit</p>
+                                            <p className={`text-sm font-mono font-bold ${stats.ltcg >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                ₹{stats.ltcg.toLocaleString('en-IN')}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Adjusted Long Term Profit</p>
+                                            <p className={`text-sm font-mono font-bold ${stats.altcg >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                ₹{stats.altcg.toLocaleString('en-IN')}
+                                            </p>
+                                        </div>
+                                        <Link href={`/dashboard/sales?${params.toString()}`}>
+                                            <Button variant="ghost" className="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-bold gap-2">
+                                                Inspect <ChevronRight size={16} />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
+                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-4">
+                        <LayoutList className="text-slate-300" size={40} />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">No Report Generated</h3>
+                    <p className="text-slate-500 text-sm max-w-xs text-center mt-2">
+                        Set a date range above and click <span className="font-bold text-indigo-600">Run Report</span> to view capital gains.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -32,8 +32,8 @@ export default function HoldingsFilter({
     setEndDate?: (val: string) => void,
     showAll?: boolean,
     setShowAll?: (val: boolean) => void,
-    longTerm?: boolean | null,
-    setLongTerm?: (val: boolean | null) => void,
+    longTerm?: boolean | null | 'square_off',
+    setLongTerm?: (val: boolean | null | 'square_off') => void,
     selectedClientIds?: string[],
     setSelectedClientIds?: (val: string[]) => void
 }) {
@@ -116,6 +116,17 @@ export default function HoldingsFilter({
                         >
                             Short Term
                         </button>
+                        {!showBalanceToggle && (
+                            <button
+                                onClick={() => setLongTerm?.('square_off')}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${longTerm === 'square_off'
+                                    ? 'bg-white shadow-sm text-indigo-600'
+                                    : 'text-slate-500'
+                                    }`}
+                            >
+                                Square Off
+                            </button>
+                        )}
                         <button
                             onClick={() => setLongTerm?.(null)}
                             className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${longTerm === null
