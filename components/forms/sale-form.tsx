@@ -16,8 +16,18 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     const [pledgeWarning, setPledgeWarning] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, watch, setValue } = useForm();
-
     const saleClient = watch("client_name");
+    const selectedTrxId = watch("purchase_trx_id");
+    const saleQty = watch("sale_qty");
+
+    // Validation Logic
+    const selectedLot = openPurchases.find(l => l.trx_id === selectedTrxId);
+    const availableBalance = selectedLot?.balance_qty || 0;
+    const pledgedQty = pledgedItems.find(p => p.ticker === selectedLot?.ticker)?.pledged_qty || 0;
+    const availableUnpledged = availableBalance - pledgedQty;
+
+    const isInvalidQty = saleQty && parseFloat(saleQty) > availableBalance;
+    const isPledgeBreach = saleQty && parseFloat(saleQty) > availableUnpledged && parseFloat(saleQty) <= availableBalance;
 
     // Auto-populate DP and Trading ID
     useEffect(() => {
@@ -187,6 +197,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             setSuccess(true);
             reset();
             await revalidateDashboard();
+            setTimeout(() => setSuccess(false), 3000);
 
         } catch (err) {
             const error = err as Error;
@@ -288,8 +299,21 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         autoComplete="off"
                         {...register("sale_qty")}
                         placeholder="0"
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
+                        className={`w-full p-2.5 bg-slate-50 border rounded-lg outline-none transition-all ${isInvalidQty
+                            ? "border-rose-500 ring-2 ring-rose-500/20"
+                            : "focus:ring-2 ring-rose-500/20 focus:border-rose-500"
+                            }`}
                     />
+                    {isInvalidQty && (
+                        <p className="text-[10px] font-bold text-rose-600 animate-pulse">
+                            INSUFFICIENT BALANCE (MAX: {availableBalance})
+                        </p>
+                    )}
+                    {isPledgeBreach && (
+                        <p className="text-[10px] font-bold text-amber-600">
+                            ⚠️ SELLING PLEDGED SHARES ({pledgedQty} PLEDGED)
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -304,8 +328,12 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             <SubmitButton
                 isPending={loading}
-                label="Confirm Sale"
-                classname="w-full py-3 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
+                disabled={isInvalidQty}
+                label={isInvalidQty ? "Invalid Quantity" : "Confirm Sale"}
+                classname={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${isInvalidQty
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
+                    : "bg-rose-600 text-white hover:bg-rose-700 shadow-rose-200"
+                    }`}
                 loadingText='Recording Sale'
             />
 
