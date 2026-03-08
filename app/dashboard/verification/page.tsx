@@ -16,10 +16,11 @@ import { VerificationDisplay } from '@/components/dashboard/verification-display
 
 export default function VerificationPage() {
     const supabase = createClient();
-    const [isSyncingAssets, setIsSyncingAssets] = useState(false);
-
-    const [loading, setLoading] = useState(false);
-    const [verificationResults, setVerificationResults] = useState<Record<string, VerificationResult>>({});
+    const [viewState, setViewState] = useState({
+        loading: false,
+        isSyncingAssets: false,
+        verificationResults: {} as Record<string, VerificationResult>
+    });
     const [selectedClientKey, setSelectedClientKey] = useState<string>("");
 
     const handleMissingAssetsBatch = async (discrepancies: DiscrepancyRow[]) => {
@@ -75,7 +76,7 @@ export default function VerificationPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setLoading(true);
+        setViewState(prev => ({ ...prev, loading: true }));
 
         try {
             const [holdingsRes, clientsRes] = await Promise.all([
@@ -175,42 +176,45 @@ export default function VerificationPage() {
                 await supabase.from('pledges').delete().eq('pledged_qty', 0);
             }
 
-            // 1. Render the table IMMEDIATELY so the user sees something
-            setVerificationResults(results);
-            setLoading(false); // Stop the main loading spinner
-
-            // 2. Start the background sync for MISSING assets only
+            // Grouping these updates to prevent multiple flickers
             const missingAssets = allDiscrepancies.filter(d => d.web_balance === 0);
+            setViewState(prev => ({
+                ...prev,
+                loading: false,
+                verificationResults: results,
+                isSyncingAssets: missingAssets.length > 0
+            }));
             if (missingAssets.length > 0) {
-                setIsSyncingAssets(true); // START background sync UI
 
                 try {
                     const assetsToSync = await handleMissingAssetsBatch(missingAssets);
                     if (assetsToSync.length > 0) {
                         await performBulkSync(assetsToSync);
-                        setVerificationResults(prev => {
-                            const updated = { ...prev };
+                        setViewState(prev => {
+                            const updated = { ...prev.verificationResults };
                             assetsToSync.forEach(s => {
                                 Object.values(updated).forEach(res => {
-                                    res.discrepancies.forEach(d => {
+                                    (res as VerificationResult).discrepancies.forEach(d => {
                                         if (d.isin === s.isin) d.ticker = s.ticker;
                                     });
                                 });
                             });
-                            return updated;
+                            return { ...prev, verificationResults: updated, isSyncingAssets: false };
                         });
+                    } else {
+                        setViewState(prev => ({ ...prev, isSyncingAssets: false }));
                     }
-                } finally {
-                    setIsSyncingAssets(false); // STOP background sync UI
+                } catch (e) {
+                    setViewState(prev => ({ ...prev, isSyncingAssets: false }));
                 }
             }
         } catch (err: any) {
-            setLoading(false);
+            setViewState(prev => ({ ...prev, loading: false }));
             alert(err.message);
         }
     };
 
-    const selectedResult = verificationResults[selectedClientKey];
+    const selectedResult = viewState.verificationResults[selectedClientKey];
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -245,11 +249,11 @@ export default function VerificationPage() {
                         hover:file:bg-indigo-100
                     "
                 />
-                {loading && <p className="text-sm text-indigo-600 animate-pulse">Processing & Verifying...</p>}
+                {viewState.loading && <p className="text-sm text-indigo-600 animate-pulse">Processing & Verifying...</p>}
             </div>
 
             {/* Results Selection */}
-            {Object.keys(verificationResults).length > 0 && (
+            {Object.keys(viewState.verificationResults).length > 0 && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                     <div className="flex items-center gap-4">
                         <label className="font-bold text-slate-700">View Results For:</label>
@@ -259,9 +263,9 @@ export default function VerificationPage() {
                             onChange={(e) => setSelectedClientKey(e.target.value)}
                         >
                             <option value="">-- Select Client --</option>
-                            {Object.keys(verificationResults).map(client => (
+                            {Object.keys(viewState.verificationResults).map(client => (
                                 <option key={client} value={client}>
-                                    {client} ({verificationResults[client].status})
+                                    {client} ({viewState.verificationResults[client].status})
                                 </option>
                             ))}
                         </select>
@@ -275,7 +279,7 @@ export default function VerificationPage() {
                     )}
                 </div>
             )}
-            {isSyncingAssets && (
+            {viewState.isSyncingAssets && (
                 <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white border border-indigo-100 shadow-xl p-4 rounded-2xl animate-in slide-in-from-right-8">
                     <div className="relative flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
