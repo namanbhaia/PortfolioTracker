@@ -56,12 +56,19 @@ export const parseVerificationCsv = (text: string): CsvRow[] => {
             const cols = trimmed.split(',').map(c => c.trim());
 
             if (cols.length >= 4) {
+                const isin = cols[0];
                 const rawName = cols[1] || "Unknown Stock";
+
+                // Ignore specific security as requested (MLB SECURITIES LTD.-EQ)
+                if (isin === 'INE0K3001018' || rawName.includes('MLB SECURITIES')) {
+                    return;
+                }
+
                 parsedData.push({
                     dp_id: currentClientId,
                     client_name: "",
                     ticker: rawName,
-                    isin: cols[0],
+                    isin: isin,
                     stock_name: rawName,
                     holding_type: cols[2].toUpperCase(),
                     balance: parseFloat(cols[3].replace(/,/g, '')) || 0
