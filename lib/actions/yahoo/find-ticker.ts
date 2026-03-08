@@ -1,13 +1,15 @@
 "use server"
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+
+const yahooFinance = new YahooFinance();
 
 export async function getTickerDetailsFromYahoo(query: string) {
   try {
     // 1. Search for the symbol
     // Disable validation to handle minor schema mismatches from Yahoo side
-    const searchResults = (await yahooFinance.search(query, {
+    const searchResults = (await yahooFinance.search(query, {}, {
       validation: { logErrors: false }
-    })) as any;
+    } as any)) as any;
 
     if (!searchResults?.quotes || searchResults.quotes.length === 0) {
       return null;
@@ -16,9 +18,9 @@ export async function getTickerDetailsFromYahoo(query: string) {
     const symbol = searchResults.quotes[0].symbol as string;
 
     // 2. Fetch the actual price for that symbol
-    const quote = (await yahooFinance.quote(symbol, {
+    const quote = (await yahooFinance.quote(symbol, {}, {
       validation: { logErrors: false }
-    })) as any;
+    } as any)) as any;
 
     return {
       symbol: symbol,
@@ -42,9 +44,9 @@ export async function getStockSuggestion(ticker: string) {
       yfSearchTicker = isNumeric ? `${yfSearchTicker}.BO` : `${yfSearchTicker}.NS`;
     }
 
-    const quote = (await yahooFinance.quote(yfSearchTicker, {
+    const quote = (await yahooFinance.quote(yfSearchTicker, {}, {
       validation: { logErrors: false }
-    })) as any;
+    } as any)) as any;
 
     if (!quote) throw new Error("Stock not found");
 
