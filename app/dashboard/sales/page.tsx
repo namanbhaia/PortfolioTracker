@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import SalesClientWrapper from './sales-client-wrapper';
 
@@ -55,10 +55,6 @@ export default async function SalesPage({
 
     return (
         <div className="p-4 space-y-4 mx-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Sales</h1>
-            </header>
-
             <SalesClientWrapper
                 initialSales={sales || []}
                 availableClients={availableClients || []}

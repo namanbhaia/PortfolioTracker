@@ -2,7 +2,11 @@
 
 import React, { useState, useMemo } from 'react';
 import HoldingsFilters from '@/components/ui/holdings-filters';
-import HoldingsTable from '@/components/dashboard/holdings-table';
+import HoldingsTable, { holdings_columns } from '@/components/dashboard/holdings-table';
+import { useColumnVisibility } from '@/hooks/use-column-visibility';
+import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
+import { RefreshButton } from '@/components/ui/refresh-button';
+import { SyncPricesButton } from '@/components/ui/sync-prices-button';
 
 export type SortFieldHoldings = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'long_term';
 
@@ -13,6 +17,10 @@ export default function HoldingsClientWrapper({
     initialHoldings: Record<string, any>[],
     availableClients: Record<string, any>[]
 }) {
+    const { isVisible, toggleColumn, visibleColumns } = useColumnVisibility(
+        "holdings",
+        holdings_columns.map(c => c.id)
+    );
     // 1. Filter State Local to this component (instead of URL)
     const [ticker, setTicker] = useState("");
     const [shareName, setShareName] = useState("");
@@ -104,6 +112,19 @@ export default function HoldingsClientWrapper({
 
     return (
         <div className="space-y-4">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Holdings</h1>
+                <div className="flex items-center gap-3">
+                    <ColumnVisibilityToggle
+                        columns={holdings_columns}
+                        visibleColumns={visibleColumns}
+                        onToggle={toggleColumn}
+                    />
+                    <RefreshButton />
+                    <SyncPricesButton />
+                </div>
+            </header>
+
             <HoldingsFilters
                 availableClients={availableClients}
                 showLongTermToggle={true}
@@ -115,7 +136,7 @@ export default function HoldingsClientWrapper({
                 startDate={startDate} setStartDate={setStartDate}
                 endDate={endDate} setEndDate={setEndDate}
                 showAll={showAll} setShowAll={setShowAll}
-                longTerm={longTerm} setLongTerm={setLongTerm}
+                longTerm={longTerm} setLongTerm={setLongTerm as any}
                 selectedClientIds={selectedClientIds} setSelectedClientIds={setSelectedClientIds}
             />
 
@@ -123,6 +144,7 @@ export default function HoldingsClientWrapper({
                 holdings={processedHoldings}
                 sortConfig={sortConfig}
                 onSort={handleSort}
+                isVisible={isVisible}
             />
         </div>
     );

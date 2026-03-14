@@ -30,9 +30,9 @@ export default function BulkAssetUpdate() {
             if (data.length === 0) throw new Error("CSV is empty.");
 
             const assetsToUpsert = data.map((row: any, idx: number) => {
-                const ticker = (row.SYMBOL || row.symbol || row.ticker || row.Ticker || row.Symbol || "").trim();
-                const isin = (row['ISIN NUMBER'] || row.isin || row.ISIN || "").trim();
-                const stock_name = (row['NAME OF COMPANY'] || row.stock_name || row.Name || row.name || "").trim();
+                const ticker = (row.SYMBOL || row.symbol || row.ticker || row.Ticker || row.Symbol || row.FinInstrmId || row.SC_CODE || "").trim();
+                const isin = (row['ISIN NUMBER'] || row.isin || row.ISIN || row.ISIN_CODE || "").trim();
+                const stock_name = (row['NAME OF COMPANY'] || row.FinInstrmNm || row.SC_NAME || row.stock_name || row.Name || row.name || "").trim();
 
                 if (!ticker || !isin || !stock_name) {
                     throw new Error(`Invalid data at row ${idx + 2}. Required: SYMBOL/Ticker, ISIN NUMBER/isin, NAME OF COMPANY/Name`);

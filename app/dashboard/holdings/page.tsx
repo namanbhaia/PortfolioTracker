@@ -1,7 +1,5 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { RefreshButton } from '@/components/ui/refresh-button';
-import { SyncPricesButton } from '@/components/ui/sync-prices-button';
 import HoldingsClientWrapper from './holdings-client-wrapper';
 
 export default async function HoldingsPage() {
@@ -38,14 +36,7 @@ export default async function HoldingsPage() {
 
     return (
         <div className="p-4 space-y-4 mx-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Holdings</h1>
-                <div className="flex items-center gap-3">
-                    <RefreshButton /><SyncPricesButton />
-                </div>
-            </header>
-
-            {/* The wrapper will handle all the local state for filtering and sorting */}
+            {/* The wrapper will handle the header with Refresh/Sync Buttons and Column Toggle */}
             <HoldingsClientWrapper
                 initialHoldings={holdings || []}
                 availableClients={availableClients || []}

@@ -2,7 +2,10 @@
 
 import React, { useState, useMemo } from 'react';
 import HoldingsFilters from '@/components/ui/holdings-filters';
-import SalesTable from '@/components/dashboard/sales-table';
+import SalesTable, { sales_columns } from '@/components/dashboard/sales-table';
+import { useColumnVisibility } from '@/hooks/use-column-visibility';
+import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
+import { RefreshButton } from '@/components/ui/refresh-button';
 
 export type SortFieldSales = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percentage' | 'pl' | 'long_term';
 
@@ -20,6 +23,10 @@ export default function SalesClientWrapper({
         clientIds?: string[];
     }
 }) {
+    const { isVisible, toggleColumn, visibleColumns } = useColumnVisibility(
+        "sales",
+        sales_columns.map(c => c.id)
+    );
     // 1. Filter State Local to this component (initialized from initialFilters if present)
     const [ticker, setTicker] = useState(initialFilters?.ticker || "");
     const [shareName, setShareName] = useState("");
@@ -120,6 +127,18 @@ export default function SalesClientWrapper({
 
     return (
         <div className="space-y-4">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Sales (P/L)</h1>
+                <div className="flex items-center gap-3">
+                    <ColumnVisibilityToggle
+                        columns={sales_columns}
+                        visibleColumns={visibleColumns}
+                        onToggle={toggleColumn}
+                    />
+                    <RefreshButton />
+                </div>
+            </header>
+
             <HoldingsFilters
                 availableClients={availableClients}
                 showLongTermToggle={true}
@@ -139,6 +158,7 @@ export default function SalesClientWrapper({
                 sales={processedSales}
                 sortConfig={sortConfig}
                 onSort={handleSort}
+                isVisible={isVisible}
             />
         </div>
     );

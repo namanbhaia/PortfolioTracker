@@ -3,9 +3,11 @@
 import React, { useState, useMemo } from 'react';
 import { Users } from "lucide-react";
 import { ClientMultiSelect } from "@/components/ui/client-filter";
-import ConsolidatedHoldingsTable from "@/components/dashboard/consolidated-holdings-table";
+import ConsolidatedHoldingsTable, { consolidated_columns } from "@/components/dashboard/consolidated-holdings-table";
 import { RefreshButton } from "@/components/ui/refresh-button";
 import SummaryCards from "@/components/ui/summary-cards";
+import { useColumnVisibility } from '@/hooks/use-column-visibility';
+import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
 
 /**
  * @file dashboard-client-wrapper.tsx
@@ -29,6 +31,10 @@ export default function DashboardClientWrapper({
     availableClients,
     userName
 }: DashboardClientWrapperProps) {
+    const { isVisible, toggleColumn, visibleColumns } = useColumnVisibility(
+        "consolidated_holdings",
+        consolidated_columns.map(c => c.id)
+    );
     // 1. Filter State (Local instead of URL search params)
     const [selectedClientNames, setSelectedClientNames] = useState<string[]>([]);
 
@@ -128,6 +134,12 @@ export default function DashboardClientWrapper({
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <ColumnVisibilityToggle
+                        label="Consolidated Columns"
+                        columns={consolidated_columns}
+                        visibleColumns={visibleColumns}
+                        onToggle={toggleColumn}
+                    />
                     <RefreshButton />
                     <div className="w-full md:w-48">
                         <ClientMultiSelect
@@ -158,7 +170,10 @@ export default function DashboardClientWrapper({
                 </div>
 
                 <div className="overflow-x-auto">
-                    <ConsolidatedHoldingsTable consolidatedRows={consolidatedRows || []} />
+                    <ConsolidatedHoldingsTable
+                        consolidatedRows={consolidatedRows || []}
+                        isVisible={isVisible}
+                    />
 
                     {consolidatedRows.length === 0 && (
                         <div className="py-20 text-center text-slate-400 italic">
