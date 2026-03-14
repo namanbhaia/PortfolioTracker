@@ -24,7 +24,6 @@ export default function VerificationPage() {
     const [selectedClientKey, setSelectedClientKey] = useState<string>("");
 
     const handleMissingAssetsBatch = async (discrepancies: DiscrepancyRow[]) => {
-        // 1. Get unique ISINs only
         const uniqueMissing = discrepancies.filter((v, i, a) =>
             v.web_balance === 0 && a.findIndex(t => t.isin === v.isin) === i
         );
@@ -32,34 +31,33 @@ export default function VerificationPage() {
         if (uniqueMissing.length === 0) return [];
 
         const assetsToSync: any[] = [];
-        const chunkSize = 15; // Process in small batches of 15 to prevent API lag
+        const chunkSize = 15;
 
         for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
             const chunk = uniqueMissing.slice(i, i + chunkSize);
-            const chunkResults = await Promise.all(chunk.map(async (item) => {
-                try {
-                    // Try ISIN only first (faster/more accurate). Fallback to name ONLY if ISIN fails.
-                    const details = await getTickerDetailsFromYahoo(item.isin);
-                    const finalDetails = details || await getTickerDetailsFromYahoo(item.stock_name);
+            const chunkIsins = chunk.map(item => item.isin);
 
-                    if (finalDetails?.symbol) {
-                        return {
-                            ticker: (finalDetails.symbol as any).split('.')[0].toUpperCase(),
-                            stock_name: item.stock_name,
-                            isin: item.isin,
-                            current_price: finalDetails.price || 0,
+            try {
+                // SINGLE server call for the entire chunk
+                const bulkResults = await getTickerDetailsFromYahoo(chunkIsins);
+
+                if (bulkResults) {
+                    bulkResults.forEach(res => {
+                        const originalItem = chunk.find(c => c.isin === res.isin);
+                        assetsToSync.push({
+                            ticker: res.symbol.split('.')[0].toUpperCase(),
+                            stock_name: originalItem?.stock_name || res.symbol,
+                            isin: res.isin,
+                            current_price: res.price,
                             last_updated: new Date().toISOString()
-                        };
-                    }
-                } catch (err) {
-                    console.warn(`Speed skip: Could not fetch ${item.isin}`);
+                        });
+                    });
                 }
-                return null;
-            }));
+            } catch (err) {
+                console.error("Bulk sync chunk failed:", err);
+            }
 
-            assetsToSync.push(...chunkResults.filter(Boolean));
-
-            // Brief pause between chunks (200ms) to let the event loop breathe
+            // Keep the small pause to avoid rate limiting
             await new Promise(resolve => setTimeout(resolve, 200));
         }
 
@@ -142,11 +140,6 @@ export default function VerificationPage() {
                     if (!match) {
                         const csvMeta = clientCsvRows.find(r => r.isin === isin);
 
-                        // // If it's missing from DB, sync it to the assets table
-                        // if (!dbEntry && csvMeta) {
-                        //     handleMissingAsset(csvMeta.isin, csvMeta.stock_name);
-                        // }
-
                         discrepancies.push({
                             client_name: clientName,
                             dp_id: dp_id,
@@ -185,26 +178,47 @@ export default function VerificationPage() {
                 isSyncingAssets: missingAssets.length > 0
             }));
             if (missingAssets.length > 0) {
-
                 try {
-                    const assetsToSync = await handleMissingAssetsBatch(missingAssets);
-                    if (assetsToSync.length > 0) {
-                        await performBulkSync(assetsToSync);
-                        setViewState(prev => {
-                            const updated = { ...prev.verificationResults };
-                            assetsToSync.forEach(s => {
-                                Object.values(updated).forEach(res => {
-                                    (res as VerificationResult).discrepancies.forEach(d => {
-                                        if (d.isin === s.isin) d.ticker = s.ticker;
+                    // 1. Get the list of ISINs you are curious about
+                    const missingIsins = missingAssets.map(d => d.isin);
+
+                    // 2. Ask Supabase: "Which of these do you already have?"
+                    const { data: foundAssets } = await supabase
+                        .from('assets')
+                        .select('isin')
+                        .in('isin', missingIsins); // Only fetches rows that match your missing list
+
+                    const foundIsinSet = new Set(foundAssets?.map(a => a.isin) || []);
+
+                    // 3. These are the ones truly missing from the 'assets' table
+                    const trulyNewAssets = missingAssets.filter(d => !foundIsinSet.has(d.isin));
+                    if (trulyNewAssets.length > 0) {
+                        setViewState(prev => ({ ...prev, isSyncingAssets: true }));
+
+                        // Call your optimized batch function for only the new ones
+                        const assetsToSync = await handleMissingAssetsBatch(trulyNewAssets);
+
+                        if (assetsToSync.length > 0) {
+                            await performBulkSync(assetsToSync);
+                            setViewState(prev => {
+                                const updated = { ...prev.verificationResults };
+                                assetsToSync.forEach(s => {
+                                    Object.values(updated).forEach(res => {
+                                        (res as VerificationResult).discrepancies.forEach(d => {
+                                            if (d.isin === s.isin) d.ticker = s.ticker;
+                                        });
                                     });
                                 });
+                                return { ...prev, verificationResults: updated, isSyncingAssets: false };
                             });
-                            return { ...prev, verificationResults: updated, isSyncingAssets: false };
-                        });
-                    } else {
-                        setViewState(prev => ({ ...prev, isSyncingAssets: false }));
+                        } else {
+                            setViewState(prev => ({ ...prev, isSyncingAssets: false }));
+                        }
                     }
+
+                    setViewState(prev => ({ ...prev, isSyncingAssets: false }));
                 } catch (e) {
+                    console.error("Asset check failed:", e);
                     setViewState(prev => ({ ...prev, isSyncingAssets: false }));
                 }
             }

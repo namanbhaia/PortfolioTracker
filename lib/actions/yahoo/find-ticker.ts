@@ -13,34 +13,51 @@ const yahooFinance = new YahooFinance();
  * @param {string} query - The search term (e.g., "RELIANCE" or "INFY.NS").
  * @returns {Promise<{symbol: string, shortName: string, price: number} | null>} - Stock details or null if not found.
  */
-export async function getTickerDetailsFromYahoo(query: string) {
+export async function getTickerDetailsFromYahoo(isins: string[]) {
   try {
-    // 1. Search for the symbol
-    // Disable validation to handle minor schema mismatches from Yahoo side
-    const searchResults = (await yahooFinance.search(query, {}, {
-      validation: { logErrors: false }
-    } as any)) as any;
+    // STEP 1: Translate all ISINs to Symbols at once
+    const translationTasks = isins.map(async (isin) => {
+      const search = await yahooFinance.search(isin, {}, { validation: false } as any);
+      const firstQuote = search?.quotes?.[0];
+      return firstQuote?.symbol ? { isin, symbol: firstQuote.symbol } : null;
+    });
 
-    if (!searchResults?.quotes || searchResults.quotes.length === 0) {
-      return null;
+    // 1. Fire off all searches
+    const results = await Promise.all(translationTasks);
+
+    // 2. Debug: Log the raw results before filtering
+    console.log("Raw Search Results:", JSON.stringify(results, null, 2));
+
+    // 3. Filter and cast
+    const mappings = results.filter((item): item is { isin: string; symbol: string } => {
+      return item !== null && typeof item.symbol === 'string';
+    });
+
+    console.log("Filtered Mappings count:", mappings.length);
+
+    if (mappings.length === 0) {
+      console.warn("⚠️ Mappings is empty! Check the ISINs and Yahoo API response.");
+      return [];
     }
 
-    const symbol = searchResults.quotes[0].symbol as string;
 
-    // 2. Fetch the actual price for that symbol
-    const quote = (await yahooFinance.quote(symbol, {}, {
-      validation: { logErrors: false }
-    } as any)) as any;
+    // STEP 2: Fetch all prices in ONE single call
+    const symbols = mappings.map(m => m.symbol);
+    const quotes = await yahooFinance.quote(symbols, {}, { validation: false } as any);
+    const quotesArray = Array.isArray(quotes) ? quotes : [quotes];
 
-    return {
-      symbol: symbol,
-      shortName: searchResults.quotes[0].shortname || searchResults.quotes[0].longname,
-      // regularMarketPrice is the standard field for live price
-      price: quote?.regularMarketPrice || 0
-    };
+    // Merge them back together
+    return mappings.map(m => {
+      const priceData = quotesArray.find(q => q.symbol === m.symbol);
+      return {
+        isin: m.isin,
+        symbol: m.symbol,
+        price: priceData?.regularMarketPrice || 0
+      };
+    });
   } catch (error) {
-    console.error("Details fetch error:", error);
-    throw error;
+    console.error("Fetch failed:", error);
+    return [];
   }
 }
 
