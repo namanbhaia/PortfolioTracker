@@ -1,5 +1,10 @@
 "use client"
 
+/**
+ * @file sidebar.tsx
+ * @description Main navigation sidebar for the dashboard, handling routing, session management, and UI state (collapsed/expanded).
+ */
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -52,6 +57,12 @@ const adminItems = [
     { name: 'Admin Controls', href: '/dashboard/admin', icon: Wrench }
 ];
 
+/**
+ * Sidebar component for dashboard navigation.
+ * @param {Object} props - Component props.
+ * @param {any} props.user - The current user object.
+ * @param {any} [props.profile] - The user's profile metadata.
+ */
 export default function Sidebar({ user, profile }: { user: any, profile?: any }) {
     // 1. Declare ALL hooks at the top level
     const [mounted, setMounted] = useState(false);

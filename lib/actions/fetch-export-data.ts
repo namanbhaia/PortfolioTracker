@@ -1,5 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+/**
+ * @file fetch-export-data.ts
+ * @description Helpers for fetching and merging purchases and sales data from active and archived tables for export.
+ */
+
 interface FetchFilters {
     clients: string[];
     ticker: string | null;
@@ -13,7 +18,13 @@ interface DateRange {
 const FY_CUTOFF = '2025-04-01'; // Configuration for Financial Year Switch
 
 /**
- * Helper to construct a single Supabase query
+ * Helper to construct a single Supabase query for purchases or sales.
+ * @param {SupabaseClient} supabase - The Supabase client instance.
+ * @param {string} table - The table name to query.
+ * @param {FetchFilters} filters - Client and ticker filters.
+ * @param {DateRange} range - Date range filters.
+ * @param {boolean} isSales - Whether the query is for the sales table.
+ * @returns {any} - The Supabase query object.
  */
 const buildQuery = (
     supabase: SupabaseClient,
@@ -24,7 +35,7 @@ const buildQuery = (
 ) => {
     // We explicitly fetch the stored profit columns here
     let selectString = '';
-    
+
     if (isSales) {
         selectString = `
             *,
@@ -65,6 +76,13 @@ const buildQuery = (
     return query;
 };
 
+/**
+ * Fetches and merges data from both active and archived purchase/sale tables.
+ * @param {SupabaseClient} supabase - The Supabase client instance.
+ * @param {FetchFilters} filters - Filtering criteria.
+ * @param {DateRange} range - Date range for the export.
+ * @returns {Promise<{purchases: any[], sales: any[]}>} - Combined data.
+ */
 export async function fetchExportData(
     supabase: SupabaseClient,
     filters: FetchFilters,
@@ -102,17 +120,17 @@ export async function fetchExportData(
 
     // 5. Merge Results
     const combinedPurchases = [
-        ...(results[0].data || []), 
+        ...(results[0].data || []),
         ...(results[2].data || [])
     ];
-    
+
     const combinedSales = [
-        ...(results[1].data || []), 
+        ...(results[1].data || []),
         ...(results[3].data || [])
     ];
 
-    return { 
-        purchases: combinedPurchases, 
-        sales: combinedSales 
+    return {
+        purchases: combinedPurchases,
+        sales: combinedSales
     };
 }

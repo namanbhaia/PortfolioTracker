@@ -1,8 +1,18 @@
 "use server"
 import YahooFinance from 'yahoo-finance2';
 
+/**
+ * @file find-ticker.ts
+ * @description Helpers for fetching stock metadata and prices from Yahoo Finance.
+ */
+
 const yahooFinance = new YahooFinance();
 
+/**
+ * Fetches real-time price and metadata for a stock based on a search query.
+ * @param {string} query - The search term (e.g., "RELIANCE" or "INFY.NS").
+ * @returns {Promise<{symbol: string, shortName: string, price: number} | null>} - Stock details or null if not found.
+ */
 export async function getTickerDetailsFromYahoo(query: string) {
   try {
     // 1. Search for the symbol
@@ -34,10 +44,13 @@ export async function getTickerDetailsFromYahoo(query: string) {
   }
 }
 
-
+/**
+ * Normalizes a ticker and fetches its current market quote.
+ * @param {string} ticker - The stock ticker symbol.
+ * @returns {Promise<{success: boolean, suggestion?: {ticker: string, name: string, price: number}, error?: string}>}
+ */
 export async function getStockSuggestion(ticker: string) {
   try {
-
     let yfSearchTicker = ticker.toUpperCase().trim();
     if (!yfSearchTicker.includes('.')) {
       const isNumeric = /^\d+$/.test(yfSearchTicker);

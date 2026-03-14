@@ -1,7 +1,15 @@
+/**
+ * @file transaction-table.tsx
+ * @description A set of reusable primitive Table components (Table, Header, Body, Row, etc.) for consistent styling.
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * The main Table container component.
+ */
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>

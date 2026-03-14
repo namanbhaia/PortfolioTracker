@@ -1,5 +1,10 @@
 ﻿"use client";
 
+/**
+ * @file client-filter.tsx
+ * @description Provides a multi-select dropdown for filtering data by client name or ID.
+ */
+
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Users, Check, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
@@ -14,6 +19,10 @@ interface ClientMultiSelectProps {
   className?: string; // Allow custom classes
 }
 
+/**
+ * Reusable multi-select component for selecting one or more clients.
+ * @param {ClientMultiSelectProps} props - Component props.
+ */
 export function ClientMultiSelect({
   clients,
   selectedKeys,
@@ -74,6 +83,11 @@ export function ClientMultiSelect({
 }
 
 // --- 2. Smart Wrapper (Legacy Support for Dashboard) ---
+/**
+ * Smart wrapper for ClientMultiSelect that synchronizes state with the URL.
+ * @param {Object} props - Component props.
+ * @param {string[]} props.currentSelection - Array of currently selected client names.
+ */
 export function ClientFilter({ currentSelection }: { currentSelection: string[] }) {
   const { clients } = useUser();
   const router = useRouter();

@@ -1,14 +1,22 @@
 "use client"
 
+/**
+ * @file sync-prices-button.tsx
+ * @description A button that triggers a background synchronization of asset prices from Yahoo Finance.
+ */
+
 import { useRouter } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { syncAssetsAction } from '@/lib/actions/yahoo/sync-assets';
 
+/**
+ * Button component for manually triggering price synchronization.
+ */
 export function SyncPricesButton() {
     const router = useRouter();
     const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
     const handleRefresh = async () => {
         setIsRefreshing(true);
         const a = await syncAssetsAction();

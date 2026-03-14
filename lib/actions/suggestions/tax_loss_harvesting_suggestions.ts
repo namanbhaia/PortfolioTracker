@@ -1,5 +1,10 @@
 "use server"
 
+/**
+ * @file tax_loss_harvesting_suggestions.ts
+ * @description Identifies tax-loss harvesting opportunities by analyzing loss-making positions.
+ */
+
 export interface TaxLossSuggestion {
     ticker: string;
     stock_name: string;
@@ -9,6 +14,11 @@ export interface TaxLossSuggestion {
     balance_qty: number;
 }
 
+/**
+ * Identifies potential positions for tax-loss harvesting.
+ * @param {any[]} holdings - The user's active portfolio holdings.
+ * @returns {Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number }>}
+ */
 export async function getTaxLossHarvestingSuggestions(
     holdings: any[]
 ): Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number }> {

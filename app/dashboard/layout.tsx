@@ -1,9 +1,19 @@
+/**
+ * @file layout.tsx
+ * @description The main layout for the dashboard, handling authentication, global state initialization, and common UI elements like the sidebar and screensaver.
+ */
+
 import Sidebar from '@/components/dashboard/sidebar';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { UserProvider } from '@/components/helper/user-context'
 import Screensaver from '@/components/dashboard/screensaver';
 
+/**
+ * Dashboard Layout component that provides authentication and context for all dashboard pages.
+ * @param {Object} props - Component props.
+ * @param {React.ReactNode} props.children - Child nodes representing the current dashboard route's content.
+ */
 export default async function DashboardLayout({
     children,
 }: {

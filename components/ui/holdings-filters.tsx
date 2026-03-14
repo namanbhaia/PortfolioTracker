@@ -1,10 +1,19 @@
 ﻿"use client";
 
+/**
+ * @file holdings-filters.tsx
+ * @description A comprehensive filter bar for refining the display of holdings and sales data.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Search, Calendar, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ClientMultiSelect } from './client-filter';
 
+/**
+ * Component providing a suite of filters (ticker, date, term, etc.) for portfolio data.
+ * @param {Object} props - Component props.
+ */
 export default function HoldingsFilter({
     availableClients,
     showLongTermToggle = true,

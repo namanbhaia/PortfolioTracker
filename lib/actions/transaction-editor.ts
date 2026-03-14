@@ -1,6 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
 
+/**
+ * @file transaction-editor.ts
+ * @description Core business logic for atomic ledger updates, FIFO reprocessing, and transaction editing.
+ */
+
 // ==========================================
 // 1. Interfaces
 // ==========================================
@@ -58,13 +63,20 @@ export interface SaleIntent {
   created_at: string;
 }
 
-// ==========================================
-// 2. Utility Class
-// ==========================================
-
+/**
+ * Utility class for managing portfolio transactions and ensuring ledger integrity.
+ */
 export class TransactionEditor {
+  /**
+   * Initializes the editor with a Supabase client.
+   * @param {SupabaseClient} supabase - The Supabase client instance.
+   */
   constructor(private supabase: SupabaseClient) { }
 
+  /**
+   * Generates a unique transaction identifier.
+   * @returns {string} - A new UUID.
+   */
   private generateUUID(): string {
     return crypto.randomUUID();
   }
@@ -399,6 +411,11 @@ export class TransactionEditor {
   // 3. Entry Points
   // ==========================================
 
+  /**
+   * Updates the purchase rate of a transaction and recalculates all linked sales.
+   * @param {string} trx_id - The transaction ID to update.
+   * @param {number} newRate - The new purchase rate.
+   */
   async editPurchaseRate(trx_id: string, newRate: number) {
     // 1. Fetch the full Purchase record
     const { data: purchase, error: pError } = await this.supabase

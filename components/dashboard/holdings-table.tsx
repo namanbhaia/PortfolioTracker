@@ -1,3 +1,8 @@
+/**
+ * @file holdings-table.tsx
+ * @description Renders a detailed table of individual purchase transactions (holdings) with sorting.
+ */
+
 import TrxIdCell from "@/components/ui/trx-id-cell";
 import CommentCell from "@/components/ui/comment-cell";
 import TickerCell from "@/components/ui/ticker-cell";
@@ -13,6 +18,10 @@ interface HoldingsTableProps {
 	onSort?: (key: SortFieldHoldings) => void;
 }
 
+/**
+ * Component for displaying the detailed holdings table.
+ * @param {HoldingsTableProps} props - Component props.
+ */
 export default function HoldingsTable({ holdings, sortConfig, onSort }: HoldingsTableProps) {
 
 	const handleSort = (field: SortFieldHoldings) => {

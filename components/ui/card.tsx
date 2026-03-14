@@ -1,7 +1,14 @@
+/**
+ * @file card.tsx
+ * @description Set of reusable Card components for grouping and structuring content in a visually consistent way.
+ */
 
 import * as React from "react"
 import { cn } from "@/lib/utils" // I'll assume a utility file for merging tailwind classes exists, if not, I'll create it.
 
+/**
+ * The main Card container component.
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>

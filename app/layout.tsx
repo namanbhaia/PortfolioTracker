@@ -1,3 +1,8 @@
+/**
+ * @file layout.tsx
+ * @description The root layout component of the application, defining the basic HTML structure, fonts, and global metadata.
+ */
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -12,6 +17,11 @@ export const metadata: Metadata = {
     },
 };
 
+/**
+ * The root layout component for the entire application.
+ * @param {Object} props - Component props.
+ * @param {React.ReactNode} props.children - Child components to render.
+ */
 export default function RootLayout({
     children,
 }: Readonly<{

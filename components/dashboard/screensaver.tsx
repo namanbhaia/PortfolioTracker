@@ -1,10 +1,20 @@
 "use client"
 
+/**
+ * @file screensaver.tsx
+ * @description Renders a privacy-focused screensaver that activates after inactivity or via a keyboard shortcut.
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Background } from "@/components/ui/background";
 import { useUser } from '@/components/helper/user-context';
 
+/**
+ * Screensaver component that provides privacy by obscuring the dashboard content.
+ * @param {Object} props - Component props.
+ * @param {number} [props.idleTimeout=300000] - Inactivity timeout in milliseconds.
+ */
 export default function Screensaver({ idleTimeout = 300000 }) {
     const { screensaverClickOnly } = useUser();
     const [isActive, setIsActive] = useState(false);

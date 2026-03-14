@@ -4,8 +4,19 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import YahooFinance from 'yahoo-finance2';
 
+/**
+ * @file sync-assets.ts
+ * @description Background action to sync market data for all assets using Yahoo Finance.
+ */
+
 const yf = new YahooFinance();
 
+/**
+ * Helper to split an array into smaller chunks for batch processing.
+ * @param {T[]} array - The source array.
+ * @param {number} size - Maximum size of each chunk.
+ * @returns {T[][]} - Array of chunks.
+ */
 const chunkArray = <T>(array: T[], size: number): T[][] => {
   const chunks: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
@@ -14,6 +25,10 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
   return chunks;
 };
 
+/**
+ * Orchestrates the synchronization of asset metadata and prices from Yahoo Finance to the database.
+ * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+ */
 export async function syncAssetsAction() {
   const supabase = await createClient();
   const BATCH_SIZE = 100;

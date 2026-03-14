@@ -1,4 +1,9 @@
-﻿import { Info } from 'lucide-react';
+﻿/**
+ * @file sales-table.tsx
+ * @description Renders a detailed table of sale transactions with profit/loss metrics and sorting.
+ */
+
+import { Info } from 'lucide-react';
 
 import TrxIdCell from '@/components/ui/trx-id-cell';
 import CommentCell from '@/components/ui/comment-cell';
@@ -15,6 +20,10 @@ interface SalesTableProps {
     onSort?: (key: SortFieldSales) => void;
 }
 
+/**
+ * Component for displaying the detailed sales table.
+ * @param {SalesTableProps} props - Component props.
+ */
 export default function SalesTable({ sales, sortConfig, onSort }: SalesTableProps) {
     const handleSort = (field: SortFieldSales) => {
         if (onSort) onSort(field);

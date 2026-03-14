@@ -4,8 +4,15 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 /**
+ * @file admin-bulk-ops.ts
+ * @description Administrative actions for bulk data operations, including asset updates and ledger commits.
+ */
+
+/**
  * Bulk updates or inserts asset records.
  * Uses the 'bulk_asset_update' SQL function for atomic processing and ticker/PK management.
+ * @param {Record<string, unknown>[]} assetsToUpsert - Array of asset data to update/insert.
+ * @returns {Promise<{success: boolean}>}
  */
 export async function bulkAssetUpdateAction(assetsToUpsert: Record<string, unknown>[]) {
     const supabase = await createClient();
@@ -25,6 +32,8 @@ export async function bulkAssetUpdateAction(assetsToUpsert: Record<string, unkno
 
 /**
  * Bulk processes purchase and sale records using the atomic_ledger_update function.
+ * @param {Object} payload - The update payload containing insertions, updates, and deletions.
+ * @returns {Promise<{success: boolean}>}
  */
 export async function bulkLedgerUpdateAction(payload: {
     purchases_to_insert?: Record<string, unknown>[],

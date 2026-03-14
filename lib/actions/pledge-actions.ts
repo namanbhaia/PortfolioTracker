@@ -4,8 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 /**
+ * @file pledge-actions.ts
+ * @description Server actions for managing share pledges.
+ */
+
+/**
  * Pledges shares for a client.
  * If a pledge for the client and ticker already exists, increases the count.
+ * @param {string} clientName - Name of the client pledging shares.
+ * @param {string} ticker - The stock ticker symbol.
+ * @param {number} qty - Quantity of shares to pledge.
+ * @returns {Promise<{success: boolean}>}
+ * @throws {Error} If qty exceeds total owned shares.
  */
 export async function pledgeShares(clientName: string, ticker: string, qty: number) {
     const supabase = await createClient();
@@ -53,6 +63,10 @@ export async function pledgeShares(clientName: string, ticker: string, qty: numb
 /**
  * Unpledges shares for a client.
  * Decreases the count and deletes the row if it reaches 0.
+ * @param {string} clientName - Name of the client unpledging shares.
+ * @param {string} ticker - The stock ticker symbol.
+ * @param {number} qty - Quantity of shares to unpledge.
+ * @returns {Promise<{success: boolean}>}
  */
 export async function unpledgeShares(clientName: string, ticker: string, qty: number) {
     const supabase = await createClient();

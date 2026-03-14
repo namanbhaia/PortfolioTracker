@@ -1,10 +1,21 @@
 "use client"
 
+/**
+ * @file edit-transaction-sheet.tsx
+ * @description Renders a modal dialog for editing purchase or sale transaction records.
+ */
+
 import { useRef, useState, useEffect } from 'react';
 import { Edit2, X, Save, Loader2, Info, IndianRupee, Calendar } from "lucide-react";
 import { updateTransaction } from '@/lib/actions/update-transactions';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+/**
+ * Component for editing a single transaction record via a modal.
+ * @param {Object} props - Component props.
+ * @param {any} props.row - The transaction data object.
+ * @param {'purchase' | 'sale'} props.type - The type of transaction being edited.
+ */
 export default function EditTransactionSimple({ row, type }: { row: any, type: 'purchase' | 'sale' }) {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [loading, setLoading] = useState(false);

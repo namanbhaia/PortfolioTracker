@@ -1,6 +1,16 @@
 "use server"
-import { createClient } from '@/lib/supabase/server'; 
+import { createClient } from '@/lib/supabase/server';
 
+/**
+ * @file update-assets-table.ts
+ * @description Action for manually upserting asset records into the database.
+ */
+
+/**
+ * Inserts or updates an asset in the database.
+ * @param {Object} assetData - The asset details including ticker, name, price, ISIN, and cutoff.
+ * @returns {Promise<any>} - The upserted asset record.
+ */
 export const upsertInAsset = async (assetData: {
     ticker: string,
     name: string,
@@ -9,7 +19,7 @@ export const upsertInAsset = async (assetData: {
     cutoff: number
 }) => {
     const supabase = await createClient(); // Ensure you use the server-side client here
-    
+
     const { data, error } = await supabase
         .from('assets')
         .upsert({

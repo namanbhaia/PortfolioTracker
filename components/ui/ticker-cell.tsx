@@ -1,3 +1,7 @@
+/**
+ * @file ticker-cell.tsx
+ * @description Renders a table cell for stock tickers with a link to Screener.in and ISIN display.
+ */
 
 import React from 'react';
 
@@ -7,6 +11,10 @@ interface TickerCellProps {
     className?: string; // Allow passing extra classes if needed
 }
 
+/**
+ * Component for displaying a stock ticker and its ISIN in a table cell.
+ * @param {TickerCellProps} props - Component props.
+ */
 export default function TickerCell({ ticker, isin, className }: TickerCellProps) {
     return (
         <td className={`px-3 py-3 ${className || ''}`}>

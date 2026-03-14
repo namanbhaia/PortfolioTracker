@@ -1,5 +1,10 @@
 "use client"
 
+/**
+ * @file submit-button.tsx
+ * @description A specialized submit button with a pending/loading state for use in forms.
+ */
+
 import { Button } from '@/components/ui/button';
 import { Search, Loader2 } from 'lucide-react';
 
@@ -12,6 +17,10 @@ interface SubmitButtonProps {
     loadingText?: string
 }
 
+/**
+ * Reusable Submit Button component with loading feedback.
+ * @param {SubmitButtonProps} props - Component props.
+ */
 export function SubmitButton({ isPending, disabled, label = "Run Report", classname, loadingText = "Loading ..." }: SubmitButtonProps) {
     return (
         <Button

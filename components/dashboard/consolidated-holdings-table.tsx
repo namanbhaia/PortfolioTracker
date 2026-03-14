@@ -4,11 +4,21 @@ import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import TickerCell from '@/components/ui/ticker-cell';
 
+/**
+ * @file consolidated-holdings-table.tsx
+ * @description Renders a sortable table showing aggregated holdings across all selected clients.
+ */
+
 type SortConfig = {
     key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'dividend_yield';
     direction: 'asc' | 'desc';
 } | null;
 
+/**
+ * Component for displaying consolidated holdings data with sorting capabilities.
+ * @param {Object} props - Component props.
+ * @param {any[]} props.consolidatedRows - The aggregated holdings data to display.
+ */
 export default function ConsolidatedHoldingsTable({ consolidatedRows }: { consolidatedRows: any[] }) {
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'ticker', direction: 'asc' });
 

@@ -8,6 +8,10 @@ import DashboardClientWrapper from "@/components/dashboard/dashboard-client-wrap
  * Fetch all authorized data once and delegate filtering/aggregation to the client.
  */
 
+/**
+ * Server Component for the Dashboard executive summary.
+ * Authenticates the user and fetches authorized holdings and pledges.
+ */
 export default async function DashboardPage() {
 	// Initialize the Supabase server client.
 	const supabase = await createClient();

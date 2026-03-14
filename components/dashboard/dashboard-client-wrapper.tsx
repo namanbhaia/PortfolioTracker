@@ -1,11 +1,16 @@
-"use client";
+"use client"
 
 import React, { useState, useMemo } from 'react';
-import { Users, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, PieChart } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users } from "lucide-react";
 import { ClientMultiSelect } from "@/components/ui/client-filter";
 import ConsolidatedHoldingsTable from "@/components/dashboard/consolidated-holdings-table";
 import { RefreshButton } from "@/components/ui/refresh-button";
+import SummaryCards from "@/components/ui/summary-cards";
+
+/**
+ * @file dashboard-client-wrapper.tsx
+ * @description Client-side wrapper for the Executive Summary dashboard, handling filtering and aggregation.
+ */
 
 interface DashboardClientWrapperProps {
     initialHoldings: any[];
@@ -14,6 +19,10 @@ interface DashboardClientWrapperProps {
     userName: string;
 }
 
+/**
+ * Main dashboard client component that handles state and data aggregation.
+ * @param {DashboardClientWrapperProps} props - Initial holdings, pledges, available clients, and user info.
+ */
 export default function DashboardClientWrapper({
     initialHoldings,
     initialPledges,
@@ -132,43 +141,12 @@ export default function DashboardClientWrapper({
             </header>
 
             {/* SUMMARY CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Total Invested</CardTitle>
-                        <Wallet className="h-4 w-4 text-slate-400" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Current Value</CardTitle>
-                        <PieChart className="h-4 w-4 text-indigo-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-indigo-600">₹{currentTotalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-widest text-slate-500">Possible P/L</CardTitle>
-                        <TrendingUp className={`h-4 w-4 ${totalPL >= 0 ? 'text-green-500' : 'text-red-500'}`} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ₹{totalPL.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                        </div>
-                        <p className={`text-xs font-bold flex items-center mt-1 ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {totalPL >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                            {(plPercentage * 100).toFixed(2)}%
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
+            <SummaryCards
+                totalInvested={totalInvested}
+                currentTotalValue={currentTotalValue}
+                totalPL={totalPL}
+                plPercentage={plPercentage}
+            />
 
             {/* CONSOLIDATED HOLDINGS TABLE */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

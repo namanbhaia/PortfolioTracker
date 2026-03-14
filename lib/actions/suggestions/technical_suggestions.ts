@@ -1,5 +1,10 @@
 "use server"
 
+/**
+ * @file technical_suggestions.ts
+ * @description Analyzes technical indicators like DMA, yearly highs/lows, and volume to provide trade setup alerts.
+ */
+
 export interface TechnicalSuggestion {
     ticker: string;
     stock_name: string;
@@ -10,6 +15,20 @@ export interface TechnicalSuggestion {
     description: string;
 }
 
+/**
+ * Generates technical alerts based on moving averages, price range, volume, and valuation.
+ * @param {any[]} holdings - The user's active portfolio holdings.
+ * @returns {Promise<{
+ *   aboveDMA: TechnicalSuggestion[],
+ *   belowDMA: TechnicalSuggestion[],
+ *   aboveHigh: TechnicalSuggestion[],
+ *   belowLow: TechnicalSuggestion[],
+ *   highVolume: TechnicalSuggestion[],
+ *   lowVolume: TechnicalSuggestion[],
+ *   highPE: TechnicalSuggestion[],
+ *   lowPE: TechnicalSuggestion[]
+ * }>} - Categorized technical suggestions.
+ */
 export async function getTechnicalSuggestions(holdings: any[]): Promise<{
     aboveDMA: TechnicalSuggestion[],
     belowDMA: TechnicalSuggestion[],

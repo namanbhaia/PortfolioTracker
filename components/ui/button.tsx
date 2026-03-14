@@ -1,3 +1,8 @@
+/**
+ * @file button.tsx
+ * @description Reusable Button component with multiple variants and sizes, built using class-variance-authority.
+ */
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -35,10 +40,15 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 
+/**
+ * Reusable Button component.
+ * @param {ButtonProps} props - Component props.
+ * @param {React.ForwardedRef<HTMLButtonElement>} ref - Forwarded ref for the button element.
+ */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"

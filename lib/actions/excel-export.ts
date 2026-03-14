@@ -1,14 +1,26 @@
 import ExcelJS from 'exceljs';
 
+/**
+ * @file excel-export.ts
+ * @description Client-side utility for generating and downloading Excel reports of portfolio data.
+ */
+
+/**
+ * Generates an Excel workbook with separate sheets for purchases and sales.
+ * @param {any[]} purchases - List of purchase transactions to export.
+ * @param {any[]} sales - List of sale transactions to export.
+ * @param {string} [fileName='Portfolio_Export'] - The desired name of the exported file.
+ * @returns {Promise<void>}
+ */
 export const exportToExcel = async (purchases: any[], sales: any[], fileName: string = 'Portfolio_Export') => {
     const workbook = new ExcelJS.Workbook();
-    
+
     workbook.creator = 'MLB Portfolio Tracker';
     workbook.created = new Date();
 
     // --- SHEET 1: PURCHASES ---
     const sheetPurchases = workbook.addWorksheet('Purchases');
-    
+
     // Define Headers
     sheetPurchases.columns = [
         { header: 'Date', key: 'date', width: 15 },
@@ -33,7 +45,7 @@ export const exportToExcel = async (purchases: any[], sales: any[], fileName: st
             dp_id: p.dp_id || p.clients?.dp_id || '-',
             trading_id: p.trading_id || p.clients?.trading_id || '-',
             ticker: p.ticker,
-            stock_name: p.stock_name || '-', 
+            stock_name: p.stock_name || '-',
             rate: p.rate,
             qty: p.qty,
             total_cost: p.rate * p.qty,
@@ -52,7 +64,7 @@ export const exportToExcel = async (purchases: any[], sales: any[], fileName: st
 
     // --- SHEET 2: SALES ---
     const sheetSales = workbook.addWorksheet('Sales');
-    
+
     sheetSales.columns = [
         { header: 'Sale Date', key: 'date', width: 15 },
         { header: 'Client', key: 'client_name', width: 15 },
@@ -77,27 +89,27 @@ export const exportToExcel = async (purchases: any[], sales: any[], fileName: st
     sales.forEach(s => {
         sheetSales.addRow({
             // 'sale_date' is from sales_view, 'date' is from raw table fallback
-            date: s.sale_date || s.date, 
+            date: s.sale_date || s.date,
             client_name: s.client_name,
-            
+
             // Handles if data is at root or nested via join
             dp_id: s.dp_id || s.clients?.dp_id || '-',
             trading_id: s.trading_id || s.clients?.trading_id || '-',
-            
+
             ticker: s.ticker || '-',
             stock_name: s.stock_name || '-',
-            
+
             purchase_date: s.purchase_date,
             purchase_rate: s.purchase_rate,
-            
+
             rate: s.sale_rate || s.rate,
             qty: s.sale_qty || s.qty,
             sale_value: s.sale_value || ((s.sale_rate || s.rate) * (s.sale_qty || s.qty)),
-            
+
             long_term: s.long_term ? 'Yes' : 'No',
             pl: s.pl,
             adjusted_pl: s.adjusted_pl || s.profit, // Fallback if adjusted not calculated
-            
+
             comments: s.comments,
             purchase_trx_id: s.purchase_trx_id,
             custom_id: s.custom_id || '-',
@@ -116,7 +128,7 @@ export const exportToExcel = async (purchases: any[], sales: any[], fileName: st
     // ExcelJS creates a buffer; we wrap it in a Blob to trigger the browser download
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    
+
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;

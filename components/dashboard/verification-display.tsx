@@ -1,3 +1,8 @@
+/**
+ * @file verification-display.tsx
+ * @description Renders the results of the data verification process, showing matches or list of discrepancies.
+ */
+
 import React from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { VerificationResult } from '@/components/helper/verification-utils';
@@ -6,6 +11,10 @@ interface VerificationDisplayProps {
     selectedResult: VerificationResult;
 }
 
+/**
+ * Component for displaying verification success or discrepancy details.
+ * @param {VerificationDisplayProps} props - Component props.
+ */
 export function VerificationDisplay({ selectedResult }: VerificationDisplayProps) {
     if (selectedResult.status === 'MATCH') {
         return (

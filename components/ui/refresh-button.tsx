@@ -1,9 +1,17 @@
 "use client"
 
+/**
+ * @file refresh-button.tsx
+ * @description A button that triggers a manual data refresh by revalidating the current route.
+ */
+
 import { useRouter } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
+/**
+ * Button component for triggering a server-side data refresh.
+ */
 export function RefreshButton() {
     const router = useRouter();
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -12,7 +20,7 @@ export function RefreshButton() {
         setIsRefreshing(true);
         // router.refresh() triggers a server-side re-fetch of the current route
         router.refresh();
-        
+
         // Simulating a brief loading state for user feedback
         setTimeout(() => setIsRefreshing(false), 1000);
     };

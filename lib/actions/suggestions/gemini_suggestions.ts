@@ -2,6 +2,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Transaction, StockPosition, Suggestion } from "@/lib/actions/types";
 
+/**
+ * @file gemini_suggestions.ts
+ * @description Integrates with Google Gemini AI to provide actionable investment suggestions based on portfolio state.
+ */
+
+/**
+ * Generates stock suggestions using the Gemini API.
+ * @param {Transaction[]} transactions - REcent transaction history.
+ * @param {StockPosition[]} positions - Current active positions.
+ * @returns {Promise<Suggestion[]>} - Array of AI-generated suggestions.
+ */
 export async function getStockSuggestions(
     transactions: Transaction[],
     positions: StockPosition[]

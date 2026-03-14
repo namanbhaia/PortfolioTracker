@@ -1,7 +1,17 @@
 "use client"
 
+/**
+ * @file profile-clients-table.tsx
+ * @description Renders a summary table of all client portfolios linked to the current user's profile.
+ */
+
 import { Check, Users } from 'lucide-react';
 
+/**
+ * Component for displaying linked client portfolios in the user profile.
+ * @param {Object} props - Component props.
+ * @param {any[]} props.clients - List of client metadata objects.
+ */
 export default function ProfileClientsTable({ clients }: { clients: any[] }) {
     return (
         <div className="bg-white rounded-xl border shadow-sm overflow-hidden">

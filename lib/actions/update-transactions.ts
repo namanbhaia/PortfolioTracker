@@ -4,6 +4,20 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { TransactionEditor } from '@/lib/actions/transaction-editor'; // Adjust path if necessary
 
+/**
+ * @file update-transactions.ts
+ * @description Entry point for updating individual purchase or sale transactions, delegating to TransactionEditor for complex logic.
+ */
+
+/**
+ * Validates and applies updates to a transaction.
+ * Handles rate, quantity, and date changes, ensuring ledger consistency.
+ * @param {string} id - The transaction ID.
+ * @param {'purchase' | 'sale'} type - The type of transaction.
+ * @param {any} data - The updated transaction data.
+ * @param {string} currentPath - The current UI path for revalidation.
+ * @returns {Promise<{success?: boolean, error?: string}>}
+ */
 export async function updateTransaction(id: string, type: 'purchase' | 'sale', data: any, currentPath: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

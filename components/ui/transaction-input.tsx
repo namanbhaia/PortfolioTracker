@@ -1,7 +1,15 @@
+/**
+ * @file transaction-input.tsx
+ * @description A reusable primitive Input component with customized styling for consistent form appearance.
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Reusable Input component.
+ */
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     return (

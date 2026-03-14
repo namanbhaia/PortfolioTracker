@@ -2,6 +2,11 @@
 
 import YahooFinance from 'yahoo-finance2';
 
+/**
+ * @file statistical_suggestions.ts
+ * @description Analyzes portfolio diversification and risk metrics to provide concentration and volatility alerts.
+ */
+
 export interface ConcentrationAlert {
     ticker: string;
     stock_name: string;
@@ -17,6 +22,11 @@ export interface VolatilityAlert {
     warning: string;
 }
 
+/**
+ * Calculates concentration and volatility alerts for the given holdings.
+ * @param {any[]} holdings - The user's active portfolio holdings.
+ * @returns {Promise<{concentration: ConcentrationAlert[], volatility: VolatilityAlert[]}>}
+ */
 export async function getStatisticalSuggestions(holdings: any[]): Promise<{
     concentration: ConcentrationAlert[],
     volatility: VolatilityAlert[]

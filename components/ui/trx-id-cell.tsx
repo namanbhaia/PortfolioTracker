@@ -1,8 +1,18 @@
 "use client"
 
+/**
+ * @file trx-id-cell.tsx
+ * @description Renders a table cell for transaction IDs with copy-to-clipboard functionality and a tooltip.
+ */
+
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 
+/**
+ * Component for displaying a transaction ID with copy capability.
+ * @param {Object} props - Component props.
+ * @param {string} props.id - The transaction ID.
+ */
 export default function TrxIdCell({ id }: { id: string }) {
     const [copied, setCopied] = useState(false);
 
@@ -16,7 +26,7 @@ export default function TrxIdCell({ id }: { id: string }) {
 
     return (
         <div className="relative group/id flex items-center gap-1">
-            <button 
+            <button
                 onClick={handleCopy}
                 className="font-mono text-[10px] text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1 focus:outline-none"
                 title="Click to copy ID"

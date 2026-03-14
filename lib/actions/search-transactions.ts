@@ -2,6 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server';
 
+/**
+ * @file search-transactions.ts
+ * @description Advanced search logic for finding transactions and their relational webs using form data.
+ */
+
+/**
+ * Performs a deep search for transactions across purchases and sales.
+ * Supports UUID-based tracing of linked transactions and standard filtering.
+ * @param {FormData} formData - The search criteria submitted via form.
+ * @returns {Promise<{purchases?: any[], sales?: any[], error?: string}>}
+ */
 export async function searchTransactions(formData: FormData) {
     const supabase = await createClient();
 

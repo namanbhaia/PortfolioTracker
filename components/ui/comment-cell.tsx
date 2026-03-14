@@ -1,7 +1,17 @@
 "use client"
 
+/**
+ * @file comment-cell.tsx
+ * @description Renders a table cell for comments with a tooltip for long text.
+ */
+
 import React from 'react';
 
+/**
+ * Component for displaying comments in a table cell.
+ * @param {Object} props - Component props.
+ * @param {string | null} props.comment - The comment text to display.
+ */
 export default function CommentCell({ comment }: { comment: string | null }) {
     if (!comment) return <span className="text-gray-400">-</span>;
 

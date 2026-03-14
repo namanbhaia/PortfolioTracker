@@ -1,3 +1,8 @@
+/**
+ * @file tabs.tsx
+ * @description Accessible Tabs component for organizing content into switchable views, built on Radix UI.
+ */
+
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 

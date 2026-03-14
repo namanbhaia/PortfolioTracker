@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * @file background.tsx
+ * @description Renders a dynamic, liquid background with floating particles for a premium aesthetic.
+ */
+
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform, MotionValue } from "framer-motion";
 
@@ -82,6 +87,9 @@ const TinyParticle = ({
     );
 };
 
+/**
+ * Main Background component that provides a dynamic, interactive visual layer for the application.
+ */
 export const Background = () => {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);

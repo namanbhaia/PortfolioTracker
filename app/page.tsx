@@ -1,10 +1,18 @@
 "use client";
 
+/**
+ * @file page.tsx
+ * @description The landing page of the application, featuring an interactive background and call-to-action buttons.
+ */
+
 import Link from "next/link";
 import { LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Background } from "@/components/ui/background";
 
+/**
+ * The main landing page component.
+ */
 export default function LandingPage() {
   const containerVariants = {
     hidden: { opacity: 0 },
