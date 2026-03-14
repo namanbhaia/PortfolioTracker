@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
 import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
+import { AlertCircle } from 'lucide-react';
 
 const supabase = createClient();
 
@@ -14,6 +15,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     const [openPurchases, setOpenPurchases] = useState<any[]>([]);
     const [pledgedItems, setPledgedItems] = useState<any[]>([]);
     const [pledgeWarning, setPledgeWarning] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
 
     const { register, handleSubmit, reset, watch, setValue } = useForm();
     const saleClient = watch("client_name");
@@ -89,6 +91,15 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
     const onSaleSubmit = async (data: any) => {
         setLoading(true);
+        setFormError(null);
+
+        // Validation for missing fields
+        if (!data.client_name || !data.purchase_trx_id || !data.sale_date || !data.sale_rate || !data.sale_qty) {
+            setFormError("Please fill all required fields.");
+            setLoading(false);
+            return;
+        }
+
         // 1. Normalize form data (handling varying field names)
         const saleQtyRequested = parseFloat(data.sale_qty || data.qty);
         const saleRate = parseFloat(data.sale_rate || data.rate);
@@ -98,12 +109,20 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("User session not found.");
+            if (!user) {
+                setFormError("User session not found.");
+                setLoading(false);
+                return;
+            }
 
             // 2. Identify Ticker from the UI selection
             const selectedLot = openPurchases.find((l) => l.trx_id === data.purchase_trx_id);
             const tickerName = selectedLot?.ticker;
-            if (!tickerName) throw new Error("Ticker not found. Please select a purchase batch.");
+            if (!tickerName) {
+                setFormError("Ticker not found. Please select a purchase batch.");
+                setLoading(false);
+                return;
+            }
 
             // 3. Fetch Asset Cutoff (for Adjusted Profit) and Client ID
             const [cutoffPrice, { data: clientData }] = await Promise.all([
@@ -126,7 +145,9 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             // 5. Cumulative Validation
             const totalAvailable = (lots || []).reduce((sum, lot) => sum + Number(lot.balance_qty), 0);
             if (totalAvailable < saleQtyRequested) {
-                throw new Error(`Insufficient stock for ${tickerName}. Total available: ${totalAvailable}`);
+                setFormError(`Insufficient stock for ${tickerName}. Total available: ${totalAvailable}`);
+                setLoading(false);
+                return;
             }
 
             // 6. Generate Transaction Group ID
@@ -202,6 +223,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         } catch (err) {
             const error = err as Error;
             console.error("Critical Error:", error.message);
+            setFormError(error.message);
         } finally {
             setLoading(false);
         }
@@ -217,7 +239,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
         <form onSubmit={handleSubmit(onSaleSubmit)} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-1">
                 <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
-                <select {...register("client_name")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                <select {...register("client_name", { required: true })} required className="w-full p-2.5 bg-slate-50 border rounded-lg">
                     <option value="">Select Client</option>
                     {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
                 </select>
@@ -252,7 +274,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 <label className="text-xs font-bold uppercase text-slate-500">
                     Link to Purchase Batch (Lot)
                 </label>
-                <select {...register("purchase_trx_id")} className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                <select {...register("purchase_trx_id", { required: true })} required className="w-full p-2.5 bg-slate-50 border rounded-lg">
                     <option value="">Select share to sell</option>
                     {openPurchases.map((lot: any) => {
                         const pledgedQty = pledgedItems.find(p => p.ticker === lot.ticker)?.pledged_qty || 0;
@@ -274,8 +296,9 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     <input
                         type="date"
                         autoComplete="off"
+                        required
                         defaultValue={getTodayDate()}
-                        {...register("sale_date")}
+                        {...register("sale_date", { required: true })}
                         className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
                     />
                 </div>
@@ -286,7 +309,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         type="number"
                         step="0.01"
                         autoComplete="off"
-                        {...register("sale_rate")}
+                        required
+                        {...register("sale_rate", { required: true, min: 0.01 })}
                         placeholder="0.00"
                         className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
                     />
@@ -297,7 +321,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     <input
                         type="number"
                         autoComplete="off"
-                        {...register("sale_qty")}
+                        required
+                        {...register("sale_qty", { required: true, min: 1 })}
                         placeholder="0"
                         className={`w-full p-2.5 bg-slate-50 border rounded-lg outline-none transition-all ${isInvalidQty
                             ? "border-rose-500 ring-2 ring-rose-500/20"
@@ -325,6 +350,13 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500"
                 />
             </div>
+
+            {formError && (
+                <div className="p-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <p>{formError}</p>
+                </div>
+            )}
 
             <SubmitButton
                 isPending={loading}

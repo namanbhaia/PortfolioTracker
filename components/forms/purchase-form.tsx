@@ -9,11 +9,13 @@ import { SubmitButton } from '@/components/ui/submit-button';
 import { upsertInAsset } from '@/lib/actions/update-assets-table';
 import { getStockSuggestion as getStockInformation } from '@/lib/actions/yahoo/find-ticker';
 import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
+import { AlertCircle } from 'lucide-react';
 
 const supabase = createClient();
 
 export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSuccess: (success: boolean) => void }) {
     const [loading, setLoading] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
 
     // This holds the data fetched from Yahoo Finance before it's saved to the DB
     const [pendingAsset, setPendingAsset] = useState<{
@@ -61,10 +63,19 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
     const onPurchaseSubmit = async (data: any) => {
         setLoading(true);
+        setFormError(null);
+
+        // Validate form fields first
+        if (!data.purchase_client_name || !data.ticker || !data.purchase_date || !data.purchase_rate || !data.purchase_qty) {
+            setFormError("Please fill all required fields before proceeding.");
+            setLoading(false);
+            return;
+        }
+
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            alert("You must be logged in to record a purchase.");
+            setFormError("You must be logged in to record a purchase.");
             setLoading(false);
             return;
         }
@@ -112,7 +123,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
         const { error } = await supabase.from('purchases').insert([payload]);
 
         if (error) {
-            alert(error.message);
+            setFormError(error.message);
         } else {
             setSuccess(true);
             reset({
@@ -139,13 +150,13 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
         // 1. Mandate Check
         if (!priceValue || parseFloat(priceValue.toString()) <= 0) {
-            alert("Please enter a valid Price.");
+            setFormError("Please enter a valid Price.");
             setLoading(false);
             return;
         }
 
         if (!isinValue || isinValue.length < 12) {
-            alert("Please enter a valid 12-digit ISIN.");
+            setFormError("Please enter a valid 12-digit ISIN.");
             setLoading(false);
             return;
         }
@@ -161,6 +172,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                 cutoff: parseFloat(formData.get("cutoff") as string)
             });
 
+            setFormError(null);
             setShowAssetModal(false);
             setPendingAsset(null);
 
@@ -181,7 +193,8 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                     <div className="space-y-1">
                         <label className="text-xs font-bold uppercase text-slate-500">Client</label>
                         <select
-                            {...register("purchase_client_name")}
+                            {...register("purchase_client_name", { required: true })}
+                            required
                             className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                         >
                             <option value="">Select Client</option>
@@ -197,7 +210,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold uppercase text-slate-500">Ticker</label>
-                        <input {...register("ticker")} autoComplete="off" placeholder="Ticker" className="w-full p-2.5 bg-slate-50 border rounded-lg" />
+                        <input {...register("ticker", { required: true })} required autoComplete="off" placeholder="Ticker" className="w-full p-2.5 bg-slate-50 border rounded-lg" />
                     </div>
                 </div>
 
@@ -231,8 +244,9 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                         <label className="text-xs font-bold uppercase text-slate-500">Purchase Date</label>
                         <input
                             type="date"
+                            required
                             autoComplete="off"
-                            {...register("purchase_date")}
+                            {...register("purchase_date", { required: true })}
                             className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                         />
                     </div>
@@ -241,8 +255,9 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                         <input
                             type="number"
                             step="0.01"
+                            required
                             autoComplete="off"
-                            {...register("purchase_rate")}
+                            {...register("purchase_rate", { required: true, min: 0.01 })}
                             placeholder="0.00"
                             className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                         />
@@ -251,8 +266,9 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                         <label className="text-xs font-bold uppercase text-slate-500">Purchase Quantity</label>
                         <input
                             type="number"
+                            required
                             autoComplete="off"
-                            {...register("purchase_qty")}
+                            {...register("purchase_qty", { required: true, min: 0.01 })}
                             placeholder="0"
                             className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-indigo-500"
                         />
@@ -267,6 +283,14 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                         className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500"
                     />
                 </div>
+
+                {formError && (
+                    <div className="p-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        <p>{formError}</p>
+                    </div>
+                )}
+
                 <SubmitButton
                     isPending={loading}
                     label="Confirm Purchase"
@@ -352,12 +376,20 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                                 />
                             </div>
 
+                            {formError && (
+                                <div className="p-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                    <p>{formError}</p>
+                                </div>
+                            )}
+
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setShowAssetModal(false);
                                         setPendingAsset(null);
+                                        setFormError(null);
                                     }}
                                     className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
                                 >

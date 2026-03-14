@@ -67,6 +67,14 @@ export function PledgeForm({ clients }: { clients: any[] }) {
     }, [selectedClient, supabase]);
 
     const onSubmit = async (data: any) => {
+        setError(null);
+
+        // Basic validation
+        if (!data.client_name || !data.ticker || !data.qty) {
+            setError("Please fill all required fields.");
+            return;
+        }
+
         const qtyToProcess = Number(data.qty);
         const selectedOption = tickerOptions.find(o => o.ticker === data.ticker);
 
@@ -156,6 +164,7 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                         <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
                         <select
                             {...register("client_name", { required: true })}
+                            required
                             className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"
                         >
                             <option value="">Select Client</option>
@@ -170,6 +179,7 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                             </label>
                             <select
                                 {...register("ticker", { required: true })}
+                                required
                                 className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"
                             >
                                 <option value="">Select Ticker</option>
@@ -183,7 +193,8 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                             <input
                                 type="number"
                                 autoComplete="off"
-                                {...register("qty", { required: true })}
+                                required
+                                {...register("qty", { required: true, min: 1 })}
                                 placeholder="Qty"
                                 className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"
                             />
