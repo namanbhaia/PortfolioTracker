@@ -1,5 +1,5 @@
-import { SupabaseClient } from '@supabase/supabase-js';
-import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
+import { LedgerRepository } from './ledger-repository';
+import { calculateProfitMetrics, isLongTerm, isSquareOff } from '@/components/helper/utility';
 
 /**
  * @file transaction-editor.ts
@@ -71,7 +71,7 @@ export class TransactionEditor {
    * Initializes the editor with a Supabase client.
    * @param {SupabaseClient} supabase - The Supabase client instance.
    */
-  constructor(private supabase: SupabaseClient) { }
+  constructor(private repo: LedgerRepository) { }
 
   /**
    * Generates a unique transaction identifier.
@@ -106,16 +106,7 @@ export class TransactionEditor {
       // "Find all sales after the salesImpactDate. Find earliest purchase that these sales refer to."
 
       // 1. Fetch Target Sales
-      const { data: sales, error: sError } = await this.supabase
-        .from('sales')
-        .select('*, purchases!inner(date, ticker, created_at)')
-        .eq('client_name', clientName)
-        .eq('purchases.ticker', ticker)
-        .gte('date', impact.saleImpactDate)
-        .order('date', { ascending: true })
-        .order('created_at', { ascending: true });
-
-      if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
+      const sales = await this.repo.fetchSalesByDate(clientName, ticker, impact.saleImpactDate as string);
       rawSales = sales || [];
 
       // 2. Find Earliest Linked Purchase Date
@@ -148,16 +139,7 @@ export class TransactionEditor {
       const purchaseFetchDate = hasLinkedPurchases ? earliestPurchaseDate : impact.saleImpactDate;
 
       // 3. List all purchases after that date (OR bal >= 0)
-      const { data: purchases, error: pError } = await this.supabase
-        .from('purchases')
-        .select('*')
-        .eq('client_name', clientName)
-        .eq('ticker', ticker)
-        .gte('date', purchaseFetchDate)
-        .order('date', { ascending: true })
-        .order('created_at', { ascending: true });
-
-      if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+      const purchases = await this.repo.fetchPurchasesByDate(clientName, ticker, purchaseFetchDate as string);
       rawPurchases = purchases || [];
 
     } else if (impact.purchaseImpactDate) {
@@ -165,16 +147,7 @@ export class TransactionEditor {
       // "Find all purchases after that date. Then find all sales linked to these purchases."
 
       // 1. Fetch Target Purchases
-      const { data: purchases, error: pError } = await this.supabase
-        .from('purchases')
-        .select('*')
-        .eq('client_name', clientName)
-        .eq('ticker', ticker)
-        .gte('date', impact.purchaseImpactDate)
-        .order('date', { ascending: true })
-        .order('created_at', { ascending: true });
-
-      if (pError) throw new Error(`Fetch Purchases Failed: ${pError.message}`);
+      const purchases = await this.repo.fetchPurchasesByDate(clientName, ticker, impact.purchaseImpactDate as string);
       rawPurchases = purchases || [];
 
       // 2. Identify all Sale IDs linked to these purchases
@@ -188,15 +161,7 @@ export class TransactionEditor {
 
       if (linkedSaleIds.size > 0) {
         // 3. Fetch Sales using the specific IDs found in the purchases
-        const { data: sales, error: sError } = await this.supabase
-          .from('sales')
-          .select('*, purchases!inner(date, ticker)')
-          .eq('client_name', clientName)
-          .in('trx_id', Array.from(linkedSaleIds))
-          .order('date', { ascending: true })
-          .order('created_at', { ascending: true });
-
-        if (sError) throw new Error(`Fetch Sales Failed: ${sError.message}`);
+        const sales = await this.repo.fetchSalesByIds(clientName, Array.from(linkedSaleIds));
         rawSales = sales || [];
       }
     }
@@ -332,7 +297,7 @@ export class TransactionEditor {
     // purchasesToUpdate is already active and tracking changes.
 
     // Fetch Grandfathered Rate once (assuming all same ticker in this batch)
-    const cutoffPrice = await getGrandfatheredRate(this.supabase, ticker);
+    const cutoffPrice = await this.repo.getGrandfatheredRate(ticker);
 
     for (const order of sortedOrders) {
       let qtyRemaining = order.sale_qty;
@@ -402,8 +367,7 @@ export class TransactionEditor {
       sales_to_insert: salesToInsert
     };
 
-    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
-    if (error) throw new Error(`Atomic Update Failed: ${error.message}`);
+    await this.repo.atomicLedgerUpdate(payload);
   }
 
 
@@ -418,25 +382,16 @@ export class TransactionEditor {
    */
   async editPurchaseRate(trx_id: string, newRate: number) {
     // 1. Fetch the full Purchase record
-    const { data: purchase, error: pError } = await this.supabase
-      .from('purchases')
-      .select('*')
-      .eq('trx_id', trx_id)
-      .single();
-
-    if (pError || !purchase) throw new Error("Purchase record not found.");
+    const purchase = await this.repo.fetchPurchaseById(trx_id);
 
     // Fetch grandfathered rate once using the purchase ticker
-    const cutoffPrice = await getGrandfatheredRate(this.supabase, purchase.ticker);
+    const cutoffPrice = await this.repo.getGrandfatheredRate(purchase.ticker);
 
     const salesToUpdate: Record<string, unknown>[] = [];
 
     // 2. Fetch only the sales linked via the purchase's sale_ids column
     if (purchase.sale_ids && purchase.sale_ids.length > 0) {
-      const { data: linkedSales } = await this.supabase
-        .from('sales')
-        .select('*')
-        .in('trx_id', purchase.sale_ids);
+      const linkedSales = await this.repo.fetchSalesByTrxIds(purchase.sale_ids);
 
       if (linkedSales && linkedSales.length > 0) {
         // 3. Recalculate profit for each linked sale
@@ -473,23 +428,19 @@ export class TransactionEditor {
     };
 
     // 5. Atomic Commit
-    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
-    if (error) throw new Error(`Failed to update rate and recalculate sales: ${error.message}`);
+    await this.repo.atomicLedgerUpdate(payload);
   }
 
   async editSaleRate(custom_id: string, newRate: number) {
     // 1. Fetch splits with necessary purchase details (date & ticker needed for calc)
-    const { data: splits } = await this.supabase
-      .from('sales')
-      .select('*, purchases(rate, date, ticker)')
-      .eq('custom_id', custom_id);
+    const splits = await this.repo.fetchSalesByCustomIdWithPurchase(custom_id);
 
     if (!splits || splits.length === 0) return;
 
     // 2. Fetch Grandfathered Rate (once for the entire batch)
     // We assume all splits in a custom_id belong to the same ticker
     const ticker = splits[0].purchases?.ticker;
-    const cutoffPrice = ticker ? await getGrandfatheredRate(this.supabase, ticker) : null;
+    const cutoffPrice = ticker ? await this.repo.getGrandfatheredRate(ticker) : null;
 
     const salesToUpdate: Record<string, unknown>[] = [];
 
@@ -523,8 +474,7 @@ export class TransactionEditor {
       sales_to_update: salesToUpdate
     };
 
-    const { error } = await this.supabase.rpc('atomic_ledger_update', { payload });
-    if (error) throw new Error(`Failed to update sale rate: ${error.message}`);
+    await this.repo.atomicLedgerUpdate(payload);
   }
 
   /**
@@ -537,10 +487,7 @@ export class TransactionEditor {
   async editSaleDate(custom_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
     // 1. Fetch all splits for this sale event
     // We need both the metadata (from any row) and the sum of quantities (from all rows)
-    const { data: allSplits } = await this.supabase
-      .from('sales')
-      .select('*')
-      .eq('custom_id', custom_id);
+    const allSplits = await this.repo.fetchSalesByCustomId(custom_id);
 
     if (!allSplits || allSplits.length === 0) throw new Error("Sale not found");
 
@@ -583,13 +530,7 @@ export class TransactionEditor {
 
   async editPurchaseDate(trx_id: string, newDate: string, originalDate: string, clientName: string, ticker: string) {
     // 1. Fetch the full Purchase record
-    const { data: p, error } = await this.supabase
-      .from('purchases')
-      .select('*')
-      .eq('trx_id', trx_id)
-      .single();
-
-    if (error || !p) throw new Error("Purchase record not found.");
+    const p = await this.repo.fetchPurchaseById(trx_id);
 
     // 2. Create Override Object (In-Memory Only)
     // We update the date on the object, but we DO NOT commit to DB yet.
@@ -623,23 +564,10 @@ export class TransactionEditor {
 
   async editPurchaseQty(trx_id: string, newQty: number, clientName: string, ticker: string, originalDate: string) {
     // 1. Get the current purchase state (Fetch '*' because we need the full object for the override)
-    const { data: p, error } = await this.supabase
-      .from('purchases')
-      .select('*')
-      .eq('trx_id', trx_id)
-      .single();
-
-    if (error || !p) throw new Error("Purchase record not found.");
+    const p = await this.repo.fetchPurchaseById(trx_id);
 
     // 2. Fetch Cumulative Balance (Validation)
-    const { data: allHoldings, error: hError } = await this.supabase
-      .from('purchases')
-      .select('balance_qty')
-      .eq('client_name', clientName)
-      .eq('ticker', ticker)
-      .gt('balance_qty', 0);
-
-    if (hError) throw new Error("Failed to validate cumulative balance.");
+    const allHoldings = await this.repo.fetchHoldingsBalances(clientName, ticker);
 
     const totalPortfolioBalance = allHoldings.reduce((sum, h) => sum + Number(h.balance_qty), 0);
 
@@ -683,14 +611,7 @@ export class TransactionEditor {
   async editSaleQty(custom_id: string, newQty: number, clientName: string, ticker: string, date: string) {
     // 1. Fetch sales details
     // Optimization: client_id is natively on sales table
-    const { data: existing } = await this.supabase
-      .from('sales')
-      .select('*')
-      .eq('custom_id', custom_id)
-      .limit(1)
-      .single();
-
-    if (!existing) throw new Error("Sale not found");
+    const existing = await this.repo.fetchSingleSaleByCustomId(custom_id);
 
     const intent: SaleIntent = {
       custom_id: custom_id,
