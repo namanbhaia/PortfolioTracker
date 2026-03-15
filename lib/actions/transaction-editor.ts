@@ -68,8 +68,8 @@ export interface SaleIntent {
  */
 export class TransactionEditor {
   /**
-   * Initializes the editor with a Supabase client.
-   * @param {SupabaseClient} supabase - The Supabase client instance.
+   * Initializes the editor with a Ledger repository.
+   * @param {LedgerRepository} repo - The Ledger repository instance.
    */
   constructor(private repo: LedgerRepository) { }
 

@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { TransactionEditor } from '@/lib/actions/transaction-editor'; // Adjust path if necessary
+import { TransactionEditor } from '@/lib/actions/transaction-editor';
+import { LedgerRepository } from '@/lib/actions/ledger-repository';
 
 /**
  * @file update-transactions.ts
@@ -23,7 +24,8 @@ export async function updateTransaction(id: string, type: 'purchase' | 'sale', d
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Unauthorized" };
 
-    const editor = new TransactionEditor(supabase);
+    const repo = new LedgerRepository(supabase);
+    const editor = new TransactionEditor(repo);
     const table = type === 'purchase' ? 'purchases' : 'sales';
 
     // 1. Fetch Original Record to compare changes and get context

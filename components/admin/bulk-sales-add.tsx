@@ -74,7 +74,7 @@ export default function BulkSalesAdd() {
             const shortfallErrors = [];
 
             for (let i = 0; i < salesToProcess.length; i++) {
-                const row = salesToProcess[i];
+                const row = salesToProcess[i] as any;
                 const percent = Math.round(((i + 1) / salesToProcess.length) * 100);
                 setProgress(percent);
                 setStatusText(`Processing row ${i + 1} of ${salesToProcess.length}...`);
