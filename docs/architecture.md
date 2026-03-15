@@ -2,6 +2,9 @@
 
 Portfolio Tracker is built with a focus on high-performance financial data handling and a modern, responsive user experience. 
 
+## 📜 The Story
+Architected and developed by **Naman and Manvi**, this project was born from a need for a "No-Drift" investment ledger. Unlike common retail portfolio trackers that often have discrepancies in average price or lot tracking, Portfolio Tracker uses an audit-first approach. Every transaction is treated as an atomic event with database-level integrity, ensuring that what you see in the UI is a perfect reflection of the underlying SQL reality.
+
 ## 🏗 Technology Stack
 
 - **Framework**: Next.js 16 (App Router)

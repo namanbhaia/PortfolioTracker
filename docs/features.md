@@ -45,3 +45,20 @@ Reconcile your manual logs against official data.
 The system leverages **Yahoo Finance** to fetch the latest market prices.
 - **Ticker Mapping**: Supports both standard tickers and ISIN lookups.
 - **Automated Sync**: A background cron job periodically updates the `assets` table to ensure your portfolio valuation is always current.
+
+---
+
+## 🚀 Basic User Guide (Step-by-Step)
+
+If you are new to Portfolio Tracker, follow these simple steps to get started:
+
+1. **Create your Profile**: Ensure your full name and primary email are correct in [Profile Settings](/dashboard/profile).
+2. **Add a Client**: Go to the sidebar and find the Client management section. Create an entity for yourself or a family member.
+3. **Log a Purchase**: 
+   - Navigate to **New Transaction**.
+   - Select the Client.
+   - Enter the Ticker (e.g., `RELIANCE.NS`). If the asset is new, a modal will appear to capture the name and ISIN.
+   - Enter the Quantity, Rate, and Date.
+4. **View Holdings**: Your dashboard and "Purchase History" will now reflect the new assets, with live unrealized gains calculated against current market prices.
+5. **Log a Sale**: When you sell, enter the ticker and quantity. The system automatically finds your oldest purchase lots (FIFO) and calculates your realized P/L.
+6. **Privacy First**: Working in a public place? Click the logo in the top-left corner or hit **Ctrl+Space** to mask all sensitive numbers.
