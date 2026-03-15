@@ -447,6 +447,27 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+-- Function: Reset Client Ledger
+-- Purpose: Resets the entire trading ledger for a specific client by clearing all sales and resetting purchase balances.
+-- Logic:   1. Updates the purchases table to set balance_qty back to original purchase_qty and clears sale_ids.
+--          2. Deletes all records from the sales table for that client.
+CREATE OR REPLACE FUNCTION reset_client_ledger(p_client_name TEXT) 
+RETURNS VOID AS $$
+BEGIN
+    -- 1. Reset balances and clear sale links in the purchases table for the client
+    UPDATE purchases 
+    SET 
+        balance_qty = purchase_qty,
+        sale_ids = '{}'
+    WHERE client_name = p_client_name;
+    -- 2. Delete the actual sales records for the client
+    DELETE FROM sales 
+    WHERE client_name = p_client_name;
+    RAISE NOTICE 'Ledger reset successfully for client: %', p_client_name;
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- =========================================================
 -- 6. TRIGGERS
 -- =========================================================
