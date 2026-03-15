@@ -320,11 +320,11 @@ BEGIN
     END IF;
 
     -- 1. DELETE Old Sales (Splits)
-    -- Expects an array of 'custom_id' strings to remove entire sale batches.
+    -- Expects an array of 'trx_id' UUIDs to remove specific sale splits.
     IF payload ? 'sales_to_delete' THEN
         FOR id_to_delete IN SELECT jsonb_array_elements_text(payload -> 'sales_to_delete')
         LOOP
-            DELETE FROM sales WHERE custom_id = id_to_delete;
+            DELETE FROM sales WHERE trx_id = id_to_delete::UUID;
         END LOOP;
     END IF;
 
