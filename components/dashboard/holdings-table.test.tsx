@@ -18,6 +18,7 @@ vi.mock("@/components/ui/sort-arrow", () => ({
 }));
 
 describe('HoldingsTable', () => {
+    const mockIsVisible = vi.fn().mockReturnValue(true);
     const mockHoldings = [
         {
             trx_id: 'TRX1',
@@ -34,7 +35,7 @@ describe('HoldingsTable', () => {
     ];
 
     it('renders holdings data correctly', () => {
-        render(<HoldingsTable holdings={mockHoldings} />);
+        render(<HoldingsTable holdings={mockHoldings} isVisible={mockIsVisible} />);
 
         expect(screen.getByText('Client A')).toBeDefined();
         expect(screen.getByTestId('ticker-cell-mock')).toHaveTextContent('RELIANCE');
@@ -46,7 +47,7 @@ describe('HoldingsTable', () => {
 
     it('calls onSort when a header button is clicked', () => {
         const onSortMock = vi.fn();
-        render(<HoldingsTable holdings={mockHoldings} onSort={onSortMock} />);
+        render(<HoldingsTable holdings={mockHoldings} onSort={onSortMock} isVisible={mockIsVisible} />);
 
         fireEvent.click(screen.getByRole('button', { name: /Client Info/i }));
         expect(onSortMock).toHaveBeenCalledWith('client_name');

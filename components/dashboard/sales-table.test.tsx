@@ -18,6 +18,7 @@ vi.mock("@/components/ui/sort-arrow", () => ({
 }));
 
 describe('SalesTable', () => {
+    const mockIsVisible = vi.fn().mockReturnValue(true);
     const mockSales = [
         {
             trx_id: 'SALE1',
@@ -41,7 +42,7 @@ describe('SalesTable', () => {
     ];
 
     it('renders sales data correctly', async () => {
-        render(<SalesTable sales={mockSales} />);
+        render(<SalesTable sales={mockSales} isVisible={mockIsVisible} />);
 
         expect(screen.getByText('SALE1')).toBeDefined();
         expect(screen.getByText('Client A')).toBeDefined();
@@ -53,7 +54,7 @@ describe('SalesTable', () => {
 
     it('calls onSort when header is clicked', async () => {
         const mockOnSort = vi.fn();
-        render(<SalesTable sales={mockSales} onSort={mockOnSort} />);
+        render(<SalesTable sales={mockSales} onSort={mockOnSort} isVisible={mockIsVisible} />);
 
         fireEvent.click(await screen.findByRole('button', { name: /Date/i }));
         expect(mockOnSort).toHaveBeenCalledWith('sale_date');

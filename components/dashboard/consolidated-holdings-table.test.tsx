@@ -9,6 +9,7 @@ vi.mock("@/components/ui/ticker-cell", () => ({
 }));
 
 describe('ConsolidatedHoldingsTable', () => {
+    const mockIsVisible = vi.fn().mockReturnValue(true);
     const mockData = [
         {
             ticker: 'RELIANCE',
@@ -27,7 +28,7 @@ describe('ConsolidatedHoldingsTable', () => {
     ];
 
     it('renders consolidated data correctly', () => {
-        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} />);
+        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
 
         expect(screen.getByText('RELIANCE')).toBeDefined();
         expect(screen.getByText('Reliance Industries')).toBeDefined();
@@ -36,7 +37,7 @@ describe('ConsolidatedHoldingsTable', () => {
     });
 
     it('sorts data when header is clicked', async () => {
-        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} />);
+        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
 
         const tickerHeader = screen.getByText(/Ticker \/ ISIN/i);
         fireEvent.click(tickerHeader);
