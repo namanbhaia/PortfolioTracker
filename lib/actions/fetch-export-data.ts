@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * @file fetch-export-data.ts
- * @description Helpers for fetching and merging purchases and sales data from active and archived tables for export.
+ * @description Helpers for fetching and merging purchases and sales data from active table for export.
  */
 
 interface FetchFilters {
@@ -77,7 +77,7 @@ const buildQuery = (
 };
 
 /**
- * Fetches and merges data from both active and archived purchase/sale tables.
+ * Fetches and merges data from both active purchase/sale tables.
  * @param {SupabaseClient} supabase - The Supabase client instance.
  * @param {FetchFilters} filters - Filtering criteria.
  * @param {DateRange} range - Date range for the export.
@@ -89,19 +89,12 @@ export async function fetchExportData(
     range: DateRange
 ) {
     // 1. Determine Scope (Archive vs Active)
-    const needsArchive = !range.start || new Date(range.start) < new Date(FY_CUTOFF);
     const needsActive = !range.end || new Date(range.end) >= new Date(FY_CUTOFF);
 
     const queries = [];
 
-    // 2. Queue Queries
-    if (needsArchive) {
-        queries.push(buildQuery(supabase, 'purchases_archived', filters, range, false));
-        queries.push(buildQuery(supabase, 'sales_archived', filters, range, true));
-    } else {
-        queries.push(Promise.resolve({ data: [], error: null }));
-        queries.push(Promise.resolve({ data: [], error: null }));
-    }
+    queries.push(Promise.resolve({ data: [], error: null }));
+    queries.push(Promise.resolve({ data: [], error: null }));
 
     if (needsActive) {
         queries.push(buildQuery(supabase, 'purchases', filters, range, false));

@@ -24,7 +24,7 @@ export default function ExportPage() {
             const ticker = searchParams.get('ticker');
             const shareName = searchParams.get('share_name');
             const isLongTerm = searchParams.get('long_term');
-            
+
             const selectedClientIds = searchParams.get('client_ids')?.split(',') || [];
             const selectedClientNames = clients
                 .filter(c => selectedClientIds.includes(c.client_id))
@@ -44,7 +44,7 @@ export default function ExportPage() {
             }
 
             // --- 3. FORMAT & POST-PROCESS ---
-            
+
             // Format Purchases
             let formattedPurchases = purchases.map((p: any) => ({
                 date: p.date,
@@ -77,11 +77,11 @@ export default function ExportPage() {
                     qty: Number(s.sale_qty) || 0,
                     sale_value: (Number(s.rate) * Number(s.sale_qty)) || 0,
                     long_term: s.long_term ? 'Yes' : 'No',
-                    
+
                     // USE STORED COLUMNS
                     pl: s.profit_stored || 0,
                     adjusted_pl: s.adjusted_profit_stored || 0,
-                    
+
                     comments: s.comments,
                     purchase_trx_id: s.purchase_trx_id,
                     custom_id: s.custom_id,
@@ -99,8 +99,8 @@ export default function ExportPage() {
 
             // --- 5. EXPORT ---
             await exportToExcel(
-                formattedPurchases, 
-                formattedSales, 
+                formattedPurchases,
+                formattedSales,
                 `Portfolio_Export_${startDate || 'Start'}_to_${endDate || 'Now'}`
             );
 
@@ -116,7 +116,7 @@ export default function ExportPage() {
         <div className="p-8 max-w-5xl mx-auto space-y-8">
             <header>
                 <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <FileSpreadsheet className="text-emerald-600" /> 
+                    <FileSpreadsheet className="text-emerald-600" />
                     Data Export
                 </h1>
                 <p className="text-slate-500 mt-2">
@@ -126,14 +126,14 @@ export default function ExportPage() {
 
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                 <HoldingsFilters
-                    availableClients={clients || []} 
-                    showLongTermToggle={false} 
-                    showBalanceToggle={false} 
+                    availableClients={clients || []}
+                    showLongTermToggle={false}
+                    showBalanceToggle={false}
                 />
 
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                     <div className="text-xs text-slate-400 italic">
-                        * Merges data from both Active and Archived financial years automatically.
+                        * Merges data from Active financial years automatically.
                     </div>
                     <button
                         onClick={handleExport}
