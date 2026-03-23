@@ -1,14 +1,23 @@
 "use client"
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, Clock, ShieldAlert } from "lucide-react";
+import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, Clock, ShieldAlert, Send, MessageCircle, X, Maximize2, Minimize2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import ReactMarkdown from 'react-markdown';
 import { getStockSuggestions } from '@/lib/actions/suggestions/gemini_suggestions';
+import { sendRecommendationChat, ChatMessage } from '@/lib/actions/suggestions/gemini_chat';
 
 export default function GeminiTab({ holdings, transactions, clients }: { holdings: any[], transactions: any[], clients: any[] }) {
     const [loading, setLoading] = useState(false);
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
+
+    // Chat State
+    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+    const [chatInput, setChatInput] = useState("");
+    const [isChatting, setIsChatting] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const handleGenerate = async () => {
         setLoading(true);
@@ -28,6 +37,37 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
             setLoading(false);
         }
     }
+
+    const handleSendMessage = async () => {
+        if (!chatInput.trim() || isChatting) return;
+
+        const newUserMsg: ChatMessage = { role: "user", parts: [{ text: chatInput }] };
+        const updatedHistory = [...chatHistory, newUserMsg];
+        
+        setChatHistory(updatedHistory);
+        setChatInput("");
+        setIsChatting(true);
+        
+        try {
+            const result = await sendRecommendationChat(
+                chatHistory, 
+                newUserMsg.parts[0].text, 
+                transactions, 
+                holdings, 
+                suggestions
+            );
+
+            if (result.success && result.message) {
+                setChatHistory([...updatedHistory, { role: "model", parts: [{ text: result.message }] }]);
+            } else {
+                setChatHistory([...updatedHistory, { role: "model", parts: [{ text: "Sorry, I encountered an error: " + result.error }] }]);
+            }
+        } catch (e: any) {
+            setChatHistory([...updatedHistory, { role: "model", parts: [{ text: "Failed to connect to the advisor." }] }]);
+        } finally {
+            setIsChatting(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -137,6 +177,108 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                         )
                     })}
                 </div>
+            )}
+            
+            {suggestions.length > 0 && (
+                <>
+                    {/* Floating Chat Button */}
+                    {!isChatOpen && (
+                        <button
+                            onClick={() => setIsChatOpen(true)}
+                            className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white p-4 rounded-full shadow-xl hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95 flex items-center justify-center group"
+                        >
+                            <MessageCircle className="w-7 h-7" />
+                        </button>
+                    )}
+
+                    {/* Active Chat Window */}
+                    {isChatOpen && (
+                        <div className={`fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 transition-all ${isExpanded ? 'w-[800px] max-w-[90vw]' : 'w-full max-w-[400px]'}`}>
+                            <Card className={`bg-slate-50 border-slate-200 shadow-2xl overflow-hidden rounded-2xl flex flex-col transition-all duration-300 ${isExpanded ? 'h-[80vh]' : 'h-[500px]'}`}>
+                                <CardHeader className="py-3 px-4 border-b border-indigo-700 bg-indigo-600 text-white flex flex-row items-center justify-between shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            onClick={() => setIsExpanded(!isExpanded)}
+                                            className="text-indigo-200 hover:text-white transition-colors focus:outline-none"
+                                            title={isExpanded ? "Collapse" : "Expand"}
+                                        >
+                                            {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-indigo-200" />
+                                            <CardTitle className="text-md font-semibold m-0 p-0 text-white">
+                                                AI Advisor
+                                            </CardTitle>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setIsChatOpen(false)}
+                                        className="text-indigo-200 hover:text-white transition-colors ml-auto focus:outline-none"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </CardHeader>
+                                <CardContent className="p-0 flex flex-col flex-1 overflow-hidden">
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                                        {chatHistory.length === 0 ? (
+                                            <div className="h-full flex items-center justify-center text-slate-400 text-sm text-center px-4 italic">
+                                                Ask me anything about your current recommendations or portfolio structure!
+                                            </div>
+                                        ) : (
+                                            chatHistory.map((msg, idx) => (
+                                                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                                                        msg.role === 'user' 
+                                                            ? 'bg-indigo-600 text-white rounded-br-sm shadow-md' 
+                                                            : 'bg-white border border-slate-200 text-slate-700 rounded-bl-sm shadow-sm'
+                                                    }`}>
+                                                        <ReactMarkdown
+                                                            components={{
+                                                                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                                                                strong: ({node, ...props}) => <strong className="font-semibold text-inherit" {...props} />,
+                                                                ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
+                                                                ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />,
+                                                                li: ({node, ...props}) => <li className="" {...props} />,
+                                                                a: ({node, ...props}) => <a className="underline hover:text-indigo-400" {...props} />
+                                                            }}
+                                                        >
+                                                            {msg.parts[0].text}
+                                                        </ReactMarkdown>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        {isChatting && (
+                                            <div className="flex justify-start">
+                                                <div className="bg-white border border-slate-200 text-slate-500 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm shadow-sm flex items-center gap-2">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                                                    Thinking...
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-3 bg-white border-t border-slate-200 flex gap-2">
+                                        <input 
+                                            type="text"
+                                            placeholder="Type a message..." 
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                        />
+                                        <Button 
+                                            onClick={handleSendMessage} 
+                                            disabled={!chatInput.trim() || isChatting}
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 rounded-lg shadow-sm"
+                                        >
+                                            <Send className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
