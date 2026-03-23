@@ -57,7 +57,8 @@
     "shadcdn": "^0.0.8",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "yahoo-finance2": "^3.13.2"
+    "yahoo-finance2": "^3.13.2",
+    "recharts": "^2.15.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

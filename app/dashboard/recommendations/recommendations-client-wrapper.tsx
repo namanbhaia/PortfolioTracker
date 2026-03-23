@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings2, Sparkles, ReceiptText, LineChart, Users, Activity } from 'lucide-react';
+import { Settings2, Sparkles, ReceiptText, LineChart, Users, Activity, PieChart as PieIcon } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -18,6 +18,7 @@ import GeminiTab from '@/components/recommendations/gemini-tab';
 import TaxLossTab from '@/components/recommendations/tax-loss-tab';
 import StatsTab from '@/components/recommendations/stats-tab';
 import TechnicalTab from '@/components/recommendations/technical-tab';
+import GraphsTab from '@/components/recommendations/graphs-tab';
 
 export default function RecommendationsClientWrapper({
     initialHoldings,
@@ -38,7 +39,8 @@ export default function RecommendationsClientWrapper({
         ai: true,
         tax: true,
         stats: true,
-        technical: true
+        technical: true,
+        graphs: true
     });
 
     const [activeTab, setActiveTab] = useState("ai");
@@ -71,7 +73,7 @@ export default function RecommendationsClientWrapper({
         setEnabledTabs(prev => {
             const next = { ...prev, [tabKey]: !prev[tabKey] };
             // Don't allow all tabs to be disabled
-            if (!next.ai && !next.tax && !next.stats && !next.technical) {
+            if (!next.ai && !next.tax && !next.stats && !next.technical && !next.graphs) {
                 return prev;
             }
             return next;
@@ -156,6 +158,14 @@ export default function RecommendationsClientWrapper({
                                 <Activity className="mr-2 h-4 w-4 text-blue-500" />
                                 Technical Insights
                             </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                                checked={enabledTabs.graphs}
+                                onCheckedChange={() => handleTabToggle('graphs')}
+                                className="focus:bg-purple-50"
+                            >
+                                <PieIcon className="mr-2 h-4 w-4 text-purple-500" />
+                                Portfolio Graphs
+                            </DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -207,6 +217,17 @@ export default function RecommendationsClientWrapper({
                             </div>
                         </TabsTrigger>
                     )}
+                    {enabledTabs.graphs && (
+                        <TabsTrigger
+                            value="graphs"
+                            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=inactive]:hover:bg-slate-200 rounded-lg py-2.5 px-6 transition-all"
+                        >
+                            <div className="flex items-center gap-2">
+                                <PieIcon className="h-4 w-4" />
+                                <span>Graphs</span>
+                            </div>
+                        </TabsTrigger>
+                    )}
                 </TabsList>
 
                 {enabledTabs.ai && (
@@ -230,6 +251,12 @@ export default function RecommendationsClientWrapper({
                 {enabledTabs.technical && (
                     <TabsContent value="technical" className="focus-visible:outline-none focus-visible:ring-0 mt-0">
                         <TechnicalTab holdings={filteredHoldings} />
+                    </TabsContent>
+                )}
+
+                {enabledTabs.graphs && (
+                    <TabsContent value="graphs" className="focus-visible:outline-none focus-visible:ring-0 mt-0">
+                        <GraphsTab holdings={filteredHoldings} />
                     </TabsContent>
                 )}
             </Tabs>
