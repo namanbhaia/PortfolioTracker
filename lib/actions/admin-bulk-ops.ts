@@ -31,6 +31,23 @@ export async function bulkAssetUpdateAction(assetsToUpsert: Record<string, unkno
 }
 
 /**
+ * Triggers the migrate_bse_to_nse SQL function.
+ */
+export async function runBseToNseMigrationAction() {
+    const supabase = await createClient();
+
+    const { error } = await supabase.rpc('migrate_bse_to_nse');
+
+    if (error) {
+        console.error("BSE to NSE Migration Error:", error);
+        throw new Error(error.message);
+    }
+
+    revalidatePath('/dashboard');
+    return { success: true };
+}
+
+/**
  * Bulk processes purchase and sale records using the atomic_ledger_update function.
  * @param {Object} payload - The update payload containing insertions, updates, and deletions.
  * @returns {Promise<{success: boolean}>}

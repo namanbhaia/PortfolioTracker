@@ -5,6 +5,7 @@ import { Wrench, ShieldAlert } from 'lucide-react';
 import BulkAssetUpdate from '@/components/admin/bulk-asset-update';
 import BulkPurchaseAdd from '@/components/admin/bulk-purchase-add';
 import BulkSalesAdd from '@/components/admin/bulk-sales-add';
+import BseToNseMigration from '@/components/admin/bse-to-nse-migration';
 import { useUser } from '@/components/helper/user-context';
 
 export default function AdminPage() {
@@ -37,7 +38,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-12 animate-in fade-in duration-500">
+        <div className="p-8 max-w-7xl mx-auto space-y-12 animate-in fade-in duration-500">
             <header className="flex items-center justify-between border-b border-slate-200 pb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
@@ -54,22 +55,26 @@ export default function AdminPage() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                 {/* Column 1: Asset Management */}
                 <div className="space-y-8">
                     <section>
                         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Asset Management</h2>
-                        <BulkAssetUpdate />
+                        <div className="space-y-6">
+                            <BulkAssetUpdate />
+                            <BseToNseMigration />
+                        </div>
                     </section>
                 </div>
 
-                {/* Column 2: Transaction Management */}
+                {/* Column 2: Ledger Management */}
                 <div className="space-y-8">
                     <section>
                         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Ledger Management</h2>
-                        <BulkPurchaseAdd />
-                        <div className="mt-8" />
-                        <BulkSalesAdd />
+                        <div className="space-y-6">
+                            <BulkPurchaseAdd />
+                            <BulkSalesAdd />
+                        </div>
                     </section>
                 </div>
             </div>
