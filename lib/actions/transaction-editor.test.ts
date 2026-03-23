@@ -324,4 +324,77 @@ describe('TransactionEditor', () => {
         await expect(editor.editSaleQty('SALE-1', 50, 'TestClient', 'RELIANCE', '2023-02-01'))
             .rejects.toThrow(/Insufficient balance/);
     });
+
+    it('Scenario: 3 Purchases -> 1 Sale (30 units) -> Edit Sale Qty to 16', async () => {
+        const clientName = 'TestClient';
+        const ticker = 'RELIANCE';
+        const saleId = 'SALE-1';
+
+        // 1. Initial State Mocks
+        const p1 = { trx_id: 'p1', date: '2023-01-01', rate: 100, purchase_qty: 10, balance_qty: 0, sale_ids: ['s1-1'], ticker, created_at: '2023-01-01T10:00:00Z' };
+        const p2 = { trx_id: 'p2', date: '2023-01-05', rate: 110, purchase_qty: 10, balance_qty: 0, sale_ids: ['s1-2'], ticker, created_at: '2023-01-05T10:00:00Z' };
+        const p3 = { trx_id: 'p3', date: '2023-01-10', rate: 120, purchase_qty: 10, balance_qty: 0, sale_ids: ['s1-3'], ticker, created_at: '2023-01-10T10:00:00Z' };
+
+        const s1_1 = { trx_id: 's1-1', custom_id: saleId, date: '2023-02-01', sale_qty: 10, rate: 150, purchase_trx_id: 'p1', purchases: p1 };
+        const s1_2 = { trx_id: 's1-2', custom_id: saleId, date: '2023-02-01', sale_qty: 10, rate: 150, purchase_trx_id: 'p2', purchases: p2 };
+        const s1_3 = { trx_id: 's1-3', custom_id: saleId, date: '2023-02-01', sale_qty: 10, rate: 150, purchase_trx_id: 'p3', purchases: p3 };
+
+        // Mock repo calls for editSaleQty -> reprocessLedger
+        vi.mocked(repo.fetchSingleSaleByCustomId).mockResolvedValue(s1_1 as any);
+        vi.mocked(repo.fetchSalesByDate).mockResolvedValue([s1_1, s1_2, s1_3] as any);
+        vi.mocked(repo.fetchPurchasesByDate).mockResolvedValue([p1, p2, p3] as any);
+        vi.mocked(repo.getGrandfatheredRate).mockResolvedValue(null);
+
+        // 2. Perform Edit
+        await editor.editSaleQty(saleId, 16, clientName, ticker, '2023-02-01');
+
+        // 3. Verify Results
+        expect(repo.atomicLedgerUpdate).toHaveBeenCalled();
+        const payload = vi.mocked(repo.atomicLedgerUpdate).mock.calls[0][0];
+
+        // Verify correct sales are deleted
+        expect(payload.sales_to_delete).toContain('s1-1');
+        expect(payload.sales_to_delete).toContain('s1-2');
+        expect(payload.sales_to_delete).toContain('s1-3');
+        expect(payload.sales_to_delete).toHaveLength(3);
+
+        // Verify correct sales are inserted
+        expect(payload.sales_to_insert).toHaveLength(2);
+        const split1 = payload.sales_to_insert.find((s: any) => s.purchase_trx_id === 'p1');
+        const split2 = payload.sales_to_insert.find((s: any) => s.purchase_trx_id === 'p2');
+        
+        expect(split1.sale_qty).toBe(10);
+        expect(split2.sale_qty).toBe(6);
+
+        // Verify purchase updates
+        const p1Update = payload.purchases_to_update.find((p: any) => p.trx_id === 'p1');
+        const p2Update = payload.purchases_to_update.find((p: any) => p.trx_id === 'p2');
+        const p3Update = payload.purchases_to_update.find((p: any) => p.trx_id === 'p3');
+
+        expect(p1Update.balance_qty).toBe(0);
+        expect(p2Update.balance_qty).toBe(4);
+        expect(p3Update.balance_qty).toBe(10); // Restored but not consumed
+    });
+
+    it('Scenario: Edit Sale Rate - Multibatch recalculation', async () => {
+        const saleId = 'SALE-1';
+
+        // 1. Initial State Mocks
+        const p1 = { trx_id: 'p1', date: '2023-01-01', rate: 100, ticker: 'RELIANCE' };
+        const s1_1 = { trx_id: 's1-1', custom_id: saleId, date: '2023-02-01', sale_qty: 10, rate: 150, purchase_trx_id: 'p1', purchases: p1 };
+
+        vi.mocked(repo.fetchSalesByCustomIdWithPurchase).mockResolvedValue([s1_1] as any);
+        vi.mocked(repo.getGrandfatheredRate).mockResolvedValue(null);
+
+        // 2. Perform Edit
+        await editor.editSaleRate(saleId, 160);
+
+        // 3. Verify Results
+        expect(repo.atomicLedgerUpdate).toHaveBeenCalled();
+        const payload = vi.mocked(repo.atomicLedgerUpdate).mock.calls[0][0];
+
+        expect(payload.sales_to_update).toHaveLength(1);
+        expect(payload.sales_to_update[0].rate).toBe(160);
+        expect(payload.sales_to_update[0].profit_stored).toBe(600); // (160 - 100) * 10
+    });
 });
