@@ -22,4 +22,6 @@ export interface Suggestion {
     confidence: number;
     reasoning: string;
     targetPrice?: number;
+    timeframe?: string;
+    riskLevel?: 'Low' | 'Medium' | 'High';
 }

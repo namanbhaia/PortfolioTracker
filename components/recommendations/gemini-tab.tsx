@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Sparkles, Loader2, TrendingUp, TrendingDown, Minus, Clock, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getStockSuggestions } from '@/lib/actions/suggestions/gemini_suggestions';
 
@@ -101,6 +101,21 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                                 <CardContent className="pl-6">
                                     <div className="text-sm text-slate-600 leading-relaxed mb-4">
                                         {suggestion.reasoning}
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {suggestion.timeframe && (
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                                                <Clock className="w-3 h-3" />
+                                                <span>{suggestion.timeframe}</span>
+                                            </div>
+                                        )}
+                                        {suggestion.riskLevel && (
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                                                <ShieldAlert className="w-3 h-3" />
+                                                <span>{suggestion.riskLevel} Risk</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-1.5 pt-4 border-t border-slate-100">
