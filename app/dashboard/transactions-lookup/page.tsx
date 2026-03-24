@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle, Info } from 'lucide-react';
 import { Input } from '@/components/ui/transaction-input';
@@ -47,6 +47,23 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         const result = await searchTransactions(formData);
         if (result.error) searchError = result.error;
         else { purchases = result.purchases || []; sales = result.sales || []; }
+    }
+
+    // 3. Calculate total quantities grouped by custom_id to pass down to Edit modales
+    const customIdTotals: Record<string, number> = {};
+    if (sales.length > 0) {
+        sales.forEach(row => {
+            if (row.custom_id) {
+                customIdTotals[row.custom_id] = (customIdTotals[row.custom_id] || 0) + Number(row.sale_qty);
+            }
+        });
+    }
+    if (purchases.length > 0) {
+        purchases.forEach(row => {
+            if (row.custom_id) {
+                customIdTotals[row.custom_id] = (customIdTotals[row.custom_id] || 0) + Number(row.purchase_qty);
+            }
+        });
     }
 
     return (
@@ -151,7 +168,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <CommentCell comment={row.comments} />
                                             </TableCell>
                                             <TableCell className="px-2">
-                                                <EditTransactionSimple row={row} type="purchase" />
+                                                <EditTransactionSimple row={row} type="purchase" totalQty={row.custom_id ? customIdTotals[row.custom_id] : undefined} />
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -237,7 +254,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                     <CommentCell comment={row.comments} />
                                                 </TableCell>
                                                 <TableCell className="px-2">
-                                                    <EditTransactionSimple row={row} type="sale" />
+                                                    <EditTransactionSimple row={row} type="sale" totalQty={row.custom_id ? customIdTotals[row.custom_id] : undefined} />
                                                 </TableCell>
                                             </TableRow>
                                         );

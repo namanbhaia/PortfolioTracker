@@ -16,7 +16,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
  * @param {any} props.row - The transaction data object.
  * @param {'purchase' | 'sale'} props.type - The type of transaction being edited.
  */
-export default function EditTransactionSimple({ row, type }: { row: any, type: 'purchase' | 'sale' }) {
+export default function EditTransactionSimple({ row, type, totalQty }: { row: any, type: 'purchase' | 'sale', totalQty?: number }) {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [loading, setLoading] = useState(false);
 
@@ -27,7 +27,7 @@ export default function EditTransactionSimple({ row, type }: { row: any, type: '
 
     // Standardized fields based on your DB columns
     const initialDate = row.date || row.sale_date;
-    const initialQty = type === 'purchase' ? row.purchase_qty : row.sale_qty;
+    const initialQty = totalQty !== undefined ? totalQty : (type === 'purchase' ? row.purchase_qty : row.sale_qty);
     const initialRate = row.rate || row.sale_rate;
 
     // State for live calculation
