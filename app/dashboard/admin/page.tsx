@@ -6,6 +6,7 @@ import BulkAssetUpdate from '@/components/admin/bulk-asset-update';
 import BulkPurchaseAdd from '@/components/admin/bulk-purchase-add';
 import BulkSalesAdd from '@/components/admin/bulk-sales-add';
 import BseToNseMigration from '@/components/admin/bse-to-nse-migration';
+import AssetsExport from '@/components/admin/assets-export';
 import { useUser } from '@/components/helper/user-context';
 
 export default function AdminPage() {
@@ -63,6 +64,7 @@ export default function AdminPage() {
                         <div className="space-y-6">
                             <BulkAssetUpdate />
                             <BseToNseMigration />
+                            <AssetsExport />
                         </div>
                     </section>
                 </div>
