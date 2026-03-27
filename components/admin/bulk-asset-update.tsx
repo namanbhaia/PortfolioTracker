@@ -60,7 +60,7 @@ export default function BulkAssetUpdate() {
     }
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors">
+        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors min-h-[250px] flex flex-col justify-between">
             <div className="flex items-center gap-4 mb-4">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg">
                     <UploadCloud size={24} />
@@ -71,32 +71,34 @@ export default function BulkAssetUpdate() {
                 </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
-                <input
-                    type="file"
-                    accept=".csv"
-                    disabled={loading}
-                    onChange={handleFileChange}
-                    className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-700 dark:file:text-indigo-400 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50 cursor-pointer transition-all"
-                />
-                <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Required: SYMBOL, ISIN NUMBER, NAME OF COMPANY (BSE/NSE Format)</p>
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
+                    <input
+                        type="file"
+                        accept=".csv"
+                        disabled={loading}
+                        onChange={handleFileChange}
+                        className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-700 dark:file:text-indigo-400 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50 cursor-pointer transition-all"
+                    />
+                    <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Required: SYMBOL, ISIN NUMBER, NAME OF COMPANY (BSE/NSE Format)</p>
+                </div>
+
+                {loading && <p className="text-xs text-indigo-600 dark:text-indigo-400 animate-pulse text-center">Processing updates...</p>}
+
+                {successCount !== null && (
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
+                        <CheckCircle2 size={18} />
+                        <span>Successfully updated {successCount} assets.</span>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 rounded-lg flex items-center gap-3 text-rose-700 dark:text-rose-400 text-sm transition-colors">
+                        <AlertCircle size={18} />
+                        <span>Error: {error}</span>
+                    </div>
+                )}
             </div>
-
-            {loading && <p className="mt-4 text-xs text-indigo-600 dark:text-indigo-400 animate-pulse text-center">Processing updates...</p>}
-
-            {successCount !== null && (
-                <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
-                    <CheckCircle2 size={18} />
-                    <span>Successfully updated {successCount} assets.</span>
-                </div>
-            )}
-
-            {error && (
-                <div className="mt-4 p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 rounded-lg flex items-center gap-3 text-rose-700 dark:text-rose-400 text-sm transition-colors">
-                    <AlertCircle size={18} />
-                    <span>Error: {error}</span>
-                </div>
-            )}
         </div>
     );
 }

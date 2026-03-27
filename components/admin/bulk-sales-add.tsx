@@ -177,8 +177,8 @@ export default function BulkSalesAdd() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                <div className="flex items-center gap-4 mb-4">
+        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors min-h-[250px] flex flex-col justify-between">
+            <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg">
                         <UploadCloud size={24} />
                     </div>
@@ -188,6 +188,7 @@ export default function BulkSalesAdd() {
                     </div>
                 </div>
 
+            <div className="flex flex-col gap-4">
                 <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
                     <input
                         type="file"
@@ -200,7 +201,7 @@ export default function BulkSalesAdd() {
                 </div>
 
                 {loading && (
-                    <div className="mt-4 animate-in fade-in">
+                    <div className="animate-in fade-in">
                         <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                             <span>{statusText}</span>
                             <span>{progress}%</span>
@@ -212,11 +213,12 @@ export default function BulkSalesAdd() {
                 )}
 
                 {successCount !== null && (
-                    <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
                         <CheckCircle2 size={18} />
                         <span>Successfully processed {successCount} sales.</span>
                     </div>
                 )}
+            </div>
             </div>
 
             {shortfalls.length > 0 && (
