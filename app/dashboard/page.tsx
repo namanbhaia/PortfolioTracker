@@ -28,9 +28,9 @@ export default async function DashboardPage() {
 
 	if (!profile || !profile.client_ids || profile.client_ids.length === 0) {
 		return (
-			<div className="p-10 text-center bg-white rounded-2xl border border-dashed border-slate-300">
-				<h2 className="text-xl font-bold text-slate-700">No Linked Accounts</h2>
-				<p className="text-slate-500 text-sm">Please link family clients to your profile to view data.</p>
+			<div className="p-10 text-center bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 transition-colors">
+				<h2 className="text-xl font-bold text-slate-700 dark:text-white transition-colors">No Linked Accounts</h2>
+				<p className="text-slate-500 dark:text-slate-400 text-sm transition-colors">Please link family clients to your profile to view data.</p>
 			</div>
 		);
 	}

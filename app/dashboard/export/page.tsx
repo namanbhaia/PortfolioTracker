@@ -115,30 +115,30 @@ export default function ExportPage() {
     return (
         <div className="p-8 max-w-5xl mx-auto space-y-8">
             <header>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <FileSpreadsheet className="text-emerald-600" />
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+                    <FileSpreadsheet className="text-emerald-600 dark:text-emerald-500" />
                     Data Export
                 </h1>
-                <p className="text-slate-500 mt-2">
+                <p className="text-slate-500 dark:text-slate-400 mt-2">
                     Download combined historical and active ledgers for analysis.
                 </p>
             </header>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+            <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
                 <HoldingsFilters
                     availableClients={clients || []}
                     showLongTermToggle={false}
                     showBalanceToggle={false}
                 />
 
-                <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                    <div className="text-xs text-slate-400 italic">
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                    <div className="text-xs text-slate-400 dark:text-slate-500 italic">
                         * Merges data from Active financial years automatically.
                     </div>
                     <button
                         onClick={handleExport}
                         disabled={loading}
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-emerald-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-emerald-200 dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {loading ? <Loader2 className="animate-spin" /> : <Download size={20} />}
                         {loading ? 'Generating File...' : 'Download Excel Report'}

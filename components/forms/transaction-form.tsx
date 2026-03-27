@@ -12,14 +12,14 @@ export function TransactionForm() {
     const [activeTab, setActiveTab] = useState<'purchase' | 'sale'>('purchase');
 
     return (
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden max-w-2xl mx-auto transition-colors">
             {/* TAB NAVIGATION */}
-            <div className="flex border-b border-slate-200 bg-slate-50/50">
+            <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 transition-colors">
                 <button
                     onClick={() => setActiveTab('purchase')}
                     className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold transition-all ${activeTab === 'purchase'
-                            ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
-                            : "text-slate-500 hover:text-slate-700"
+                            ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                         }`}
                 >
                     <ShoppingCart size={18} />
@@ -28,8 +28,8 @@ export function TransactionForm() {
                 <button
                     onClick={() => setActiveTab('sale')}
                     className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold transition-all ${activeTab === 'sale'
-                            ? "bg-white text-rose-600 border-b-2 border-rose-600"
-                            : "text-slate-500 hover:text-slate-700"
+                            ? "bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 border-b-2 border-rose-600 dark:border-rose-400"
+                            : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                         }`}
                 >
                     <Tag size={18} />
@@ -45,7 +45,7 @@ export function TransactionForm() {
                 )}
 
                 {success && (
-                    <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
+                    <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
                         <CheckCircle2 size={20} /> Transaction Recorded Successfully!
                     </div>
                 )}

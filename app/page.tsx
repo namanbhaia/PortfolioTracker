@@ -50,7 +50,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full selection:bg-indigo-100 font-sans text-slate-900 overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative min-h-screen w-full selection:bg-indigo-100 dark:selection:bg-indigo-900 font-sans text-slate-900 dark:text-white transition-colors overflow-hidden flex flex-col items-center justify-center">
       <Background />
 
       <motion.main
@@ -62,7 +62,7 @@ export default function LandingPage() {
         {/* Logo Section */}
         <motion.div variants={itemVariants} className="mb-8 md:mb-12 flex flex-col items-center">
           <div className="relative group">
-            <div className="absolute -inset-4 rounded-full blur-xl transition-all duration-500 bg-indigo-50/50" />
+            <div className="absolute -inset-4 rounded-full blur-xl transition-all duration-500 bg-indigo-50/50 dark:bg-indigo-900/20" />
             <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
               <img
                 src="/images/logo.png"
@@ -77,7 +77,7 @@ export default function LandingPage() {
         {/* Title Section */}
         <motion.h1
           variants={titleVariants}
-          className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 text-center mb-12 md:mb-16 leading-[1.1] tracking-tight"
+          className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 dark:text-white text-center mb-12 md:mb-16 leading-[1.1] tracking-tight transition-colors"
         >
           Portfolio Tracker
         </motion.h1>
@@ -89,14 +89,14 @@ export default function LandingPage() {
         >
           <Link
             href="/login"
-            className="group px-10 py-4 text-sm tracking-[0.15em] font-bold transition-all duration-300 rounded-xl text-white flex items-center justify-center gap-3 uppercase w-full sm:w-[220px] bg-indigo-600 hover:bg-slate-900 hover:shadow-xl hover:-translate-y-1 active:scale-95"
+            className="group px-10 py-4 text-sm tracking-[0.15em] font-bold transition-all duration-300 rounded-xl text-white flex items-center justify-center gap-3 uppercase w-full sm:w-[220px] bg-indigo-600 hover:bg-slate-900 dark:hover:bg-white dark:hover:text-slate-900 hover:shadow-xl hover:-translate-y-1 active:scale-95"
           >
             Sign In
             <LogIn size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
           <Link
             href="/signup"
-            className="group px-10 py-4 text-sm tracking-[0.15em] font-bold transition-all duration-300 rounded-xl text-indigo-600 flex items-center justify-center gap-3 uppercase w-full sm:w-[220px] bg-white border border-slate-200 hover:border-indigo-600 hover:bg-indigo-50/50 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm"
+            className="group px-10 py-4 text-sm tracking-[0.15em] font-bold transition-all duration-300 rounded-xl text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-3 uppercase w-full sm:w-[220px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-600 dark:hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 hover:shadow-lg hover:-translate-y-1 active:scale-95 shadow-sm"
           >
             Sign Up
             <UserPlus size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -111,10 +111,10 @@ export default function LandingPage() {
         transition={{ delay: 1.5, duration: 1 }}
         className="fixed bottom-8 md:bottom-12 left-0 w-full flex flex-col items-center pointer-events-none"
       >
-        <span className="text-[10px] tracking-[0.6em] uppercase mb-4 font-bold text-slate-400">
+        <span className="text-[10px] tracking-[0.6em] uppercase mb-4 font-bold text-slate-400 dark:text-slate-500 transition-colors">
           Personal Wealth Management
         </span>
-        <div className="w-px h-12 md:h-16 bg-slate-200" />
+        <div className="w-px h-12 md:h-16 bg-slate-200 dark:bg-slate-800 transition-colors" />
       </motion.div>
 
       {/* Corner Labels (Visible on Desktop) */}
@@ -124,7 +124,7 @@ export default function LandingPage() {
         transition={{ delay: 1, duration: 1 }}
         className="fixed top-12 left-12 pointer-events-none hidden lg:block"
       >
-        <div className="text-[10px] tracking-[0.4em] uppercase font-bold text-slate-400">
+        <div className="text-[10px] tracking-[0.4em] uppercase font-bold text-slate-400 dark:text-slate-500 transition-colors">
           Established 2026
         </div>
       </motion.div>
@@ -135,7 +135,7 @@ export default function LandingPage() {
         transition={{ delay: 1.2, duration: 1 }}
         className="fixed top-12 right-12 pointer-events-none hidden lg:block"
       >
-        <div className="text-[10px] tracking-[0.4em] uppercase font-bold text-slate-400">
+        <div className="text-[10px] tracking-[0.4em] uppercase font-bold text-slate-400 dark:text-slate-500 transition-colors">
           Private Access
         </div>
       </motion.div>

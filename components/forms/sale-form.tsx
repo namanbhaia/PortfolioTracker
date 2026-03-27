@@ -238,8 +238,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
     return (
         <form onSubmit={handleSubmit(onSaleSubmit)} className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
-                <select {...register("client_name", { required: true })} required className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Select Client</label>
+                <select {...register("client_name", { required: true })} required className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg dark:text-white transition-colors">
                     <option value="">Select Client</option>
                     {clients.map(c => <option key={c.client_id} value={c.client_name}>{c.client_name}</option>)}
                 </select>
@@ -247,23 +247,23 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                    <label htmlFor="dp_id" className="text-xs font-bold uppercase text-slate-500">DP ID</label>
+                    <label htmlFor="dp_id" className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">DP ID</label>
                     <input
                         id="dp_id"
                         {...register("dp_id")}
                         placeholder="DP ID"
-                        className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed"
+                        className="w-full p-2.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:placeholder-slate-600 cursor-not-allowed transition-colors"
                         readOnly
                         data-testid="dp-id-input"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label htmlFor="trading_id" className="text-xs font-bold uppercase text-slate-500">Trading ID</label>
+                    <label htmlFor="trading_id" className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Trading ID</label>
                     <input
                         id="trading_id"
                         {...register("trading_id")}
                         placeholder="Trading ID"
-                        className="w-full p-2.5 bg-slate-100 border rounded-lg text-slate-600 cursor-not-allowed"
+                        className="w-full p-2.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:placeholder-slate-600 cursor-not-allowed transition-colors"
                         readOnly
                         data-testid="trading-id-input"
                     />
@@ -271,10 +271,10 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             </div>
 
             <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">
+                <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                     Link to Purchase Batch (Lot)
                 </label>
-                <select {...register("purchase_trx_id", { required: true })} required className="w-full p-2.5 bg-slate-50 border rounded-lg">
+                <select {...register("purchase_trx_id", { required: true })} required className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg dark:text-white transition-colors">
                     <option value="">Select share to sell</option>
                     {openPurchases.map((lot: any) => {
                         const pledgedQty = pledgedItems.find(p => p.ticker === lot.ticker)?.pledged_qty || 0;
@@ -292,19 +292,19 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Sale Date</label>
+                    <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Sale Date</label>
                     <input
                         type="date"
                         autoComplete="off"
                         required
                         defaultValue={getTodayDate()}
                         {...register("sale_date", { required: true })}
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
+                        className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 dark:text-white transition-all"
                     />
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Sale Rate (₹)</label>
+                    <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Sale Rate (₹)</label>
                     <input
                         type="number"
                         step="0.01"
@@ -312,19 +312,19 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         required
                         {...register("sale_rate", { required: true, min: 0.01 })}
                         placeholder="0.00"
-                        className="w-full p-2.5 bg-slate-50 border rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 transition-all"
+                        className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 dark:text-white dark:placeholder-slate-500 transition-all"
                     />
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500">Sale Quantity</label>
+                    <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Sale Quantity</label>
                     <input
                         type="number"
                         autoComplete="off"
                         required
                         {...register("sale_qty", { required: true, min: 1 })}
                         placeholder="0"
-                        className={`w-full p-2.5 bg-slate-50 border rounded-lg outline-none transition-all ${isInvalidQty
+                        className={`w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none transition-all dark:text-white dark:placeholder-slate-500 ${isInvalidQty
                             ? "border-rose-500 ring-2 ring-rose-500/20"
                             : "focus:ring-2 ring-rose-500/20 focus:border-rose-500"
                             }`}
@@ -343,16 +343,16 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             </div>
 
             <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-500">Notes</label>
+                <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Notes</label>
                 <textarea
                     {...register("comments")}
                     placeholder="Strategy, conviction, etc..."
-                    className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg h-24 outline-none focus:ring-2 ring-indigo-500 dark:text-white dark:placeholder-slate-500 transition-colors"
                 />
             </div>
 
             {formError && (
-                <div className="p-3 text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                <div className="p-3 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/30 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 transition-colors">
                     <AlertCircle className="w-5 h-5 flex-shrink-0" />
                     <p>{formError}</p>
                 </div>
@@ -363,14 +363,14 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 disabled={isInvalidQty}
                 label={isInvalidQty ? "Invalid Quantity" : "Confirm Sale"}
                 classname={`w-full py-3 rounded-xl font-bold transition-all shadow-lg ${isInvalidQty
-                    ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
-                    : "bg-rose-600 text-white hover:bg-rose-700 shadow-rose-200"
+                    ? "bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-600 cursor-not-allowed shadow-none"
+                    : "bg-rose-600 dark:bg-rose-500 text-white hover:bg-rose-700 dark:hover:bg-rose-600 shadow-rose-200 dark:shadow-rose-900/20"
                     }`}
                 loadingText='Recording Sale'
             />
 
             {pledgeWarning && (
-                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl relative animate-in fade-in zoom-in duration-300">
+                <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-400 rounded-xl relative animate-in fade-in zoom-in duration-300 transition-colors">
                     <div className="flex items-start gap-3 pr-8">
                         <div className="mt-0.5">
                             <svg className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">

@@ -29,7 +29,7 @@ const renderActiveShape = (props: any) => {
 
     return (
         <g>
-            <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="#64748b" className="text-xs font-medium uppercase tracking-wider">{payload.name}</text>
+            <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="currentColor" className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">{payload.name}</text>
             <text x={cx} y={cy} dy={25} textAnchor="middle" fill={fill} className="font-black text-2xl">
                 ₹{(value / 100000).toFixed(1)}L
             </text>
@@ -153,12 +153,12 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
 
     if (activeHoldings.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-24 text-center bg-slate-50/50 rounded-3xl border-2 border-slate-200 border-dashed backdrop-blur-sm">
-                <div className="p-6 bg-white rounded-full shadow-lg mb-6">
-                    <PieIcon className="w-12 h-12 text-slate-300" />
+            <div className="flex flex-col items-center justify-center py-24 text-center bg-slate-50/50 dark:bg-slate-800/50 rounded-3xl border-2 border-slate-200 dark:border-slate-700 border-dashed backdrop-blur-sm transition-colors">
+                <div className="p-6 bg-white dark:bg-slate-900 rounded-full shadow-lg mb-6 transition-colors">
+                    <PieIcon className="w-12 h-12 text-slate-300 dark:text-slate-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 tracking-tight">No Active Holdings Portfolio</h3>
-                <p className="text-slate-500 max-w-sm mt-3 leading-relaxed">Add transactions to see interactive risk maps and diversification metrics.</p>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight transition-colors">No Active Holdings Portfolio</h3>
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm mt-3 leading-relaxed transition-colors">Add transactions to see interactive risk maps and diversification metrics.</p>
             </div>
         );
     }
@@ -181,21 +181,21 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-white border-slate-200 shadow-xl border-l-4 border-l-emerald-500">
+                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl border-l-4 border-l-emerald-500 transition-colors">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-slate-500 font-medium">Average Beta</CardDescription>
-                        <CardTitle className="text-3xl font-bold text-slate-900">{avgBeta.toFixed(2)}</CardTitle>
+                        <CardDescription className="text-slate-500 dark:text-slate-400 font-medium transition-colors">Average Beta</CardDescription>
+                        <CardTitle className="text-3xl font-bold text-slate-900 dark:text-white transition-colors">{avgBeta.toFixed(2)}</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm text-slate-600">
+                    <CardContent className="text-sm text-slate-600 dark:text-slate-400 transition-colors">
                         {avgBeta > 1.2 ? 'High Market Sensitivity' : 'Moderate Volatility'}
                     </CardContent>
                 </Card>
-                <Card className="bg-white border-slate-200 shadow-xl border-l-4 border-l-amber-500">
+                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl border-l-4 border-l-amber-500 transition-colors">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-slate-500 font-medium">Avg Portfolio P/E</CardDescription>
-                        <CardTitle className="text-3xl font-bold text-slate-900">{avgPE.toFixed(1)}x</CardTitle>
+                        <CardDescription className="text-slate-500 dark:text-slate-400 font-medium transition-colors">Avg Portfolio P/E</CardDescription>
+                        <CardTitle className="text-3xl font-bold text-slate-900 dark:text-white transition-colors">{avgPE.toFixed(1)}x</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm text-slate-600">
+                    <CardContent className="text-sm text-slate-600 dark:text-slate-400 transition-colors">
                         Top valuation metrics for current holdings.
                     </CardContent>
                 </Card>
@@ -203,15 +203,15 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* 1. Portfolio Composition with Enhanced Active Shape */}
-                <Card className="bg-white border-slate-200 shadow-2xl overflow-hidden rounded-3xl group">
-                    <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
+                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden rounded-3xl group transition-colors">
+                    <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 p-6 transition-colors">
                         <div className="flex justify-between items-center">
                             <div>
-                                <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900">
+                                <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white transition-colors">
                                     <PieIcon className="w-5 h-5 text-indigo-600" />
                                     Composition
                                 </CardTitle>
-                                <CardDescription>Focus on your core positions.</CardDescription>
+                                <CardDescription className="dark:text-slate-400 transition-colors">Focus on your core positions.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
@@ -253,13 +253,13 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
                 </Card>
 
                 {/* 2. Market Cap Distribution with Gradients */}
-                <Card className="bg-white border-slate-200 shadow-2xl overflow-hidden rounded-3xl">
-                    <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
-                        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900">
+                <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden rounded-3xl transition-colors">
+                    <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 p-6 transition-colors">
+                        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white transition-colors">
                             <TrendingUp className="w-5 h-5 text-emerald-600" />
                             Size Distribution
                         </CardTitle>
-                        <CardDescription>Large vs Mid vs Small Cap exposure.</CardDescription>
+                        <CardDescription className="dark:text-slate-400 transition-colors">Large vs Mid vs Small Cap exposure.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[400px] p-6">
                         <ResponsiveContainer width="100%" height="100%">
@@ -286,19 +286,19 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
 
                 {/* 3. Risk vs Return with Reference Line */}
                 <Card className="bg-white border-slate-200 shadow-2xl overflow-hidden rounded-3xl lg:col-span-1">
-                    <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
-                        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900">
+                    <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 p-6 transition-colors">
+                        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white transition-colors">
                             <ScatterIcon className="w-5 h-5 text-rose-600" />
                             Sensitivity Map
                         </CardTitle>
-                        <CardDescription>Where are you being rewarded for risk?</CardDescription>
+                        <CardDescription className="dark:text-slate-400 transition-colors">Where are you being rewarded for risk?</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[450px] p-6">
                         <ResponsiveContainer width="100%" height="100%">
                             <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis type="number" dataKey="beta" name="Beta" domain={[0.2, 'auto']} tick={{fill: '#64748b'}} />
-                                <YAxis type="number" dataKey="pl_percent" name="Profit" unit="%" tick={{fill: '#64748b'}} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-slate-800 transition-colors" />
+                                <XAxis type="number" dataKey="beta" name="Beta" domain={[0.2, 'auto']} tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
+                                <YAxis type="number" dataKey="pl_percent" name="Profit" unit="%" tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
                                 <ZAxis type="number" dataKey="size" range={[60, 600]} />
                                 <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                                 <ReferenceLine x={avgBeta} stroke="#6366f1" strokeDasharray="5 5" label={{ value: 'Avg Beta', position: 'top', fill: '#6366f1', fontSize: 12 }} />
@@ -321,19 +321,19 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
 
                 {/* 4. Valuation vs Yield with Reference Lines */}
                 <Card className="bg-white border-slate-200 shadow-2xl overflow-hidden rounded-3xl lg:col-span-1">
-                    <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
-                        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900">
+                    <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 p-6 transition-colors">
+                        <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white transition-colors">
                             <ShieldAlert className="w-5 h-5 text-amber-600" />
                             Value vs. Income
                         </CardTitle>
-                        <CardDescription>Spotting the high-yield, low-PE bargains.</CardDescription>
+                        <CardDescription className="dark:text-slate-400 transition-colors">Spotting the high-yield, low-PE bargains.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[450px] p-6">
                         <ResponsiveContainer width="100%" height="100%">
                             <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis type="number" dataKey="pe" name="P/E" domain={[0, 'auto']} tick={{fill: '#64748b'}} />
-                                <YAxis type="number" dataKey="yield" name="Yield" unit="%" tick={{fill: '#64748b'}} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-slate-800 transition-colors" />
+                                <XAxis type="number" dataKey="pe" name="P/E" domain={[0, 'auto']} tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
+                                <YAxis type="number" dataKey="yield" name="Yield" unit="%" tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
                                 <ZAxis type="number" dataKey="size" range={[60, 600]} />
                                 <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                                 <ReferenceLine x={avgPE} stroke="#f59e0b" strokeDasharray="5 5" label={{ value: 'Avg P/E', position: 'top', fill: '#f59e0b', fontSize: 12 }} />

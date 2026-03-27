@@ -133,14 +133,14 @@ export function PledgeForm({ clients }: { clients: any[] }) {
         }));
 
     return (
-        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900/50 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
             {/* Tab Navigation */}
-            <div className="flex border-b border-slate-200 bg-slate-50/50">
+            <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                 <button
                     onClick={() => { setActiveTab('pledge'); reset(); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold transition-all ${activeTab === 'pledge'
-                        ? "bg-white text-indigo-600 border-b-2 border-indigo-600"
-                        : "text-slate-500 hover:text-slate-700"
+                        ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                         }`}
                 >
                     <Lock size={18} />
@@ -149,8 +149,8 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                 <button
                     onClick={() => { setActiveTab('unpledge'); reset(); }}
                     className={`flex-1 flex items-center justify-center gap-2 py-4 font-bold transition-all ${activeTab === 'unpledge'
-                        ? "bg-white text-emerald-600 border-b-2 border-emerald-600"
-                        : "text-slate-500 hover:text-slate-700"
+                        ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 dark:border-emerald-400"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                         }`}
                 >
                     <Unlock size={18} />
@@ -161,11 +161,11 @@ export function PledgeForm({ clients }: { clients: any[] }) {
             <div className="p-8">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase text-slate-500">Select Client</label>
+                        <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Select Client</label>
                         <select
                             {...register("client_name", { required: true })}
                             required
-                            className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"
+                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 ring-indigo-500 outline-none dark:text-white transition-colors"
                         >
                             <option value="">Select Client</option>
                             {clients.map(c => <option key={c.client_name} value={c.client_name}>{c.client_name}</option>)}
@@ -174,13 +174,13 @@ export function PledgeForm({ clients }: { clients: any[] }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase text-slate-500">
+                            <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                                 Share to {activeTab === 'pledge' ? 'Pledge' : 'Unpledge'}
                             </label>
                             <select
                                 {...register("ticker", { required: true })}
                                 required
-                                className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"
+                                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 ring-indigo-500 outline-none dark:text-white transition-colors"
                             >
                                 <option value="">Select Ticker</option>
                                 {tickerOptions.map(opt => (
@@ -189,29 +189,29 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                             </select>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase text-slate-500">Quantity</label>
+                            <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Quantity</label>
                             <input
                                 type="number"
                                 autoComplete="off"
                                 required
                                 {...register("qty", { required: true, min: 1 })}
                                 placeholder="Qty"
-                                className="w-full p-2.5 bg-slate-50 border rounded-lg focus:ring-2 ring-indigo-500 outline-none"
+                                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 ring-indigo-500 outline-none dark:text-white dark:placeholder-slate-500 transition-colors"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase text-slate-500">Comments</label>
+                        <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Comments</label>
                         <textarea
                             {...register("comments")}
                             placeholder="Reason for action..."
-                            className="w-full p-2.5 bg-slate-50 border rounded-lg h-24 focus:ring-2 ring-indigo-500 outline-none"
+                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg h-24 focus:ring-2 ring-indigo-500 outline-none dark:text-white dark:placeholder-slate-500 transition-colors"
                         />
                     </div>
 
                     {error && (
-                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm flex items-center gap-2">
+                        <div className="p-3 bg-red-50 dark:bg-rose-900/20 border border-red-200 dark:border-rose-900/30 text-red-600 dark:text-rose-400 rounded-lg text-sm flex items-center gap-2 transition-colors">
                             <AlertCircle size={16} /> {error}
                         </div>
                     )}
@@ -220,15 +220,15 @@ export function PledgeForm({ clients }: { clients: any[] }) {
                         isPending={loading}
                         label={`Confirm ${activeTab === 'pledge' ? 'Pledge' : 'Unpledge'}`}
                         classname={`w-full py-3 text-white rounded-xl font-bold transition-all shadow-lg ${activeTab === 'pledge'
-                            ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
-                            : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100'
+                            ? 'bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-indigo-100 dark:shadow-indigo-900/20'
+                            : 'bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-600 shadow-emerald-100 dark:shadow-emerald-900/20'
                             }`}
                         loadingText="Processing..."
                     />
                 </form>
 
                 {success && (
-                    <div className="mt-4 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
+                    <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center gap-2 animate-in fade-in zoom-in duration-300 transition-colors">
                         <CheckCircle2 size={20} /> Action Recorded Successfully!
                     </div>
                 )}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * @file client-filter.tsx
@@ -38,9 +38,9 @@ export function ClientMultiSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm text-sm font-medium hover:bg-slate-50 transition-all"
+        className="flex items-center justify-between w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
       >
-        <div className="flex items-center gap-2 text-slate-600 truncate">
+        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 truncate">
           <Users size={16} className="text-indigo-500" />
           <span>
             {selectedKeys.length === 0
@@ -54,7 +54,7 @@ export function ClientMultiSelect({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute right-0 z-20 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-100">
+          <div className="absolute right-0 z-20 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl dark:shadow-indigo-500/20 overflow-hidden animate-in fade-in zoom-in duration-100">
             <div className="p-2 space-y-1 max-h-60 overflow-y-auto">
               {clients.map((client) => {
                 const key = client[identifier];
@@ -65,12 +65,12 @@ export function ClientMultiSelect({
                     key={client.client_id}
                     type="button"
                     onClick={() => onChange(key)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-lg transition-colors hover:bg-indigo-50"
+                    className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-lg transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/40"
                   >
-                    <span className={isSelected ? "font-bold text-indigo-600" : "text-slate-600"}>
+                    <span className={isSelected ? "font-bold text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"}>
                       {client.client_name}
                     </span>
-                    {isSelected && <Check size={14} className="text-indigo-600" />}
+                    {isSelected && <Check size={14} className="text-indigo-600 dark:text-indigo-400" />}
                   </button>
                 );
               })}

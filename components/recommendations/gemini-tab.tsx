@@ -71,14 +71,14 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
 
     return (
         <div className="space-y-6">
-            <Card className="bg-white border-slate-200 shadow-sm">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div className="space-y-1">
-                        <CardTitle className="text-xl text-slate-900 flex items-center gap-2">
+                        <CardTitle className="text-xl text-slate-900 dark:text-white flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-indigo-400" />
                             AI-Powered Insights
                         </CardTitle>
-                        <CardDescription className="text-slate-500">
+                        <CardDescription className="text-slate-500 dark:text-slate-400">
                             Get personalized buy, sell, or hold recommendations based on your transaction history, current holdings, and general Indian market sentiment.
                         </CardDescription>
                     </div>
@@ -115,11 +115,11 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                         const isSell = suggestion.action === 'SELL';
 
                         return (
-                            <Card key={index} className="bg-white border-slate-200 overflow-hidden relative group hover:border-indigo-400 transition-colors shadow-sm hover:shadow-md">
-                                <div className={`absolute top-0 left-0 w-1 h-full ${isBuy ? 'bg-emerald-500' : isSell ? 'bg-rose-500' : 'bg-slate-400'}`} />
+                            <Card key={index} className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 overflow-hidden relative group hover:border-indigo-400 dark:hover:border-indigo-500 transition-all shadow-sm hover:shadow-md">
+                                <div className={`absolute top-0 left-0 w-1 h-full ${isBuy ? 'bg-emerald-500' : isSell ? 'bg-rose-500' : 'bg-slate-400 dark:bg-slate-600'}`} />
                                 <CardHeader className="pb-3 pl-6">
                                     <div className="flex justify-between items-start">
-                                        <CardTitle className="text-2xl font-bold text-slate-900 tracking-tight">
+                                        <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                                             {suggestion.symbol}
                                         </CardTitle>
                                         <div className={`px-3 py-1 text-xs font-bold rounded-full flex items-center gap-1.5 ${isBuy ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
@@ -139,31 +139,31 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                                     )}
                                 </CardHeader>
                                 <CardContent className="pl-6">
-                                    <div className="text-sm text-slate-600 leading-relaxed mb-4">
+                                    <div className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
                                         {suggestion.reasoning}
                                     </div>
 
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         {suggestion.timeframe && (
-                                            <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                                                 <Clock className="w-3 h-3" />
                                                 <span>{suggestion.timeframe}</span>
                                             </div>
                                         )}
                                         {suggestion.riskLevel && (
-                                            <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                                                 <ShieldAlert className="w-3 h-3" />
                                                 <span>{suggestion.riskLevel} Risk</span>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="space-y-1.5 pt-4 border-t border-slate-100">
-                                        <div className="flex justify-between text-xs text-slate-500 border-t-0 p-0 m-0">
+                                    <div className="space-y-1.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 border-t-0 p-0 m-0">
                                             <span>AI Confidence</span>
-                                            <span className="font-semibold text-slate-900">{Math.round(suggestion.confidence * 100)}%</span>
+                                            <span className="font-semibold text-slate-900 dark:text-white">{Math.round(suggestion.confidence * 100)}%</span>
                                         </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-1000 ${suggestion.confidence > 0.8 ? 'bg-indigo-500' :
                                                     suggestion.confidence > 0.5 ? 'bg-indigo-400' : 'bg-indigo-300/50'
@@ -194,7 +194,7 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                     {/* Active Chat Window */}
                     {isChatOpen && (
                         <div className={`fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 transition-all ${isExpanded ? 'w-[800px] max-w-[90vw]' : 'w-full max-w-[400px]'}`}>
-                            <Card className={`bg-slate-50 border-slate-200 shadow-2xl overflow-hidden rounded-2xl flex flex-col transition-all duration-300 ${isExpanded ? 'h-[80vh]' : 'h-[500px]'}`}>
+                            <Card className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden rounded-2xl flex flex-col transition-all duration-300 ${isExpanded ? 'h-[80vh]' : 'h-[500px]'}`}>
                                 <CardHeader className="py-3 px-4 border-b border-indigo-700 bg-indigo-600 text-white flex flex-row items-center justify-between shadow-sm">
                                     <div className="flex items-center gap-3">
                                         <button 
@@ -219,7 +219,7 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                                     </button>
                                 </CardHeader>
                                 <CardContent className="p-0 flex flex-col flex-1 overflow-hidden">
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-950 transition-colors">
                                         {chatHistory.length === 0 ? (
                                             <div className="h-full flex items-center justify-center text-slate-400 text-sm text-center px-4 italic">
                                                 Ask me anything about your current recommendations or portfolio structure!
@@ -230,7 +230,7 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                                                     <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                                                         msg.role === 'user' 
                                                             ? 'bg-indigo-600 text-white rounded-br-sm shadow-md' 
-                                                            : 'bg-white border border-slate-200 text-slate-700 rounded-bl-sm shadow-sm'
+                                                            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-bl-sm shadow-sm'
                                                     }`}>
                                                         <ReactMarkdown
                                                             components={{
@@ -250,21 +250,21 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
                                         )}
                                         {isChatting && (
                                             <div className="flex justify-start">
-                                                <div className="bg-white border border-slate-200 text-slate-500 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm shadow-sm flex items-center gap-2">
+                                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm shadow-sm flex items-center gap-2">
                                                     <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
                                                     Thinking...
                                                 </div>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="p-3 bg-white border-t border-slate-200 flex gap-2">
+                                    <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-2 transition-colors">
                                         <input 
                                             type="text"
                                             placeholder="Type a message..." 
                                             value={chatInput}
                                             onChange={(e) => setChatInput(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:text-white dark:placeholder-slate-500 transition-colors"
                                         />
                                         <Button 
                                             onClick={handleSendMessage} 

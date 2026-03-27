@@ -26,12 +26,12 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
         return (
             <div className="space-y-3 mt-6">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
-                    <span className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded-md">{description}</span>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white transition-colors">{title}</h3>
+                    <span className="text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md transition-colors">{description}</span>
                 </div>
-                <div className="rounded-xl border border-slate-200 overflow-hidden">
-                    <table className="w-full text-sm text-left text-slate-600">
-                        <thead className="text-xs text-slate-500 uppercase bg-slate-100/50">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+                    <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
+                        <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100/50 dark:bg-slate-800/50 transition-colors">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Asset</th>
                                 <th scope="col" className="px-6 py-3 text-right">Qty</th>
@@ -40,25 +40,25 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                                 <th scope="col" className="px-6 py-3 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {data.map((item, idx) => (
-                                <tr key={idx} className="bg-white border-b border-slate-200 hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-slate-800">
+                                <tr key={idx} className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">
                                         <div className="flex flex-col">
                                             <span>{item.ticker}</span>
-                                            <span className="text-xs text-slate-500 truncate max-w-[200px]">{item.stock_name}</span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{item.stock_name}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">{item.balance_qty}</td>
-                                    <td className="px-6 py-4 text-right text-rose-500 font-semibold flex items-center justify-end gap-1">
+                                    <td className="px-6 py-4 text-right text-rose-500 dark:text-rose-400 font-semibold flex items-center justify-end gap-1">
                                         <ArrowDownRight className="w-4 h-4" />
                                         {item.loss_amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                     </td>
-                                    <td className="px-6 py-4 text-right text-rose-500/80">
+                                    <td className="px-6 py-4 text-right text-rose-500/80 dark:text-rose-400/80">
                                         {item.loss_percent.toFixed(2)}%
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                        <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors">
                                             Info Only
                                         </div>
                                     </td>
@@ -73,13 +73,13 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
 
     return (
         <div className="space-y-6">
-            <Card className="bg-white border-slate-200 shadow-xl">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl transition-colors">
                 <CardHeader>
-                    <CardTitle className="text-xl text-slate-900 flex items-center gap-2">
+                    <CardTitle className="text-xl text-slate-900 dark:text-white flex items-center gap-2 transition-colors">
                         <ReceiptText className="h-5 w-5 text-rose-500" />
                         Tax Loss Harvesting
                     </CardTitle>
-                    <CardDescription className="text-slate-500">
+                    <CardDescription className="text-slate-500 dark:text-slate-400 transition-colors">
                         Identify opportunities to realize losses and offset capital gains tax liability for the Indian Market.
                     </CardDescription>
                 </CardHeader>
@@ -87,14 +87,14 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
 
                     {totalLoss > 0 ? (
                         <>
-                            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center gap-4">
-                                <div className="p-3 bg-indigo-100 rounded-full">
-                                    <AlertTriangle className="w-6 h-6 text-indigo-600" />
+                            <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-4 flex items-center gap-4 transition-colors">
+                                <div className="p-3 bg-indigo-100 dark:bg-indigo-800/50 rounded-full transition-colors">
+                                    <AlertTriangle className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-indigo-600 font-medium">Potential Harvestable Loss</p>
-                                    <p className="text-2xl font-bold text-slate-900">₹{totalLoss.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
-                                    <p className="text-xs text-slate-500 mt-1">Selling these assets could help offset your capital gains tax.</p>
+                                    <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium transition-colors">Potential Harvestable Loss</p>
+                                    <p className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">₹{totalLoss.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 transition-colors">Selling these assets could help offset your capital gains tax.</p>
                                 </div>
                             </div>
 
@@ -102,12 +102,12 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                             {renderTable(longTerm, "Long-Term Losses", "LTCG Offset (> 1 Year)")}
                         </>
                     ) : (
-                        <div className="text-center py-10">
-                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
-                                <ReceiptText className="h-8 w-8 text-slate-400" />
+                        <div className="text-center py-10 transition-colors">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4 transition-colors">
+                                <ReceiptText className="h-8 w-8 text-slate-400 dark:text-slate-500" />
                             </div>
-                            <h3 className="text-lg font-medium text-slate-900 mb-1">No harvestable losses found</h3>
-                            <p className="text-slate-500 text-sm max-w-md mx-auto">
+                            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1 transition-colors">No harvestable losses found</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto transition-colors">
                                 All your active holdings are currently profitable or flat. You don't have any unrealized losses to offset gains.
                             </p>
                         </div>

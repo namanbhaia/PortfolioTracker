@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -54,11 +54,11 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 relative overflow-hidden transition-colors">
             {/* Background Decorative Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-100/50 blur-[120px] rounded-full" />
-                <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-100/50 blur-[120px] rounded-full" />
+                <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-100/50 dark:bg-blue-900/20 blur-[120px] rounded-full transition-colors" />
+                <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-100/50 dark:bg-indigo-900/20 blur-[120px] rounded-full transition-colors" />
             </div>
 
             <motion.div
@@ -66,23 +66,23 @@ export default function SignupPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-md w-full relative z-10"
             >
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-200/60 dark:border-slate-800 transition-colors">
                     <button
                         onClick={() => router.push('/login')}
-                        className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-6 group"
+                        className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors mb-6 group"
                     >
                         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                         <span className="text-sm font-medium">Back to login</span>
                     </button>
 
-                    <h2 className="text-2xl font-semibold mb-8 text-slate-900">Create Account</h2>
+                    <h2 className="text-2xl font-semibold mb-8 text-slate-900 dark:text-white transition-colors">Create Account</h2>
 
                     <form onSubmit={handleSignup} className="space-y-4">
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-xl border border-red-100"
+                                className="flex items-center gap-2 text-red-500 text-sm bg-red-50 dark:bg-red-950/30 p-3 rounded-xl border border-red-100 dark:border-red-900/50 transition-colors"
                             >
                                 <AlertCircle className="w-4 h-4" />
                                 {error}
@@ -91,7 +91,7 @@ export default function SignupPage() {
 
                         {/* Full Name */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 ml-1">Full Name</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1 transition-colors">Full Name</label>
                             <div className="relative group">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
@@ -100,14 +100,14 @@ export default function SignupPage() {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="John Doe"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* Trading ID (Added This) */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 ml-1">Trading ID</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1 transition-colors">Trading ID</label>
                             <div className="relative group">
                                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
@@ -117,14 +117,14 @@ export default function SignupPage() {
                                     value={tradingId}
                                     onChange={(e) => setTradingId(e.target.value)}
                                     placeholder="e.g. TRD-12345"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* DP ID */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 ml-1">DP ID</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1 transition-colors">DP ID</label>
                             <div className="relative group">
                                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
@@ -134,14 +134,14 @@ export default function SignupPage() {
                                     value={dpId}
                                     onChange={(e) => setDpId(e.target.value)}
                                     placeholder="e.g. IN123456"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* Username */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 ml-1">Username</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1 transition-colors">Username</label>
                             <div className="relative group">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
@@ -150,14 +150,14 @@ export default function SignupPage() {
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     placeholder="your_username"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* Email */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 ml-1">Email Address</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1 transition-colors">Email Address</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
@@ -166,14 +166,14 @@ export default function SignupPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="name@company.com"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
                                 />
                             </div>
                         </div>
 
                         {/* Password */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 ml-1">Password</label>
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1 transition-colors">Password</label>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                 <input
@@ -182,12 +182,12 @@ export default function SignupPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="At least 8 characters"
-                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900"
+                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-slate-900 dark:text-white"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                 >
                                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
@@ -197,7 +197,7 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-2xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+                            className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-2xl shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
                         >
                             {isLoading ? (
                                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -211,11 +211,11 @@ export default function SignupPage() {
                     </form>
 
                     <div className="mt-8 text-center">
-                        <p className="text-slate-500 text-sm">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm transition-colors">
                             Already have an account?{' '}
                             <button
                                 onClick={() => router.push('/login')}
-                                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                                className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                             >
                                 Sign in here
                             </button>

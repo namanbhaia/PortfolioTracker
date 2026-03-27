@@ -124,12 +124,12 @@ export default function DashboardClientWrapper({
     };
 
     return (
-        <div className="p-6 space-y-8 mx-auto">
+        <div className="p-6 space-y-8 mx-auto transition-colors">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Executive Summary</h1>
-                    <p className="text-sm text-slate-500">
-                        Consolidated overview for <span className="font-semibold text-indigo-600">{userName}</span>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Executive Summary</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Consolidated overview for <span className="font-semibold text-indigo-600 dark:text-indigo-400">{userName}</span>
                     </p>
                 </div>
 
@@ -161,10 +161,10 @@ export default function DashboardClientWrapper({
             />
 
             {/* CONSOLIDATED HOLDINGS TABLE */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wider">Union of Family Holdings</h3>
-                    <span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-1 rounded-md">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm uppercase tracking-wider">Union of Family Holdings</h3>
+                    <span className="text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-md">
                         {consolidatedRows.length} TICKERS
                     </span>
                 </div>

@@ -112,11 +112,11 @@ export const Background = () => {
         return () => window.removeEventListener("mousemove", handleMouseMove);
     }, [mouseX, mouseY]);
 
-    // Define the liquid orbs
+    // Define the liquid orbs with theme-aware colors
     const orbs = useMemo(() => [
-        { size: 850, color: "bg-indigo-300", factor: 0.3, delay: 0 },
-        { size: 650, color: "bg-blue-300", factor: 0.5, delay: 2 },
-        { size: 500, color: "bg-purple-200", factor: 0.2, delay: 4 },
+        { size: 850, color: "bg-indigo-300 dark:bg-indigo-950", factor: 0.3, delay: 0 },
+        { size: 650, color: "bg-blue-300 dark:bg-blue-950", factor: 0.5, delay: 2 },
+        { size: 500, color: "bg-purple-200 dark:bg-purple-950", factor: 0.2, delay: 4 },
     ], []);
 
     // Generate 50 tiny particles
@@ -126,7 +126,7 @@ export const Background = () => {
             size: Math.random() * 3 + 2, // Tiny particles (2-5px)
             x: Math.random() * 100 + "%",
             y: Math.random() * 100 + "%",
-            color: ["bg-indigo-400", "bg-blue-400", "bg-purple-300"][
+            color: ["bg-indigo-400 dark:bg-indigo-500", "bg-blue-400 dark:bg-blue-500", "bg-purple-300 dark:bg-purple-400"][
                 Math.floor(Math.random() * 3)
             ],
             factor: (Math.random() * 0.15 + 0.05) * (Math.random() > 0.5 ? 1 : -1),
@@ -134,7 +134,7 @@ export const Background = () => {
     }, []);
 
     return (
-        <div className="fixed inset-0 -z-10 overflow-hidden bg-white">
+        <div className="fixed inset-0 -z-10 overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-700">
             {/* Liquid Orbs Layer */}
             {isMounted && orbs.map((orb, i) => (
                 <LiquidOrb
@@ -159,7 +159,7 @@ export const Background = () => {
                 style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/p6-static.png")' }}
             />
             <div
-                className="absolute inset-0 opacity-[0.015]"
+                className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
                 style={{
                     backgroundImage: `linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)`,
                     backgroundSize: "64px 64px",

@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle, Info } from 'lucide-react';
 import { Input } from '@/components/ui/transaction-input';
@@ -53,8 +53,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         <div className="p-8 mx-auto space-y-8">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Audit Lookup</h1>
-                    <p className="text-slate-500 mt-1">Search buy/sell logs with relational impact tracing.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight transition-colors">Audit Lookup</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">Search buy/sell logs with relational impact tracing.</p>
                 </div>
             </header>
 
@@ -79,7 +79,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 </div>
 
                 {/* Middle: Separator */}
-                <div className="text-slate-300 font-bold text-xs uppercase shrink-0">OR</div>
+                <div className="text-slate-300 dark:text-slate-700 font-bold text-xs uppercase shrink-0">OR</div>
 
                 {/* Right: Direct UUID Lookup (Fixed Width) */}
                 <div className="w-full md:w-96 shrink-0">
@@ -88,7 +88,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                             name="trx_id"
                             placeholder="Direct UUID Lookup..."
                             defaultValue={resolvedParams.trx_id || ''}
-                            className="pr-10 pl-4 bg-white border-slate-200 shadow-sm rounded-xl h-[58px]" // Matches height of filter bar
+                            className="pr-10 pl-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white shadow-sm rounded-xl h-[58px] transition-colors" // Matches height of filter bar
                         />
                         <button
                             type="submit"
@@ -111,9 +111,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                     {/* --- PURCHASE TABLE --- */}
                     <div className="space-y-4">
                         <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2"><ArrowDownToLine size={16} /> Purchase Records</h2>
-                        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                             <Table className="w-full text-xs text-left border-collapse">
-                                <TableHeader className="bg-gray-100 border-b uppercase text-gray-600 font-semibold">
+                                <TableHeader className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 uppercase text-gray-600 dark:text-slate-400 font-semibold transition-colors">
                                     <TableRow>
                                         <TableHead className="px-3 py-3 w-16">ID</TableHead>
                                         <TableHead className="px-3 py-3 w-16">Client Name</TableHead>
@@ -130,13 +130,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                 </TableHeader>
                                 <TableBody>
                                     {purchases.map(row => (
-                                        <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-indigo-50/20' : 'text-slate-400'}`}>
+                                        <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${row.is_bold ? 'font-black bg-indigo-50/20 dark:bg-indigo-900/20 text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
                                             <TableCell className="px-3 py-3">
                                                 <TrxIdCell id={row.trx_id} />
                                             </TableCell>
                                             <TableCell className="p-3">
-                                                <div className="font-semibold text-gray-900">{row.client_name}</div>
-                                                <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
+                                                <div className="font-semibold text-gray-900 dark:text-white transition-colors">{row.client_name}</div>
+                                                <div className="text-[10px] opacity-70 dark:text-slate-400 transition-colors">DP: {row.dp_id} | Trade: {row.trading_id}</div>
                                             </TableCell>
                                             <TickerCell ticker={row.ticker} isin={row.isin} />
                                             <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
@@ -162,11 +162,11 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
                     {/* --- SALES TABLE --- */}
                     <div className="space-y-4">
-                        <h2 className="text-sm font-bold text-rose-600 uppercase tracking-widest flex items-center gap-2"><ArrowUpFromLine size={16} /> Sale Records</h2>
-                        <div className="bg-white rounded-xl border shadow-sm overflow-hidden overflow-x-auto">
+                        <h2 className="text-sm font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest flex items-center gap-2 transition-colors"><ArrowUpFromLine size={16} /> Sale Records</h2>
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto transition-colors">
                             <Table className="min-w-[1400px]">
-                                <TableHeader className="bg-slate-50/50">
-                                    <TableRow className="text-[10px] uppercase font-bold text-slate-500">
+                                <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                                    <TableRow className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
                                         <TableHead className="px-4">ID</TableHead>
                                         <TableHead className="px-4">Custom ID</TableHead>
                                         <TableHead className="px-4">Client Info</TableHead>
@@ -203,14 +203,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                     {sales.map(row => {
                                         const plPercent = (Number(row.profit) / (Number(row.purchase_rate) * Number(row.sale_qty))) * 100;
                                         return (
-                                            <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 ${row.is_bold ? 'font-black bg-rose-50/20' : 'text-slate-400'}`}>
+                                            <TableRow key={row.trx_id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${row.is_bold ? 'font-black bg-rose-50/20 dark:bg-rose-900/20 text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
                                                 <TableCell className="px-3 py-3">
                                                     <TrxIdCell id={row.trx_id} />
                                                 </TableCell>
                                                 <TableCell className="px-4 py-3 font-mono text-[10px]">{row.custom_id || '--'}</TableCell>
                                                 <TableCell className="p-3">
-                                                    <div className="font-semibold text-gray-900">{row.client_name}</div>
-                                                    <div className="text-[10px] opacity-70">DP: {row.dp_id} | Trade: {row.trading_id}</div>
+                                                    <div className="font-semibold text-gray-900 dark:text-white transition-colors">{row.client_name}</div>
+                                                    <div className="text-[10px] opacity-70 dark:text-slate-400 transition-colors">DP: {row.dp_id} | Trade: {row.trading_id}</div>
                                                 </TableCell>
                                                 <TickerCell ticker={row.ticker} isin={row.isin} />
                                                 <TableCell className="px-3 py-3 max-w-[120px] truncate">{row.stock_name}</TableCell>
@@ -218,7 +218,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <TableCell className="px-4 py-3 text-xs">{new Date(row.sale_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right">{Number(row.sale_qty)}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right">₹{Number(row.sale_rate).toLocaleString()}</TableCell>
-                                                <TableCell className="px-4 py-3 text-right text-slate-900">₹{Number(row.sale_value).toLocaleString()}</TableCell>
+                                                <TableCell className="px-4 py-3 text-right text-slate-900 dark:text-white transition-colors">₹{Number(row.sale_value).toLocaleString()}</TableCell>
                                                 <TableCell className="px-3 py-3 text-center">
                                                     <div className="flex justify-center items-center">
                                                         {row.long_term ? (
@@ -230,9 +230,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className={`px-4 py-3 text-right ${Number(row.pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.pl).toLocaleString()}</TableCell>
-                                                <TableCell className={`px-4 py-3 text-right text-[10px] ${Number(row.pl_percentage) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{row.pl_percentage.toFixed(1)}%</TableCell>
-                                                <TableCell className={`px-4 py-3 text-right ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>₹{Number(row.adjusted_pl).toLocaleString()}</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right transition-colors ${Number(row.pl) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>₹{Number(row.pl).toLocaleString()}</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right text-[10px] transition-colors ${Number(row.pl_percentage) >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>{row.pl_percentage.toFixed(1)}%</TableCell>
+                                                <TableCell className={`px-4 py-3 text-right transition-colors ${Number(row.adjusted_pl) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>₹{Number(row.adjusted_pl).toLocaleString()}</TableCell>
                                                 <TableCell className="px-3 py-3">
                                                     <CommentCell comment={row.comments} />
                                                 </TableCell>

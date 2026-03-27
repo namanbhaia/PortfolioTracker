@@ -42,9 +42,9 @@ export default async function RecommendationsPage() {
     }
 
     return (
-        <div className="p-4 space-y-4 mx-auto max-w-7xl">
+        <div className="p-4 space-y-4 mx-auto max-w-7xl transition-colors">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Portfolio Recommendations (Beta)</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">Portfolio Recommendations (Beta)</h1>
             </header>
 
             <RecommendationsClientWrapper

@@ -177,42 +177,42 @@ export default function BulkSalesAdd() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                 <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-rose-100 text-rose-600 rounded-lg">
+                    <div className="p-3 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg">
                         <UploadCloud size={24} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900">Bulk Add Sales</h3>
-                        <p className="text-sm text-slate-500">Import historical sales and auto-match with FIFO lots.</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bulk Add Sales</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Import historical sales and auto-match with FIFO lots.</p>
                     </div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 rounded-lg bg-white">
+                <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
                     <input
                         type="file"
                         accept=".csv"
                         disabled={loading}
                         onChange={handleFileChange}
-                        className="block w-full max-w-xs text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer"
+                        className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-rose-900/30 file:text-rose-700 dark:file:text-rose-400 hover:file:bg-rose-100 dark:hover:file:bg-rose-900/50 cursor-pointer transition-all"
                     />
-                    <p className="mt-2 text-[10px] text-slate-400">Required: client_name, ticker, sale_qty, sale_rate, sale_date</p>
+                    <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Required: client_name, ticker, sale_qty, sale_rate, sale_date</p>
                 </div>
 
                 {loading && (
                     <div className="mt-4 animate-in fade-in">
-                        <div className="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                        <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                             <span>{statusText}</span>
                             <span>{progress}%</span>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                            <div className="bg-rose-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5">
+                            <div className="bg-rose-600 dark:bg-rose-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
                         </div>
                     </div>
                 )}
 
                 {successCount !== null && (
-                    <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg flex items-center gap-3 text-emerald-700 text-sm">
+                    <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
                         <CheckCircle2 size={18} />
                         <span>Successfully processed {successCount} sales.</span>
                     </div>
@@ -220,14 +220,14 @@ export default function BulkSalesAdd() {
             </div>
 
             {shortfalls.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
-                    <div className="flex items-center gap-2 text-amber-800 mb-4">
+                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-xl p-6 transition-colors">
+                    <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 mb-4">
                         <AlertCircle size={20} />
                         <h4 className="font-bold">Inventory Shortfalls</h4>
                     </div>
                     <div className="max-h-60 overflow-auto">
                         <table className="w-full text-xs text-left">
-                            <thead className="sticky top-0 bg-amber-50 text-amber-900 font-bold border-b border-amber-200">
+                            <thead className="sticky top-0 bg-amber-50 dark:bg-amber-900/40 backdrop-blur-sm text-amber-900 dark:text-amber-200 font-bold border-b border-amber-200 dark:border-amber-900/50">
                                 <tr>
                                     <th className="py-2">Row</th>
                                     <th className="py-2">Client</th>
@@ -235,9 +235,9 @@ export default function BulkSalesAdd() {
                                     <th className="py-2">Missing Qty</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-amber-100">
+                            <tbody className="divide-y divide-amber-100 dark:divide-amber-900/30">
                                 {shortfalls.map((s, idx) => (
-                                    <tr key={idx} className="text-amber-700">
+                                    <tr key={idx} className="text-amber-700 dark:text-amber-400/80">
                                         <td className="py-2">{s.row}</td>
                                         <td className="py-2">{s.client}</td>
                                         <td className="py-2">{s.ticker}</td>

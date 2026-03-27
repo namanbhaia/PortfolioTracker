@@ -50,35 +50,35 @@ export function DateRangeFilter({
 
     return (
         <div className="space-y-4">
-            <Card className="border-slate-200 shadow-sm rounded-2xl">
+            <Card className="border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-indigo-500/5 rounded-2xl">
                 <CardContent className="p-6">
                     <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                         <div className="space-y-1.5">
-                            <Label className="text-[11px] font-bold text-slate-500 uppercase font-normal">From Date</Label>
+                            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase font-normal">From Date</Label>
                             <Input
                                 key={`start-${initialDates.startDate}`}
                                 type="date"
                                 name="start_date"
                                 required
                                 defaultValue={initialDates.startDate ?? ''}
-                                className="bg-slate-50 font-normal"
+                                className="bg-slate-50 dark:bg-slate-900/50 font-normal"
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label className="text-[11px] font-bold text-slate-500 uppercase font-normal">To Date</Label>
+                            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase font-normal">To Date</Label>
                             <Input
                                 key={`end-${initialDates.endDate}`}
                                 type="date"
                                 name="end_date"
                                 defaultValue={initialDates.endDate}
-                                className="bg-slate-50 font-normal"
+                                className="bg-slate-50 dark:bg-slate-900/50 font-normal"
                             />
                         </div>
 
                         <SubmitButton
                             isPending={isPending}
                             label="Generate Tax Summary"
-                            classname="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center gap-2 min-w-[140px] justify-center font-normal"
+                            classname="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition-all flex items-center gap-2 min-w-[140px] justify-center font-normal"
                             loadingText='Generating...'
                         />
                     </form>
@@ -86,7 +86,7 @@ export function DateRangeFilter({
             </Card>
 
             {error && (
-                <div className="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-sm font-normal flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 rounded-xl text-sm font-normal flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
                     <AlertCircle size={16} />
                     {error}
                 </div>

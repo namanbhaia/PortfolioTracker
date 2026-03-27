@@ -44,7 +44,7 @@ export default async function DashboardLayout({
             initialClients={clients || []
             }>
 
-            <div className="flex h-screen bg-slate-50 overflow-hidden">
+            <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
                 <Screensaver idleTimeout={300000} /> {/* 10 Minutes */}
                 {/* 3. Pass data to Sidebar */}
                 <Sidebar user={user} profile={profile} />

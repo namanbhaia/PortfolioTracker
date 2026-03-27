@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * @file holdings-filters.tsx
@@ -120,7 +120,7 @@ export default function HoldingsFilter({
                     onChange={(e) => { setLocalTicker(e.target.value); setTicker?.(e.target.value); }}
                     placeholder="Ticker"
                     autoComplete="off"
-                    className="w-full pl-8 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold uppercase outline-none focus:ring-2 ring-indigo-500"
+                    className="w-full pl-8 pr-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500 transition-all dark:text-white dark:placeholder-slate-500"
                 />
             </div>
 
@@ -132,19 +132,19 @@ export default function HoldingsFilter({
                     onChange={(e) => { setLocalShareName(e.target.value); setShareName?.(e.target.value); }}
                     placeholder="Security name..."
                     autoComplete="off"
-                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500"
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500 transition-all dark:text-white dark:placeholder-slate-500"
                 />
             </div>
 
             {/* 4. Long Term Toggle - Conditional Rendering */}
             {showLongTermToggle && (
-                <div className="flex p-1 bg-slate-100 rounded-xl shrink-0 overflow-x-auto max-w-full">
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl shrink-0 overflow-x-auto max-w-full">
                     <button
                         type="button"
                         onClick={() => { setLocalLongTerm(true); setLongTerm?.(true); }}
                         className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${localLongTerm === true
-                            ? 'bg-white shadow-sm text-indigo-600'
-                            : 'text-slate-500'
+                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-500 dark:text-slate-400'
                             }`}
                     >
                         Long Term
@@ -153,8 +153,8 @@ export default function HoldingsFilter({
                         type="button"
                         onClick={() => { setLocalLongTerm(false); setLongTerm?.(false); }}
                         className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${localLongTerm === false
-                            ? 'bg-white shadow-sm text-indigo-600'
-                            : 'text-slate-500'
+                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-500 dark:text-slate-400'
                             }`}
                     >
                         Short Term
@@ -164,8 +164,8 @@ export default function HoldingsFilter({
                             type="button"
                             onClick={() => { setLocalLongTerm('square_off'); setLongTerm?.('square_off'); }}
                             className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${localLongTerm === 'square_off'
-                                ? 'bg-white shadow-sm text-indigo-600'
-                                : 'text-slate-500'
+                                ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                                : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             Square Off
@@ -175,8 +175,8 @@ export default function HoldingsFilter({
                         type="button"
                         onClick={() => { setLocalLongTerm(null); setLongTerm?.(null); }}
                         className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap ${localLongTerm === null
-                            ? 'bg-white shadow-sm text-indigo-600'
-                            : 'text-slate-500'
+                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                            : 'text-slate-500 dark:text-slate-400'
                             }`}
                     >
                         All
@@ -185,39 +185,43 @@ export default function HoldingsFilter({
             )}
 
             {/* 5. Date Range */}
-            <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 border border-slate-200 px-2 py-1.5 rounded-xl">
-                <Calendar size={12} className="text-slate-400" />
+            <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl">
+                <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
                 <input
                     name="start_date"
                     type="date" value={localStartDate}
                     autoComplete="off"
                     onChange={(e) => { setLocalStartDate(e.target.value); setStartDate?.(e.target.value); }}
-                    className="bg-transparent text-[10px] outline-none w-[95px]"
+                    className="bg-transparent text-[10px] outline-none w-[95px] dark:text-white dark:[color-scheme:dark]"
                 />
-                <span className="text-slate-300">-</span>
+                <span className="text-slate-300 dark:text-slate-700">-</span>
                 <input
                     name="end_date"
                     type="date" value={localEndDate}
                     autoComplete="off"
                     onChange={(e) => { setLocalEndDate(e.target.value); setEndDate?.(e.target.value); }}
-                    className="bg-transparent text-[10px] outline-none w-[95px]"
+                    className="bg-transparent text-[10px] outline-none w-[95px] dark:text-white dark:[color-scheme:dark]"
                 />
             </div>
 
             {/* 6. Balance Toggle - Conditional Rendering */}
             {showBalanceToggle && (
-                <div className="flex p-1 bg-slate-100 rounded-xl shrink-0">
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl shrink-0">
                     <button
                         type="button"
                         onClick={() => { setLocalShowAll(false); setShowAll?.(false); }}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!localShowAll ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!localShowAll 
+                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' 
+                            : 'text-slate-500 dark:text-slate-400'}`}
                     >
                         Active
                     </button>
                     <button
                         type="button"
                         onClick={() => { setLocalShowAll(true); setShowAll?.(true); }}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${localShowAll ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${localShowAll 
+                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' 
+                            : 'text-slate-500 dark:text-slate-400'}`}
                     >
                         All
                     </button>
@@ -244,7 +248,7 @@ export default function HoldingsFilter({
     );
 
     return (
-        <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-900/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
             {onSubmit ? (
                 <form onSubmit={onSubmit}>
                     {content}

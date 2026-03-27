@@ -233,34 +233,34 @@ export default function VerificationPage() {
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
             <header>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <FileCheck className="text-indigo-600" size={32} />
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3 transition-colors">
+                    <FileCheck className="text-indigo-600 dark:text-indigo-400" size={32} />
                     Holdings Verification
                 </h1>
-                <p className="text-slate-500 mt-2">
+                <p className="text-slate-500 dark:text-slate-400 mt-2 transition-colors">
                     Upload DP-Manager export (CSV) to validate system accuracy.
                 </p>
             </header>
 
             {/* Upload Section */}
-            <div className="bg-white p-8 rounded-2xl border border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 text-center">
-                <div className="p-4 bg-indigo-50 text-indigo-600 rounded-full">
+            <div className="bg-white dark:bg-slate-900/50 p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 flex flex-col items-center justify-center gap-4 text-center transition-colors">
+                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full transition-colors">
                     <UploadCloud size={32} />
                 </div>
                 <div>
-                    <h3 className="font-bold text-lg">Upload Holdings CSV</h3>
-                    <p className="text-sm text-slate-400">Expected columns: dp_id, client_name, ticker, isin, name, balance</p>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">Upload Holdings CSV</h3>
+                    <p className="text-sm text-slate-400 dark:text-slate-500">Expected columns: dp_id, client_name, ticker, isin, name, balance</p>
                 </div>
                 <input
                     type="file"
                     accept=".csv"
                     onChange={handleFileUpload}
-                    className="block w-full max-w-xs text-sm text-slate-500
+                    className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-indigo-50 file:text-indigo-700
-                        hover:file:bg-indigo-100
+                        file:bg-indigo-50 dark:file:bg-indigo-900/50 file:text-indigo-700 dark:file:text-indigo-400
+                        hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/70 transition-all
                     "
                 />
                 {viewState.loading && <p className="text-sm text-indigo-600 animate-pulse">Processing & Verifying...</p>}
@@ -270,9 +270,9 @@ export default function VerificationPage() {
             {Object.keys(viewState.verificationResults).length > 0 && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                     <div className="flex items-center gap-4">
-                        <label className="font-bold text-slate-700">View Results For:</label>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 transition-colors">View Results For:</label>
                         <select
-                            className="p-2.5 bg-white border border-slate-200 rounded-lg min-w-[250px]"
+                            className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg min-w-[250px] dark:text-white transition-colors"
                             value={selectedClientKey}
                             onChange={(e) => setSelectedClientKey(e.target.value)}
                         >
@@ -287,21 +287,21 @@ export default function VerificationPage() {
 
                     {/* Result Display Logic */}
                     {selectedResult && (
-                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm transition-colors">
                             <VerificationDisplay selectedResult={selectedResult} />
                         </div>
                     )}
                 </div>
             )}
             {viewState.isSyncingAssets && (
-                <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white border border-indigo-100 shadow-xl p-4 rounded-2xl animate-in slide-in-from-right-8">
+                <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/50 shadow-xl p-4 rounded-2xl animate-in slide-in-from-right-8 transition-colors">
                     <div className="relative flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600 dark:bg-indigo-500"></span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900">Syncing Market Data</span>
-                        <span className="text-[11px] text-slate-500">Fetching tickers & live prices...</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">Syncing Market Data</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Fetching tickers & live prices...</span>
                     </div>
                 </div>
             )}

@@ -17,8 +17,8 @@ interface TickerCellProps {
  */
 export default function TickerCell({ ticker, isin, className }: TickerCellProps) {
     return (
-        <td className={`px-3 py-3 ${className || ''}`}>
-            <div className="font-bold text-blue-700">
+        <td className={`px-3 py-3 transition-colors ${className || ''}`}>
+            <div className="font-bold text-blue-700 dark:text-blue-400 transition-colors">
                 <a
                     href={`https://www.screener.in/company/${ticker}/`}
                     target="_blank"
@@ -27,7 +27,7 @@ export default function TickerCell({ ticker, isin, className }: TickerCellProps)
                     {ticker}
                 </a>
             </div>
-            <div className="text-[10px] text-gray-400">{isin}</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 transition-colors">{isin}</div>
         </td>
     );
 }

@@ -99,6 +99,51 @@ const SECTIONS = [
                 "Diff View: Visual identification of quantity mismatches between your records and the depository."
             ]
         }
+    },
+    {
+        id: 'holdings',
+        label: 'Consolidated Holdings',
+        icon: <UserCircle size={18} />,
+        color: 'bg-cyan-500',
+        content: {
+            title: "Executive Summary",
+            subtitle: "A unified view of all active investments across multiple linked profiles.",
+            details: [
+                "Unified Dashboard: View aggregated holdings and active pledges across all your authorized clients in one place.",
+                "Live Valuations: Real-time syncing with market data to reflect current portfolio worth.",
+                "Advanced Recommendations: Beta feature providing portfolio suggestions and technical analysis categorizations."
+            ]
+        }
+    },
+    {
+        id: 'tax',
+        label: 'Tax & Export',
+        icon: <FileCheck size={18} />,
+        color: 'bg-rose-500',
+        content: {
+            title: "Audit & Compliance Ready",
+            subtitle: "Aggregated capital gains and one-click data exports for seamless tax filing.",
+            details: [
+                "Tax Overview: Compute realized capital gains over any specific period, structured by STCG, LTCG, and Square Offs.",
+                "Excel Exports: Download combined historical and active ledgers into formatted spreadsheets.",
+                "Transaction Audit: Comprehensive lookup tool with direct UUID search to trace the exact lineage of any buy/sell event."
+            ]
+        }
+    },
+    {
+        id: 'admin',
+        label: 'Admin Controls',
+        icon: <Cpu size={18} />,
+        color: 'bg-orange-500',
+        content: {
+            title: "Advanced System Operations",
+            subtitle: "Powerful bulk management tools restricted to authorized power users.",
+            details: [
+                "Bulk Operations: Execute mass asset updates, bulk purchase additions, and bulk sales.",
+                "Exchange Migration: Built-in tools to seamlessly migrate assets from BSE to NSE.",
+                "Collateral Management: Track margin availability by pledging or unpledging shares against total holdings."
+            ]
+        }
     }
 ];
 
@@ -181,32 +226,32 @@ export default function InfoPage() {
             </div>
 
             {/* --- INTERACTIVE NAVIGATOR --- */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row h-auto md:h-[600px]">
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col md:flex-row h-auto md:h-[600px]">
                 {/* Side Nav */}
-                <div className="w-full md:w-72 bg-slate-50 border-r border-slate-200 p-6 flex flex-col gap-2 shrink-0">
+                <div className="w-full md:w-72 bg-slate-50 dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-2 shrink-0">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-2">Interactive Guide</h3>
                     {SECTIONS.map((section) => (
                         <button
                             key={section.id}
                             onClick={() => setActiveTab(section.id)}
                             className={`flex items-center gap-3 p-4 rounded-2xl transition-all text-left group ${activeTab === section.id
-                                ? 'bg-white shadow-lg shadow-slate-200/50 text-slate-900 border border-slate-200'
-                                : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700'
+                                ? 'bg-white dark:bg-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
+                                : 'text-slate-500 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                         >
-                            <div className={`p-2 rounded-xl transition-colors ${activeTab === section.id ? section.color + ' text-white' : 'bg-slate-200 text-slate-400 group-hover:bg-slate-300'
+                            <div className={`p-2 rounded-xl transition-colors ${activeTab === section.id ? section.color + ' text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 group-hover:bg-slate-300 dark:group-hover:bg-slate-600'
                                 }`}>
                                 {section.icon}
                             </div>
                             <span className="font-bold text-sm tracking-tight">{section.label}</span>
                             {activeTab === section.id && (
-                                <ChevronRight size={16} className="ml-auto text-slate-300" />
+                                <ChevronRight size={16} className="ml-auto text-slate-300 dark:text-slate-600" />
                             )}
                         </button>
                     ))}
 
-                    <div className="mt-auto pt-6 border-t border-slate-200">
-                        <div className="bg-indigo-600 rounded-2xl p-4 text-white space-y-3 shadow-lg shadow-indigo-100">
+                    <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800">
+                        <div className="bg-indigo-600 rounded-2xl p-4 text-white space-y-3 shadow-lg shadow-indigo-100 dark:shadow-none">
                             <ShieldCheck size={20} />
                             <p className="text-[10px] font-medium leading-relaxed opacity-80 uppercase tracking-wider">
                                 System verified for security & performance.
@@ -230,21 +275,21 @@ export default function InfoPage() {
                                 <div className={`w-14 h-14 rounded-2xl ${activeData?.color} text-white flex items-center justify-center p-3 shadow-xl`}>
                                     {activeData?.icon && React.cloneElement(activeData.icon as React.ReactElement<any>, { size: 28 })}
                                 </div>
-                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{activeData?.content.title}</h2>
-                                <p className="text-lg text-slate-500 leading-relaxed font-medium">{activeData?.content.subtitle}</p>
+                                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{activeData?.content.title}</h2>
+                                <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{activeData?.content.subtitle}</p>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">
                                 {activeData?.content.details.map((detail, idx) => {
                                     const [title, text] = detail.split(':');
                                     return (
-                                        <div key={idx} className="flex gap-4 items-start p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-indigo-200 transition-colors">
-                                            <div className="mt-1 w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                                                <div className={`w-2 h-2 rounded-full ${activeTab === activeData?.id ? activeData?.color : 'bg-slate-300'}`} />
+                                        <div key={idx} className="flex gap-4 items-start p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 group hover:border-indigo-200 dark:hover:border-indigo-900 transition-colors">
+                                            <div className="mt-1 w-5 h-5 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center shrink-0">
+                                                <div className={`w-2 h-2 rounded-full ${activeTab === activeData?.id ? activeData?.color : 'bg-slate-300 dark:bg-slate-600'}`} />
                                             </div>
                                             <div className="space-y-1">
-                                                <h4 className="font-black text-sm text-slate-800 uppercase tracking-wide">{title}</h4>
-                                                <p className="text-slate-500 text-sm leading-relaxed">{text}</p>
+                                                <h4 className="font-black text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wide">{title}</h4>
+                                                <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{text}</p>
                                             </div>
                                         </div>
                                     );
@@ -267,52 +312,54 @@ export default function InfoPage() {
             </div>
 
             {/* --- WORKFLOW TILES --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
                     { label: "Ledger", icon: <Download size={20} />, text: "Automated FIFO logging", color: "text-blue-500" },
                     { label: "Privacy", icon: <Lock size={20} />, text: "Click-to-Wake security", color: "text-indigo-500" },
                     { label: "Tax-Ready", icon: <FileCheck size={20} />, text: "LT/ST classification", color: "text-emerald-500" },
-                    { label: "Verified", icon: <RefreshCw size={20} />, text: "CDSL/NSDL reconciliation", color: "text-purple-500" }
+                    { label: "Verified", icon: <RefreshCw size={20} />, text: "CDSL/NSDL reconciliation", color: "text-purple-500" },
+                    { label: "Export", icon: <FileCheck size={20} />, text: "One-click Excel reports", color: "text-rose-500" },
+                    { label: "Admin", icon: <Cpu size={20} />, text: "Bulk system operations", color: "text-orange-500" }
                 ].map((tile, i) => (
-                    <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-200 hover:shadow-xl transition-all group flex flex-col gap-4">
-                        <div className={`w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center ${tile.color}`}>
+                    <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-xl dark:hover:shadow-indigo-500/10 transition-all group flex flex-col gap-4">
+                        <div className={`w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center ${tile.color}`}>
                             {tile.icon}
                         </div>
                         <div>
-                            <h4 className="font-black text-slate-900 text-sm">{tile.label}</h4>
-                            <p className="text-xs text-slate-500 font-medium">{tile.text}</p>
+                            <h4 className="font-black text-slate-900 dark:text-white text-sm">{tile.label}</h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{tile.text}</p>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* --- DEVELOPER FOOTER --- */}
-            <div className="bg-slate-100 rounded-[2.5rem] p-8 mt-12 flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-200">
+            <div className="bg-slate-100 dark:bg-slate-900 rounded-[2.5rem] p-8 mt-12 flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-6">
                     <div className="relative">
-                        <div className="w-20 h-20 rounded-3xl bg-slate-900 flex items-center justify-center text-white text-3xl font-black">
+                        <div className="w-20 h-20 rounded-3xl bg-slate-900 dark:bg-slate-800 flex items-center justify-center text-white text-3xl font-black">
                             NM
                         </div>
-                        <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 border-4 border-slate-100 flex items-center justify-center">
+                        <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 border-4 border-slate-100 dark:border-slate-900 flex items-center justify-center">
                             <Zap size={14} className="text-white" />
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <h4 className="text-xl font-black text-slate-900 tracking-tighter">Architected by Naman and Manvi</h4>
-                        <p className="text-sm text-slate-500 font-medium max-w-sm">
+                        <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">Architected by Naman and Manvi</h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium max-w-sm">
                             Built with love and coffee to bridge the gap between retail trading and professional wealth management.
                         </p>
                     </div>
                 </div>
 
                 <div className="flex gap-4">
-                    <div className="px-5 py-3 rounded-2xl bg-white border border-slate-200 flex items-center gap-3">
+                    <div className="px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">System Live</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">System Live</span>
                     </div>
-                    <div className="px-5 py-3 rounded-2xl bg-white border border-slate-200 flex items-center gap-3">
-                        <BookOpen size={14} className="text-indigo-600" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">v2.0.4-LTS</span>
+                    <div className="px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                        <BookOpen size={14} className="text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">v2.0.4-LTS</span>
                     </div>
                 </div>
             </div>
@@ -330,28 +377,28 @@ export default function InfoPage() {
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.95, y: 20 }}
-                            className="relative bg-white rounded-[3rem] w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+                            className="relative bg-white dark:bg-slate-900 rounded-[3rem] w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col border border-white/10"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="p-8 border-b flex justify-between items-center bg-slate-50/50 backdrop-blur-md">
+                            <div className="p-8 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 backdrop-blur-md">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center">
                                         <Database size={24} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Core Data Schema</h2>
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Relational Asset Architecture</p>
+                                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Core Data Schema</h2>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Relational Asset Architecture</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setShowSchema(false)}
-                                    className="w-12 h-12 flex items-center justify-center hover:bg-slate-200 rounded-full transition-all group"
+                                    className="w-12 h-12 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-all group"
                                 >
-                                    <X size={24} className="text-slate-400 group-hover:text-slate-900 group-hover:rotate-90 transition-all" />
+                                    <X size={24} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-hover:rotate-90 transition-all" />
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-auto p-12 bg-slate-100/50 flex justify-center items-start">
+                            <div className="flex-1 overflow-auto p-12 bg-slate-100/50 dark:bg-slate-900/50 flex justify-center items-start">
                                 <div className="max-w-4xl w-full">
                                     <Zoom>
                                         <img
@@ -366,17 +413,17 @@ export default function InfoPage() {
                                             { t: "Sales", d: "FIFO liquidation records" },
                                             { t: "Assets", d: "Market reference data" }
                                         ].map((info, i) => (
-                                            <div key={i} className="bg-white/60 p-4 rounded-2xl border border-white/60 text-center">
-                                                <h5 className="font-black text-[10px] uppercase text-slate-800">{info.t}</h5>
-                                                <p className="text-xs text-slate-500 italic">{info.d}</p>
+                                            <div key={i} className="bg-white/60 dark:bg-slate-800/60 p-4 rounded-2xl border border-white/60 dark:border-slate-700/60 text-center">
+                                                <h5 className="font-black text-[10px] uppercase text-slate-800 dark:text-slate-200">{info.t}</h5>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 italic">{info.d}</p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="p-6 border-t bg-slate-50 text-center shadow-inner">
-                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.3em]">WealthTrack Neural Core • Secured Transmission</p>
+                            <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-center shadow-inner">
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.3em]">WealthTrack Neural Core • Secured Transmission</p>
                             </div>
                         </motion.div>
                     </motion.div>

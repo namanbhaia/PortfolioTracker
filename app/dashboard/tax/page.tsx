@@ -32,8 +32,8 @@ export default async function TaxReportOverviewPage({
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
             <header>
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Tax Overview</h1>
-                <p className="text-slate-500 mt-1">Select a period to aggregate capital gains across all clients.</p>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Tax Overview</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Select a period to aggregate capital gains across all clients.</p>
             </header>
 
             <TaxClientWrapper

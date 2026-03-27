@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Check, Pencil, Loader2, ShieldCheck } from 'lucide-react';
@@ -43,13 +43,13 @@ export default function ProfilePage() {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-10">
             <header>
-                <h1 className="text-3xl font-bold tracking-tight">Profile & Access</h1>
-                <p className="text-muted-foreground text-sm">Manage your identity and linked family portfolios.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Profile & Access</h1>
+                <p className="text-muted-foreground dark:text-slate-400 text-sm">Manage your identity and linked family portfolios.</p>
             </header>
 
             {/* SECTION 1: PERSONAL DETAILS */}
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                <div className="p-4 border-b bg-slate-50/50 flex items-center gap-2 font-semibold text-slate-700">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-300">
                     <User size={18} /> Account Information
                 </div>
                 <div className="p-6 space-y-6">
@@ -62,7 +62,7 @@ export default function ProfilePage() {
                                         value={newName}
                                         autoComplete="off"
                                         onChange={(e) => setNewName(e.target.value)}
-                                        className="flex-1 p-2 border rounded-md outline-none ring-primary/20 focus:ring-2 text-sm"
+                                        className="flex-1 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md outline-none ring-primary/20 focus:ring-2 text-sm dark:text-white"
                                     />
                                     <div className="flex items-center gap-2">
                                         <button onClick={handleSave} disabled={saving} className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
@@ -74,15 +74,15 @@ export default function ProfilePage() {
                                                 setIsEditing(false); // Exit editing mode
                                             }}
                                             disabled={saving}
-                                            className="bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                                            className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
                                         >
                                             Cancel
                                         </button></div>
                                 </>
                             ) : (
                                 <div className="flex justify-between items-center w-full group">
-                                    <span className="text-lg font-medium text-slate-900">{profile?.full_name}</span>
-                                    <button onClick={() => setIsEditing(true)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                                    <span className="text-lg font-medium text-slate-900 dark:text-white">{profile?.full_name}</span>
+                                    <button onClick={() => setIsEditing(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500">
                                         <Pencil size={16} />
                                     </button>
                                 </div>
@@ -90,10 +90,10 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200 dark:border-slate-800 transition-colors">
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-slate-400">Email</label>
-                            <div className="flex items-center gap-2 mt-1 text-slate-600 text-sm">
+                            <label className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">Email</label>
+                            <div className="flex items-center gap-2 mt-1 text-slate-600 dark:text-slate-400 text-sm">
                                 <Mail size={14} /> {profile?.email}
                             </div>
                         </div>
@@ -102,15 +102,15 @@ export default function ProfilePage() {
             </div>
 
             {/* SECTION 2: PRIVACY SETTINGS */}
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                <div className="p-4 border-b bg-slate-50/50 flex items-center gap-2 font-semibold text-slate-700">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-300">
                     <ShieldCheck size={18} /> Privacy Settings
                 </div>
                 <div className="p-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                            <label className="text-sm font-medium text-slate-900">Click to Dismiss Screensaver</label>
-                            <p className="text-xs text-slate-500">When enabled, the screensaver will only be dismissed by a click.</p>
+                            <label className="text-sm font-medium text-slate-900 dark:text-white">Click to Dismiss Screensaver</label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">When enabled, the screensaver will only be dismissed by a click.</p>
                         </div>
                         <button
                             onClick={async () => {
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                                 }
                             }}
                             disabled={saving}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${screensaverClickOnly ? 'bg-indigo-600' : 'bg-slate-200'
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${screensaverClickOnly ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-slate-200 dark:bg-slate-800'
                                 }`}
                         >
                             <span
