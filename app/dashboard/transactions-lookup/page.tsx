@@ -49,6 +49,23 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         else { purchases = result.purchases || []; sales = result.sales || []; }
     }
 
+    // 3. Calculate total quantities grouped by custom_id to pass down to Edit modales
+    const customIdTotals: Record<string, number> = {};
+    if (sales.length > 0) {
+        sales.forEach(row => {
+            if (row.custom_id) {
+                customIdTotals[row.custom_id] = (customIdTotals[row.custom_id] || 0) + Number(row.sale_qty);
+            }
+        });
+    }
+    if (purchases.length > 0) {
+        purchases.forEach(row => {
+            if (row.custom_id) {
+                customIdTotals[row.custom_id] = (customIdTotals[row.custom_id] || 0) + Number(row.purchase_qty);
+            }
+        });
+    }
+
     return (
         <div className="p-8 mx-auto space-y-8">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -151,7 +168,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                 <CommentCell comment={row.comments} />
                                             </TableCell>
                                             <TableCell className="px-2">
-                                                <EditTransactionSimple row={row} type="purchase" />
+                                                <EditTransactionSimple row={row} type="purchase" totalQty={row.custom_id ? customIdTotals[row.custom_id] : undefined} />
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -237,7 +254,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                     <CommentCell comment={row.comments} />
                                                 </TableCell>
                                                 <TableCell className="px-2">
-                                                    <EditTransactionSimple row={row} type="sale" />
+                                                    <EditTransactionSimple row={row} type="sale" totalQty={row.custom_id ? customIdTotals[row.custom_id] : undefined} />
                                                 </TableCell>
                                             </TableRow>
                                         );
