@@ -15,6 +15,7 @@ vi.mock('lucide-react', () => ({
     TrendingUp: () => <div data-testid="trending-up-icon" />,
     TrendingDown: () => <div data-testid="trending-down-icon" />,
     Minus: () => <div data-testid="minus-icon" />,
+    MessageCircle: () => <div data-testid="message-circle-icon" />,
 }));
 
 // Mock UI components
