@@ -97,7 +97,7 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
 
     return (
         <aside
-            className={`relative h-screen bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
+            className={`hidden md:flex relative h-screen bg-slate-900 text-slate-300 flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
                 }`}
         >
             {/* FLOATING TOGGLE BUTTON */}

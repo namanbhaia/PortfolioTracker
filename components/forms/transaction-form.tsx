@@ -37,7 +37,7 @@ export function TransactionForm() {
                 </button>
             </div>
 
-            <div className="p-8">
+            <div className="p-4 md:p-8">
                 {activeTab === 'purchase' ? (
                     <PurchaseForm clients={clients} setSuccess={setSuccess} />
                 ) : (
