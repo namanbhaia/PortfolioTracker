@@ -8,9 +8,13 @@ import { bulkLedgerUpdateAction } from '@/lib/actions/admin-bulk-ops';
 import { parse } from 'csv-parse/browser/esm/sync';
 
 const formatCsvDate = (dateStr: string) => {
-    if (!dateStr || !dateStr.includes('-')) return dateStr;
-    const parts = dateStr.split('-');
+    if (!dateStr) return dateStr;
+    // Support both DD/MM/YYYY and DD-MM-YYYY
+    const separator = dateStr.includes('-') ? '-' : dateStr.includes('/') ? '/' : null;
+    if (!separator) return dateStr;
+    const parts = dateStr.split(separator);
     if (parts.length === 3) {
+        // Always return with hyphens for the database (YYYY-MM-DD)
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
     return dateStr;
@@ -79,13 +83,13 @@ export default function BulkSalesAdd() {
                 setProgress(percent);
                 setStatusText(`Processing row ${i + 1} of ${salesToProcess.length}...`);
 
-                const clientName = (row.client_name || row.sale_client_name || row.Client || "").trim();
+                const clientName = (row.client_name || row.sale_client_name || row['Client Name'] || "").trim();
                 const ticker = (row.ticker || row.Symbol || row.Ticker || "").trim();
-                const rawQty = row.sale_qty || row.qty || row.Quantity || row.Units;
+                const rawQty = row.sale_qty || row.qty || row['Sale Quantity'] || row.Units;
                 const saleQtyRequested = parseFloat(String(rawQty || 0).replace(/,/g, ''));
-                const rawRate = row.rate || row.price || row.Rate || row.Price;
+                const rawRate = row.rate || row.price || row['Sale Rate'] || row.Price;
                 const saleRate = parseFloat(String(rawRate || 0).replace(/,/g, ''));
-                const rawDate = row.sale_date || row.date || row.Date;
+                const rawDate = row.sale_date || row.date || row['Sale Date'];
                 const saleDateStr = formatCsvDate(rawDate?.trim());
 
                 if (!ticker || isNaN(saleQtyRequested) || isNaN(saleRate) || !clientName) {
@@ -177,8 +181,8 @@ export default function BulkSalesAdd() {
 
     return (
         <div className="space-y-6">
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors min-h-[250px] flex flex-col justify-between">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors min-h-[250px] flex flex-col justify-between">
+                <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg">
                         <UploadCloud size={24} />
                     </div>
@@ -188,37 +192,37 @@ export default function BulkSalesAdd() {
                     </div>
                 </div>
 
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
-                    <input
-                        type="file"
-                        accept=".csv"
-                        disabled={loading}
-                        onChange={handleFileChange}
-                        className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-rose-900/30 file:text-rose-700 dark:file:text-rose-400 hover:file:bg-rose-100 dark:hover:file:bg-rose-900/50 cursor-pointer transition-all"
-                    />
-                    <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Required: client_name, ticker, sale_qty, sale_rate, sale_date</p>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
+                        <input
+                            type="file"
+                            accept=".csv"
+                            disabled={loading}
+                            onChange={handleFileChange}
+                            className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-rose-900/30 file:text-rose-700 dark:file:text-rose-400 hover:file:bg-rose-100 dark:hover:file:bg-rose-900/50 cursor-pointer transition-all"
+                        />
+                        <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Required: client_name, ticker, sale_qty, sale_rate, sale_date</p>
+                    </div>
+
+                    {loading && (
+                        <div className="animate-in fade-in">
+                            <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                                <span>{statusText}</span>
+                                <span>{progress}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5">
+                                <div className="bg-rose-600 dark:bg-rose-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {successCount !== null && (
+                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
+                            <CheckCircle2 size={18} />
+                            <span>Successfully processed {successCount} sales.</span>
+                        </div>
+                    )}
                 </div>
-
-                {loading && (
-                    <div className="animate-in fade-in">
-                        <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-                            <span>{statusText}</span>
-                            <span>{progress}%</span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5">
-                            <div className="bg-rose-600 dark:bg-rose-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
-                        </div>
-                    </div>
-                )}
-
-                {successCount !== null && (
-                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-sm transition-colors">
-                        <CheckCircle2 size={18} />
-                        <span>Successfully processed {successCount} sales.</span>
-                    </div>
-                )}
-            </div>
             </div>
 
             {shortfalls.length > 0 && (

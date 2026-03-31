@@ -175,8 +175,10 @@ export default function VerificationPage() {
                 ...prev,
                 loading: false,
                 verificationResults: results,
-                isSyncingAssets: missingAssets.length > 0
+                isSyncingAssets: false // missingAssets.length > 0
             }));
+
+            /* Commenting out Yahoo Finance Sync for now 
             if (missingAssets.length > 0) {
                 try {
                     // 1. Get the list of ISINs you are curious about
@@ -222,6 +224,7 @@ export default function VerificationPage() {
                     setViewState(prev => ({ ...prev, isSyncingAssets: false }));
                 }
             }
+            */
         } catch (err: any) {
             setViewState(prev => ({ ...prev, loading: false }));
             alert(err.message);

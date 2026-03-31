@@ -7,9 +7,13 @@ import { parse } from 'csv-parse/browser/esm/sync';
 import { bulkLedgerUpdateAction } from '@/lib/actions/admin-bulk-ops';
 
 const formatCsvDate = (dateStr: string) => {
-    if (!dateStr || !dateStr.includes('-')) return dateStr;
-    const parts = dateStr.split('-');
+    if (!dateStr) return dateStr;
+    // Support both DD/MM/YYYY and DD-MM-YYYY
+    const separator = dateStr.includes('-') ? '-' : dateStr.includes('/') ? '/' : null;
+    if (!separator) return dateStr;
+    const parts = dateStr.split(separator);
     if (parts.length === 3) {
+        // Always return with hyphens for the database (YYYY-MM-DD)
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
     return dateStr;
@@ -42,12 +46,12 @@ export default function BulkPurchaseAdd() {
             if (data.length === 0) throw new Error("CSV is empty.");
 
             const purchasesToInsert = data.map((row: any, idx: number) => {
-                const purchase_qty = parseFloat(String(row.qty || row.Quantity || 0).replace(/,/g, ''));
-                const rate = parseFloat(String(row.rate || row.Price || 0).replace(/,/g, ''));
-                const date = formatCsvDate((row.date || row.Date || "").trim());
+                const purchase_qty = parseFloat(String(row['Purchase Quantity'] || 0).replace(/,/g, ''));
+                const rate = parseFloat(String(row.rate || row['Purchase Rate'] || 0).replace(/,/g, ''));
+                const date = formatCsvDate((row.date || row['Purchase Date'] || "").trim());
                 const ticker = (row.ticker || row.Symbol || "").trim();
-                const client_name = (row.client_name || row.Client || "").trim();
-
+                const client_name = (row.client_name || row['Client Name'] || "").trim();
+               
                 if (!ticker || !client_name || isNaN(purchase_qty) || isNaN(rate) || !date) {
                     throw new Error(`Invalid data at row ${idx + 2}`);
                 }
