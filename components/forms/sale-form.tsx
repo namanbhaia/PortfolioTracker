@@ -279,8 +279,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                     {openPurchases.map((lot: any) => {
                         const pledgedQty = pledgedItems.find(p => p.ticker === lot.ticker)?.pledged_qty || 0;
                         const label = pledgedQty > 0
-                            ? `${lot.ticker} (Avail: ${lot.balance_qty}, Pledged: ${pledgedQty}/${lot.balance_qty})`
-                            : `${lot.ticker} (Avail: ${lot.balance_qty})`;
+                            ? `${lot.ticker} (Avail: ${lot.balance_qty}, Pledged: ${pledgedQty}/${lot.balance_qty}) - ${lot.stock_name}`
+                            : `${lot.ticker} (Avail: ${lot.balance_qty}) - ${lot.stock_name}`;
                         return (
                             <option key={lot.ticker} value={lot.trx_id}>
                                 {label}

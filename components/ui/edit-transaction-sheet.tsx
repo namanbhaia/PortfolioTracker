@@ -90,7 +90,7 @@ export default function EditTransactionSimple({ row, type, totalQty }: { row: an
                         <div className="bg-slate-50/80 dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <div className="space-y-0.5">
                                 <label className="text-[10px] uppercase text-slate-400 dark:text-slate-500 tracking-wider">Asset</label>
-                                <p className="text-slate-700 dark:text-slate-300 font-medium">{row.ticker}</p>
+                                <p className="text-slate-700 dark:text-slate-300 font-medium">{row.ticker} {row.stock_name ? `- ${row.stock_name}` : ''}</p>
                             </div>
                             <div className="text-right">
                                 <input type="hidden" name="ticker" value={row.ticker} />

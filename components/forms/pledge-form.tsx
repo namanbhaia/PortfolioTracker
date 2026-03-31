@@ -46,7 +46,7 @@ export function PledgeForm({ clients }: { clients: any[] }) {
             // Fetch currently pledged
             const { data: pledgeData } = await supabase
                 .from('pledges')
-                .select('ticker, pledged_qty')
+                .select('ticker, pledged_qty, assets(stock_name)')
                 .eq('client_name', selectedClient);
 
             // Aggregate holdings by ticker
@@ -107,7 +107,7 @@ export function PledgeForm({ clients }: { clients: any[] }) {
             // Refresh data
             const { data: pledgeData } = await supabase
                 .from('pledges')
-                .select('ticker, pledged_qty')
+                .select('ticker, pledged_qty, assets(stock_name)')
                 .eq('client_name', selectedClient);
             setPledgedItems(pledgeData || []);
 
@@ -124,11 +124,11 @@ export function PledgeForm({ clients }: { clients: any[] }) {
         ? holdings.map(h => {
             const pledged = pledgedItems.find(p => p.ticker === h.ticker)?.pledged_qty || 0;
             const available = h.balance_qty - pledged;
-            return { ticker: h.ticker, label: `${h.ticker} (Avail: ${available})`, available };
+            return { ticker: h.ticker, label: `${h.ticker} (Avail: ${available}) - ${h.stock_name}`, available };
         }).filter(o => o.available > 0)
         : pledgedItems.map(p => ({
             ticker: p.ticker,
-            label: `${p.ticker} (Pledged: ${p.pledged_qty})`,
+            label: `${p.ticker} (Pledged: ${p.pledged_qty}) - ${p.assets?.stock_name || ''}`,
             available: p.pledged_qty
         }));
 
