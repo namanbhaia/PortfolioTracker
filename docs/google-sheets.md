@@ -44,8 +44,9 @@ GOOGLE_SHEETS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KE
 
 ## 4. Developer Implementation Note
 
-The other developer should use the `googleapis` package to access the data. Here is a recommended utility function:
+The other developer should use the `googleapis` package to access the data and the `rpc` method to update the database.
 
+### Fetching Data (Node.js/Next.js)
 ```typescript
 import { google } from 'googleapis';
 
@@ -61,12 +62,27 @@ export async function getGoogleSheetsData() {
   const sheets = google.sheets({ version: 'v4', auth });
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: 'Sheet1!A:Z', // Adjust sheet name and range as needed
+    range: 'Sheet1!A:Z', 
   });
 
   return response.data.values;
 }
 ```
+
+### Updating the Database (Supabase RPC)
+Once the data is fetched and mapped to match the table columns (e.g., `current_price`, `beta`, `eps`), call the custom SQL function:
+
+```javascript
+const { error } = await supabase.rpc('update_assets_from_sheet', { 
+  payload: mappedSheetData // Array of objects
+});
+```
+
+> [!NOTE]
+> The `update_assets_from_sheet` function is designed to:
+> - **Only update existing tickers** (it will never insert new rows).
+> - **Ignore `#N/A` or blank values** (it will keep the existing DB data for those cells).
+> - **Protect Core Fields**: It will never overwrite `ticker`, `stock_name`, `isin`, or `cutoff`.
 
 > [!IMPORTANT]
 > Keep your JSON key file secure. Do NOT commit it to version control. The `.env.local` file is already ignored by Git in this project.

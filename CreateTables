@@ -474,6 +474,110 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+-- Function: Update Assets from Google Sheet
+-- Purpose: Bulk updates market data from a JSON payload while ignoring identity fields (#N/A or blanks).
+-- Input:   JSONB array of asset objects.
+CREATE OR REPLACE FUNCTION update_assets_from_sheet(payload JSONB)
+RETURNS VOID AS $$
+DECLARE
+    a_record JSONB;
+BEGIN
+    FOR a_record IN SELECT * FROM jsonb_array_elements(payload)
+    LOOP
+        -- Update only if ticker exists
+        UPDATE assets
+        SET 
+            current_price = CASE 
+                WHEN (a_record ->> 'current_price') IS NULL 
+                     OR TRIM(a_record ->> 'current_price') = '' 
+                     OR (a_record ->> 'current_price') = '#N/A' 
+                THEN current_price 
+                ELSE (a_record ->> 'current_price')::NUMERIC 
+            END,
+            beta = CASE 
+                WHEN (a_record ->> 'beta') IS NULL 
+                     OR TRIM(a_record ->> 'beta') = '' 
+                     OR (a_record ->> 'beta') = '#N/A' 
+                THEN beta 
+                ELSE (a_record ->> 'beta')::NUMERIC 
+            END,
+            trailing_pe = CASE 
+                WHEN (a_record ->> 'trailing_pe') IS NULL 
+                     OR TRIM(a_record ->> 'trailing_pe') = '' 
+                     OR (a_record ->> 'trailing_pe') = '#N/A' 
+                THEN trailing_pe 
+                ELSE (a_record ->> 'trailing_pe')::NUMERIC 
+            END,
+            eps = CASE 
+                WHEN (a_record ->> 'eps') IS NULL 
+                     OR TRIM(a_record ->> 'eps') = '' 
+                     OR (a_record ->> 'eps') = '#N/A' 
+                THEN eps 
+                ELSE (a_record ->> 'eps')::NUMERIC 
+            END,
+            today_high = CASE 
+                WHEN (a_record ->> 'today_high') IS NULL 
+                     OR TRIM(a_record ->> 'today_high') = '' 
+                     OR (a_record ->> 'today_high') = '#N/A' 
+                THEN today_high 
+                ELSE (a_record ->> 'today_high')::NUMERIC 
+            END,
+            today_low = CASE 
+                WHEN (a_record ->> 'today_low') IS NULL 
+                     OR TRIM(a_record ->> 'today_low') = '' 
+                     OR (a_record ->> 'today_low') = '#N/A' 
+                THEN today_low 
+                ELSE (a_record ->> 'today_low')::NUMERIC 
+            END,
+            today_open = CASE 
+                WHEN (a_record ->> 'today_open') IS NULL 
+                     OR TRIM(a_record ->> 'today_open') = '' 
+                     OR (a_record ->> 'today_open') = '#N/A' 
+                THEN today_open 
+                ELSE (a_record ->> 'today_open')::NUMERIC 
+            END,
+            fifty_two_week_high = CASE 
+                WHEN (a_record ->> 'fifty_two_week_high') IS NULL 
+                     OR TRIM(a_record ->> 'fifty_two_week_high') = '' 
+                     OR (a_record ->> 'fifty_two_week_high') = '#N/A' 
+                THEN fifty_two_week_high 
+                ELSE (a_record ->> 'fifty_two_week_high')::NUMERIC 
+            END,
+            fifty_two_week_low = CASE 
+                WHEN (a_record ->> 'fifty_two_week_low') IS NULL 
+                     OR TRIM(a_record ->> 'fifty_two_week_low') = '' 
+                     OR (a_record ->> 'fifty_two_week_low') = '#N/A' 
+                THEN fifty_two_week_low 
+                ELSE (a_record ->> 'fifty_two_week_low')::NUMERIC 
+            END,
+            market_cap = CASE 
+                WHEN (a_record ->> 'market_cap') IS NULL 
+                     OR TRIM(a_record ->> 'market_cap') = '' 
+                     OR (a_record ->> 'market_cap') = '#N/A' 
+                THEN market_cap 
+                ELSE (a_record ->> 'market_cap')::BIGINT 
+            END,
+            avg_volume = CASE 
+                WHEN (a_record ->> 'avg_volume') IS NULL 
+                     OR TRIM(a_record ->> 'avg_volume') = '' 
+                     OR (a_record ->> 'avg_volume') = '#N/A' 
+                THEN avg_volume 
+                ELSE (a_record ->> 'avg_volume')::NUMERIC 
+            END,
+            market_volume = CASE 
+                WHEN (a_record ->> 'market_volume') IS NULL 
+                     OR TRIM(a_record ->> 'market_volume') = '' 
+                     OR (a_record ->> 'market_volume') = '#N/A' 
+                THEN market_volume 
+                ELSE (a_record ->> 'market_volume')::NUMERIC 
+            END,
+            last_updated = now()
+        WHERE ticker = UPPER(a_record ->> 'ticker');
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- =========================================================
 -- 6. TRIGGERS
 -- =========================================================
@@ -512,21 +616,14 @@ CREATE TRIGGER on_auth_user_created
 -- 7. SCHEDULED JOBS (EDGE FUNCTIONS)
 -- =========================================================
 
--- Schedule: Update Market Prices
--- Runs every 5 mins, between 3:30 and 10:30 UTC, Mon-Fri
+-- Schedule: Update Market Prices from Google Sheet
+-- India Market Hours: ~8:30 AM to 4:30 PM IST
+-- UTC Conversion: 3 AM to 10 AM UTC
+-- Frequency: Every 5 minutes
 SELECT cron.schedule(
-  'update-market-prices-india-market', 
+  'sync-sheet-market-hours', 
   '*/5 3-10 * * 1-5',                  
-  $$
-  SELECT
-    net.http_post(
-      url:='https://[YOUR_PROJECT_REF].functions.supabase.co/update-prices',
-      headers:='{
-        "Content-Type": "application/json", 
-        "Authorization": "Bearer [YOUR_ANON_KEY]"
-      }'::jsonb
-    );
-  $$
+  $$ SELECT net.http_post(url:='https://[PROJECT].functions.supabase.co/sync-assets-sheet', headers:='{"Authorization": "Bearer [ANON_KEY]"}'::jsonb); $$
 );
 
 -- Schedule: Migrate BSE to NSE Tickers
