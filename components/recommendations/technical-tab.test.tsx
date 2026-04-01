@@ -54,9 +54,7 @@ describe('TechnicalTab', () => {
 
     it('renders technical insights when loaded', async () => {
         const mockSuggestions = {
-            aboveDMA: [{ ticker: 'TCS', stock_name: 'Tata Consultancy', type: 'Above 200 DMA', value: '3500', description: 'Strong trend' }],
-            belowDMA: [],
-            aboveHigh: [],
+            aboveHigh: [{ ticker: 'TCS', stock_name: 'Tata Consultancy', type: 'Above 52W High', value: '3500', description: 'Strong breakout' }],
             belowLow: [],
             highVolume: [],
             lowVolume: [],
@@ -70,13 +68,13 @@ describe('TechnicalTab', () => {
 
         await waitFor(() => {
             expect(screen.getByText('TCS')).toBeDefined();
-            expect(screen.getByText(/Above 200 DMA/i)).toBeDefined();
+            expect(screen.getByText(/Above 52W High/i)).toBeDefined();
         });
     });
 
     it('shows "No Major Signals" when suggestions are empty', async () => {
         const mockSuggestions = {
-            aboveDMA: [], belowDMA: [], aboveHigh: [], belowLow: [], highVolume: [], lowVolume: [], highPE: [], lowPE: []
+            aboveHigh: [], belowLow: [], highVolume: [], lowVolume: [], highPE: [], lowPE: []
         };
         const { getTechnicalSuggestions } = await import('@/lib/actions/suggestions/technical_suggestions');
         (getTechnicalSuggestions as any).mockResolvedValue(mockSuggestions);

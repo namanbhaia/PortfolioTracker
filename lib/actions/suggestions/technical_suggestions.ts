@@ -9,7 +9,7 @@ export interface TechnicalSuggestion {
     ticker: string;
     stock_name: string;
     current_price: number;
-    category: 'DMA' | 'YEARLY_RANGE' | 'VOLUME' | 'VALUATION';
+    category: 'YEARLY_RANGE' | 'VOLUME' | 'VALUATION';
     type: string;
     value: string;
     description: string;
@@ -30,8 +30,6 @@ export interface TechnicalSuggestion {
  * }>} - Categorized technical suggestions.
  */
 export async function getTechnicalSuggestions(holdings: any[]): Promise<{
-    aboveDMA: TechnicalSuggestion[],
-    belowDMA: TechnicalSuggestion[],
     aboveHigh: TechnicalSuggestion[],
     belowLow: TechnicalSuggestion[],
     highVolume: TechnicalSuggestion[],
@@ -44,8 +42,6 @@ export async function getTechnicalSuggestions(holdings: any[]): Promise<{
     // Deduplicate by ticker (multiple purchases of same ticker)
     const uniqueStocks = Array.from(new Map(activeHoldings.map(h => [h.ticker, h])).values());
 
-    const aboveDMA: TechnicalSuggestion[] = [];
-    const belowDMA: TechnicalSuggestion[] = [];
     const aboveHigh: TechnicalSuggestion[] = [];
     const belowLow: TechnicalSuggestion[] = [];
     const highVolume: TechnicalSuggestion[] = [];
@@ -55,8 +51,6 @@ export async function getTechnicalSuggestions(holdings: any[]): Promise<{
 
     for (const h of uniqueStocks) {
         const price = Number(h.current_price || h.market_rate);
-        const ma50 = Number(h.fifty_day_avg);
-        const ma200 = Number(h.two_hundred_day_avg);
         const high52 = Number(h.fifty_two_week_high);
         const low52 = Number(h.fifty_two_week_low);
         const vol = Number(h.market_volume);
@@ -64,32 +58,6 @@ export async function getTechnicalSuggestions(holdings: any[]): Promise<{
         const pe = Number(h.trailing_pe);
 
         if (!price) continue;
-
-        // 1. Above 50 and 200 days DMA
-        if (ma50 && ma200 && price > ma50 && price > ma200) {
-            aboveDMA.push({
-                ticker: h.ticker,
-                stock_name: h.stock_name,
-                current_price: price,
-                category: 'DMA',
-                type: 'Above 50 & 200 DMA',
-                value: `Price: ${price.toFixed(2)}`,
-                description: `Bullish trend: Price is above both 50-day (${ma50.toFixed(2)}) and 200-day (${ma200.toFixed(2)}) moving averages.`
-            });
-        }
-
-        // 3. Below 50 and 200 days DMA
-        if (ma50 && ma200 && price < ma50 && price < ma200) {
-            belowDMA.push({
-                ticker: h.ticker,
-                stock_name: h.stock_name,
-                current_price: price,
-                category: 'DMA',
-                type: 'Below 50 & 200 DMA',
-                value: `Price: ${price.toFixed(2)}`,
-                description: `Bearish trend: Price is below both 50-day (${ma50.toFixed(2)}) and 200-day (${ma200.toFixed(2)}) moving averages.`
-            });
-        }
 
         // 2. Above yearly high (or very close to it)
         if (high52 && price >= high52 * 0.99) {
@@ -173,8 +141,6 @@ export async function getTechnicalSuggestions(holdings: any[]): Promise<{
     }
 
     return {
-        aboveDMA,
-        belowDMA,
         aboveHigh,
         belowLow,
         highVolume,

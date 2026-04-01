@@ -48,7 +48,6 @@ export default function TechnicalTab({ holdings }: { holdings: any[] }) {
     if (!suggestions) return null;
 
     const sections = [
-        { id: 'dma', title: 'Moving Averages', icon: Activity, data: [...suggestions.aboveDMA, ...suggestions.belowDMA] },
         { id: 'yearly', title: '52-Week Range', icon: TrendingUp, data: [...suggestions.aboveHigh, ...suggestions.belowLow] },
         { id: 'volume', title: 'Volume Insights', icon: BarChart3, data: [...suggestions.highVolume, ...suggestions.lowVolume] },
         { id: 'pe', title: 'Valuation (P/E)', icon: Scale, data: [...suggestions.highPE, ...suggestions.lowPE] },

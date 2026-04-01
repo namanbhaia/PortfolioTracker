@@ -23,7 +23,9 @@ describe('ConsolidatedHoldingsTable', () => {
             pl_percent: 4,
             beta: 1.1,
             trailing_pe: 25,
-            dividend_yield: 1.5
+            eps: 120.5,
+            today_high: 2610,
+            today_low: 2580
         }
     ];
 

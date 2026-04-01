@@ -64,7 +64,10 @@ export default function DashboardClientWrapper({
                     total_pledged: 0,
                     beta: curr.beta,
                     trailing_pe: curr.trailing_pe,
-                    dividend_yield: curr.dividend_yield,
+                    today_high: curr.today_high,
+                    today_low: curr.today_low,
+                    today_open: curr.today_open,
+                    eps: curr.eps,
                 };
             }
 

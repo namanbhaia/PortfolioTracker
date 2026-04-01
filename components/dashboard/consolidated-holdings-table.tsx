@@ -14,7 +14,8 @@ export const consolidated_columns = [
     { id: 'total_market_value', label: 'Market Val' },
     { id: 'beta', label: 'Beta' },
     { id: 'trailing_pe', label: 'P/E' },
-    { id: 'dividend_yield', label: 'Yield %' },
+    { id: 'eps', label: 'EPS' },
+    { id: 'today_range', label: 'Day Range' },
     { id: 'pl', label: 'P/L' },
 ];
 
@@ -24,7 +25,7 @@ export const consolidated_columns = [
  */
 
 type SortConfig = {
-    key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'dividend_yield';
+    key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'eps';
     direction: 'asc' | 'desc';
 } | null;
 
@@ -61,7 +62,7 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows, isVisible 
         return sortableItems;
     }, [consolidatedRows, sortConfig]);
 
-    const requestSort = (key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'dividend_yield') => {
+    const requestSort = (key: 'ticker' | 'stock_name' | 'total_market_value' | 'pl' | 'pl_percent' | 'total_pledged' | 'beta' | 'trailing_pe' | 'eps') => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
             direction = 'desc';
@@ -114,11 +115,12 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows, isVisible 
                                     <div className="flex items-center justify-end">P/E <SortIcon column="trailing_pe" /></div>
                                 </th>
                             )}
-                            {isVisible('dividend_yield') && (
-                                <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => requestSort('dividend_yield')}>
-                                    <div className="flex items-center justify-end">Yield % <SortIcon column="dividend_yield" /></div>
+                            {isVisible('eps') && (
+                                <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => requestSort('eps')}>
+                                    <div className="flex items-center justify-end">EPS <SortIcon column="eps" /></div>
                                 </th>
                             )}
+                            {isVisible('today_range') && <th className="px-4 py-4 text-right transition-colors">Day Range</th>}
                             {isVisible('pl') && (
                                 <th className="px-4 py-4 text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => requestSort('pl')}>
                                     <div className="flex items-center justify-end">P/L <SortIcon column="pl" /></div>
@@ -143,7 +145,12 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows, isVisible 
                                 {isVisible('total_market_value') && <td className="px-4 py-4 text-right font-bold text-slate-900 dark:text-white">₹{row.total_market_value.toLocaleString('en-IN')}</td>}
                                 {isVisible('beta') && <td className="px-4 py-4 text-right font-mono text-slate-500 dark:text-slate-400">{row.beta?.toFixed(2) || '-'}</td>}
                                 {isVisible('trailing_pe') && <td className="px-4 py-4 text-right font-mono text-slate-500 dark:text-slate-400">{row.trailing_pe?.toFixed(2) || '-'}</td>}
-                                {isVisible('dividend_yield') && <td className="px-4 py-4 text-right font-mono text-indigo-600 dark:text-indigo-400 font-semibold">{row.dividend_yield ? `${row.dividend_yield.toFixed(2)}%` : '-'}</td>}
+                                {isVisible('eps') && <td className="px-4 py-4 text-right font-mono text-indigo-600 dark:text-indigo-400 font-semibold">{row.eps?.toFixed(2) || '-'}</td>}
+                                {isVisible('today_range') && (
+                                    <td className="px-4 py-4 text-right font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                                        {row.today_low && row.today_high ? `₹${row.today_low.toFixed(1)} - ${row.today_high.toFixed(1)}` : '-'}
+                                    </td>
+                                )}
                                 {isVisible('pl') && (
                                     <td className={`px-4 py-4 text-right font-bold ${row.pl >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                         ₹{row.pl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}

@@ -147,7 +147,7 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
             ticker: h.ticker,
             stock_name: h.stock_name,
             pe: Number(h.trailing_pe || 0),
-            yield: Number(h.dividend_yield || 0),
+            eps: Number(h.eps || 0),
             size: Math.sqrt(Number(h.market_value)) / 50
         })), [activeHoldings]);
 
@@ -324,16 +324,16 @@ export default function GraphsTab({ holdings }: GraphsTabProps) {
                     <CardHeader className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 p-6 transition-colors">
                         <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white transition-colors">
                             <ShieldAlert className="w-5 h-5 text-amber-600" />
-                            Value vs. Income
+                            Value vs. Performance
                         </CardTitle>
-                        <CardDescription className="dark:text-slate-400 transition-colors">Spotting the high-yield, low-PE bargains.</CardDescription>
+                        <CardDescription className="dark:text-slate-400 transition-colors">Spotting the high-EPS, low-PE bargains.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[450px] p-6">
                         <ResponsiveContainer width="100%" height="100%">
                             <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-slate-800 transition-colors" />
                                 <XAxis type="number" dataKey="pe" name="P/E" domain={[0, 'auto']} tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
-                                <YAxis type="number" dataKey="yield" name="Yield" unit="%" tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
+                                <YAxis type="number" dataKey="eps" name="EPS" tick={{fill: 'currentColor'}} className="text-slate-500 dark:text-slate-400 transition-colors" />
                                 <ZAxis type="number" dataKey="size" range={[60, 600]} />
                                 <Tooltip content={<CustomScatterTooltip />} cursor={{ strokeDasharray: '3 3' }} />
                                 <ReferenceLine x={avgPE} stroke="#f59e0b" strokeDasharray="5 5" label={{ value: 'Avg P/E', position: 'top', fill: '#f59e0b', fontSize: 12 }} />
