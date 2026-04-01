@@ -87,22 +87,22 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
             .maybeSingle();
 
         if (!existingAsset) {
-            const res = await getStockInformation(data.ticker);
+            // const res = await getStockInformation(data.ticker);
 
-            if (res.success && res.suggestion) {
-                setPendingAsset({
-                    ticker: res.suggestion.ticker,
-                    name: String(res.suggestion.name || ""),
-                    price: Number(res.suggestion.price || 0)
-                });
-            } else {
-                // Fallback: If YF fails, we still open the modal but with empty fields
-                setPendingAsset({
-                    ticker: data.ticker.toUpperCase(),
-                    name: "", // User will fill this in
-                    price: 0  // User will fill this in
-                });
-            }
+            // if (res.success && res.suggestion) {
+            //     setPendingAsset({
+            //         ticker: res.suggestion.ticker,
+            //         name: String(res.suggestion.name || ""),
+            //         price: Number(res.suggestion.price || 0)
+            //     });
+            // } else {
+            // Fallback: If YF fails, we still open the modal but with empty fields
+            setPendingAsset({
+                ticker: data.ticker.toUpperCase(),
+                name: "", // User will fill this in
+                price: 0  // User will fill this in
+            });
+            // }
             setShowAssetModal(true);
             setLoading(false);
             return;
