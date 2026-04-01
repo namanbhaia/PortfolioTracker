@@ -51,11 +51,10 @@ CREATE TABLE assets (
     current_price NUMERIC DEFAULT 0,
     beta NUMERIC,
     trailing_pe NUMERIC,
-    forward_pe NUMERIC,
-    peg_ratio NUMERIC,
-    dividend_yield NUMERIC,
-    fifty_day_avg NUMERIC,
-    two_hundred_day_avg NUMERIC,
+    eps NUMERIC,
+    today_high NUMERIC,
+    today_low NUMERIC,
+    today_open NUMERIC,
     fifty_two_week_high NUMERIC,
     fifty_two_week_low NUMERIC,
     market_cap BIGINT,
@@ -154,10 +153,11 @@ SELECT
     a.current_price AS market_rate,
     a.beta,
     a.trailing_pe,
-    a.dividend_yield,
+    a.eps,
+    a.today_high,
+    a.today_low,
+    a.today_open,
     a.market_cap,
-    a.fifty_day_avg,
-    a.two_hundred_day_avg,
     a.fifty_two_week_high,
     a.fifty_two_week_low,
     a.market_volume,
@@ -252,7 +252,7 @@ BEGIN
     LOOP
         INSERT INTO assets (
             ticker, stock_name, isin, current_price, beta, trailing_pe, 
-            dividend_yield, market_cap, last_updated
+            eps, today_open, today_high, today_low, market_cap, last_updated
         )
         VALUES (
             (a_record ->> 'ticker'),
@@ -261,7 +261,10 @@ BEGIN
             COALESCE((a_record ->> 'current_price')::NUMERIC, 0),
             (a_record ->> 'beta')::NUMERIC,
             (a_record ->> 'trailing_pe')::NUMERIC,
-            (a_record ->> 'dividend_yield')::NUMERIC,
+            (a_record ->> 'eps')::NUMERIC,
+            (a_record ->> 'today_open')::NUMERIC,
+            (a_record ->> 'today_high')::NUMERIC,
+            (a_record ->> 'today_low')::NUMERIC,
             (a_record ->> 'market_cap')::BIGINT,
             now()
         )
@@ -272,7 +275,10 @@ BEGIN
             current_price = CASE WHEN EXCLUDED.current_price > 0 THEN EXCLUDED.current_price ELSE assets.current_price END,
             beta = EXCLUDED.beta,
             trailing_pe = EXCLUDED.trailing_pe,
-            dividend_yield = EXCLUDED.dividend_yield,
+            eps = EXCLUDED.eps,
+            today_open = EXCLUDED.today_open,
+            today_high = EXCLUDED.today_high,
+            today_low = EXCLUDED.today_low,
             market_cap = EXCLUDED.market_cap,
             last_updated = now();
     END LOOP;
