@@ -1,6 +1,6 @@
 "use server"
 
-import YahooFinance from 'yahoo-finance2';
+// import YahooFinance from 'yahoo-finance2';
 
 /**
  * @file statistical_suggestions.ts
