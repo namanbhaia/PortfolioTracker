@@ -5,6 +5,7 @@ import { Users } from "lucide-react";
 import { ClientMultiSelect } from "@/components/ui/client-filter";
 import ConsolidatedHoldingsTable, { consolidated_columns } from "@/components/dashboard/consolidated-holdings-table";
 import { RefreshButton } from "@/components/ui/refresh-button";
+import { SyncPricesButton } from "@/components/ui/sync-prices-button";
 import SummaryCards from "@/components/ui/summary-cards";
 import { useColumnVisibility } from '@/hooks/use-column-visibility';
 import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
@@ -143,6 +144,7 @@ export default function DashboardClientWrapper({
                         visibleColumns={visibleColumns}
                         onToggle={toggleColumn}
                     />
+                    <SyncPricesButton />
                     <RefreshButton />
                     <div className="w-full md:w-48">
                         <ClientMultiSelect
