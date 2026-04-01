@@ -144,6 +144,21 @@ const SECTIONS = [
                 "Collateral Management: Track margin availability by pledging or unpledging shares against total holdings."
             ]
         }
+    },
+    {
+        id: 'sheets',
+        label: 'Google Sheets',
+        icon: <BookOpen size={18} />,
+        color: 'bg-green-600',
+        content: {
+            title: "Live Cloud Integration",
+            subtitle: "Automatically pull and sync asset metadata from your master Google Sheet.",
+            details: [
+                "Collaborative Maintenance: Multiple users can update the master sheet simultaneously while the app handles the heavy lifting.",
+                "Real-Time Sync: The platform is architected to fetch the latest values from the cloud for consistent data across devices.",
+                "Centralized Logic: Manage complex formulas and asset mappings in a familiar spreadsheet interface for maximum flexibility."
+            ]
+        }
     }
 ];
 

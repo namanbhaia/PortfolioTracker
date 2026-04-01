@@ -16,6 +16,7 @@ Detailed documentation is available in the [docs/](file:///c:/Users/naman/source
 - [**Core Features**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/features.md): FIFO logic, P/L metrics (Adjusted, LT/ST), Pledging, and CSV Verification.
 - [**System Architecture**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/architecture.md): Code structure, data flow, and authentication.
 - [**Database Schema**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/database.md): Table relationships, calculated views, and RLS policies.
+- [**Google Sheets Sync**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/google-sheets.md): How to configure Sheets API and environment variables.
 
 ---
 
