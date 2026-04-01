@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { UserProvider } from '@/components/helper/user-context'
 import Screensaver from '@/components/dashboard/screensaver';
+import { LoadingProvider } from '@/components/helper/loading-context';
+import { Suspense } from 'react';
 
 /**
  * Dashboard Layout component that provides authentication and context for all dashboard pages.
@@ -44,23 +46,26 @@ export default async function DashboardLayout({
             initialProfile={profile}
             initialClients={clients || []
             }>
+            <Suspense fallback={null}>
+                <LoadingProvider>
+                    <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+                        <Screensaver idleTimeout={300000} /> {/* 10 Minutes */}
+                        
+                        {/* Mobile Navigation */}
+                        <MobileNav user={user} profile={profile} />
 
-            <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
-                <Screensaver idleTimeout={300000} /> {/* 10 Minutes */}
-                
-                {/* Mobile Navigation */}
-                <MobileNav user={user} profile={profile} />
+                        {/* 3. Pass data to Sidebar (Desktop) */}
+                        <Sidebar user={user} profile={profile} />
 
-                {/* 3. Pass data to Sidebar (Desktop) */}
-                <Sidebar user={user} profile={profile} />
-
-                {/* Main Content Area */}
-                <main className="flex-1 overflow-y-auto relative pt-14 md:pt-0">
-                    <div className="min-h-full">
-                        {children}
+                        {/* Main Content Area */}
+                        <main className="flex-1 overflow-y-auto relative pt-14 md:pt-0">
+                            <div className="min-h-full">
+                                {children}
+                            </div>
+                        </main>
                     </div>
-                </main>
-            </div>
+                </LoadingProvider>
+            </Suspense>
         </UserProvider>
     );
 }

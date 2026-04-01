@@ -38,6 +38,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLoading } from '@/components/helper/loading-context';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -72,6 +73,7 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
     const pathname = usePathname();
     const router = useRouter();
     const supabase = createClient();
+    const { setIsLoading } = useLoading();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     // Only set mounted to true after the initial render
@@ -153,6 +155,9 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                             key={item.name}
                             href={item.href}
                             title={isCollapsed ? item.name : ""}
+                            onClick={() => {
+                                if (pathname !== item.href) setIsLoading(true);
+                            }}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${isActive
                                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                                 : 'hover:bg-slate-800 hover:text-slate-100'
@@ -174,6 +179,9 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                     <Link
                         key={item.name}
                         href={item.href}
+                        onClick={() => {
+                            if (pathname !== item.href) setIsLoading(true);
+                        }}
                         className="flex items-center gap-3 px-3 py-2 text-sm font-medium hover:text-slate-100 transition-colors group"
                     >
                         <item.icon size={18} className="shrink-0 text-slate-500 group-hover:text-slate-300" />
@@ -196,6 +204,9 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                onClick={() => {
+                                    if (pathname !== item.href) setIsLoading(true);
+                                }}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${isActive
                                     ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
                                     : 'hover:bg-slate-800 hover:text-slate-100'
@@ -235,7 +246,13 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                         align={isCollapsed ? "start" : "center"}
                     >
                         <DropdownMenuItem asChild>
-                            <Link href="/dashboard/profile" className="cursor-pointer flex items-center gap-2">
+                            <Link 
+                                href="/dashboard/profile" 
+                                className="cursor-pointer flex items-center gap-2"
+                                onClick={() => {
+                                    if (pathname !== '/dashboard/profile') setIsLoading(true);
+                                }}
+                            >
                                 <User size={16} />
                                 <span>Profile Settings</span>
                             </Link>
