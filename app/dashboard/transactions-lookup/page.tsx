@@ -103,7 +103,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                     <form className="relative w-full">
                         <Input
                             name="trx_id"
-                            placeholder="Direct UUID Lookup..."
+                            placeholder="Transaction ID Lookup"
+                            autoComplete="off"
                             defaultValue={resolvedParams.trx_id || ''}
                             className="pr-10 pl-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white shadow-sm rounded-xl h-[58px] transition-colors" // Matches height of filter bar
                         />
@@ -130,7 +131,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                         <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2"><ArrowDownToLine size={16} /> Purchase Records</h2>
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                             <Table className="w-full text-xs text-left border-collapse">
-                                <TableHeader className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 uppercase text-gray-600 dark:text-slate-400 font-semibold transition-colors">
+                                <TableHeader className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 uppercase text-gray-600 dark:text-slate-400 font-semibold transition-colors sticky top-0 z-10">
                                     <TableRow>
                                         <TableHead className="px-3 py-3 w-16">ID</TableHead>
                                         <TableHead className="px-3 py-3 w-16">Client Name</TableHead>
@@ -182,7 +183,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                         <h2 className="text-sm font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest flex items-center gap-2 transition-colors"><ArrowUpFromLine size={16} /> Sale Records</h2>
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto transition-colors">
                             <Table className="min-w-[1400px]">
-                                <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                                <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 transition-colors sticky top-0 z-10">
                                     <TableRow className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
                                         <TableHead className="px-4">ID</TableHead>
                                         <TableHead className="px-4">Custom ID</TableHead>

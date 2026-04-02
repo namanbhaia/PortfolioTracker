@@ -146,7 +146,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
 
         const formData = new FormData(e.currentTarget);
         const priceValue = formData.get("price");
-        const isinValue = formData.get("isin")?.toString().trim();
+        const isinValue = formData.get("isin")?.toString().trim().toUpperCase();
 
         // 1. Mandate Check
         if (!priceValue || parseFloat(priceValue.toString()) <= 0) {
@@ -210,7 +210,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Ticker</label>
-                        <input {...register("ticker", { required: true })} required autoComplete="off" placeholder="Ticker" className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg dark:text-white dark:placeholder-slate-500 transition-colors" />
+                        <input {...register("ticker", { required: true })} required autoComplete="off" placeholder="Ticker" className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg dark:text-white dark:placeholder-slate-500 transition-colors uppercase" />
                     </div>
                 </div>
 
@@ -223,6 +223,8 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                             placeholder="DP ID"
                             className="w-full p-2.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:placeholder-slate-600 cursor-not-allowed transition-colors"
                             readOnly
+                            tabIndex={-1}
+                            autoComplete="off"
                             data-testid="dp-id-input"
                         />
                     </div>
@@ -234,6 +236,8 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                             placeholder="Trading ID"
                             className="w-full p-2.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:placeholder-slate-600 cursor-not-allowed transition-colors"
                             readOnly
+                            tabIndex={-1}
+                            autoComplete="off"
                             data-testid="trading-id-input"
                         />
                     </div>
@@ -359,8 +363,9 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                                 <input
                                     name="isin"
                                     required
+                                    autoComplete="off"
                                     placeholder="e.g. INE002A01018"
-                                    className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 ring-indigo-500 outline-none transition-all text-sm dark:text-white dark:placeholder-slate-500"
+                                    className="uppercase w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 ring-indigo-500 outline-none transition-all text-sm dark:text-white dark:placeholder-slate-500"
                                 />
                             </div>
 

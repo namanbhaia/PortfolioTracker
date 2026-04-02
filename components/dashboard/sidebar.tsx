@@ -29,7 +29,6 @@ import {
     Moon,
     Sun
 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { createClient } from '@/lib/supabase/client';
 import {
     DropdownMenu,
@@ -39,6 +38,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLoading } from '@/components/helper/loading-context';
+import { useUser } from '@/components/helper/user-context';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -74,7 +74,14 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
     const router = useRouter();
     const supabase = createClient();
     const { setIsLoading } = useLoading();
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { autoFoldSidebar } = useUser();
+    const [isManuallyToggled, setIsManuallyToggled] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+
+    // If auto-fold is enabled, the toggle pins it open. Otherwise, the toggle pins it closed.
+    const isCollapsed = autoFoldSidebar 
+        ? (!isHovered && !isManuallyToggled) 
+        : isManuallyToggled;
 
     // Only set mounted to true after the initial render
     useEffect(() => {
@@ -99,22 +106,19 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
 
     return (
         <aside
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             className={`hidden md:flex relative h-screen bg-slate-900 text-slate-300 flex-col border-r border-slate-800 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'
                 }`}
         >
             {/* FLOATING TOGGLE BUTTON */}
             <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
+                onClick={() => setIsManuallyToggled(!isManuallyToggled)}
                 className="absolute -right-3 top-10 z-50 bg-indigo-600 text-white rounded-full p-1 border-2 border-slate-900 hover:bg-indigo-500 transition-all shadow-xl hover:scale-110 active:scale-95"
                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
-
-            {/* THEME TOGGLE (FLOATING NEAR COLLAPSE) */}
-            <div className={`absolute z-50 transition-all duration-300 ${isCollapsed ? 'top-20 right-5' : 'top-20 right-4'}`}>
-                <ThemeToggle />
-            </div>
 
             {/* Brand Logo Section */}
 

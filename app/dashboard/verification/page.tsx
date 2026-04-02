@@ -22,6 +22,13 @@ export default function VerificationPage() {
         verificationResults: {} as Record<string, VerificationResult>
     });
     const [selectedClientKey, setSelectedClientKey] = useState<string>("");
+    const [fileKey, setFileKey] = useState(Date.now());
+
+    const handleReset = () => {
+        setViewState({ loading: false, isSyncingAssets: false, verificationResults: {} });
+        setSelectedClientKey("");
+        setFileKey(Date.now());
+    };
 
     const handleMissingAssetsBatch = async (discrepancies: DiscrepancyRow[]) => {
         const uniqueMissing = discrepancies.filter((v, i, a) =>
@@ -255,6 +262,7 @@ export default function VerificationPage() {
                     <p className="text-sm text-slate-400 dark:text-slate-500">Expected columns: dp_id, client_name, ticker, isin, name, balance</p>
                 </div>
                 <input
+                    key={fileKey}
                     type="file"
                     accept=".csv"
                     onChange={handleFileUpload}
@@ -266,6 +274,14 @@ export default function VerificationPage() {
                         hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/70 transition-all
                     "
                 />
+                {Object.keys(viewState.verificationResults).length > 0 && (
+                    <button
+                        onClick={handleReset}
+                        className="mt-2 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 underline transition-colors"
+                    >
+                        Remove Upload / Start Over
+                    </button>
+                )}
                 {viewState.loading && <p className="text-sm text-indigo-600 animate-pulse">Processing & Verifying...</p>}
             </div>
 

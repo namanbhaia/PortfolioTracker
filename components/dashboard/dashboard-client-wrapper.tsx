@@ -166,15 +166,15 @@ export default function DashboardClientWrapper({
             />
 
             {/* CONSOLIDATED HOLDINGS TABLE */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center rounded-t-2xl">
                     <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm uppercase tracking-wider">Union of Family Holdings</h3>
                     <span className="text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-md">
                         {consolidatedRows.length} TICKERS
                     </span>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="relative">
                     <ConsolidatedHoldingsTable
                         consolidatedRows={consolidatedRows || []}
                         isVisible={isVisible}

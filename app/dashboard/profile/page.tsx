@@ -4,12 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Check, Pencil, Loader2, ShieldCheck } from 'lucide-react';
 import { updateProfileName } from '@/lib/actions/update-profile-name';
 import { updateScreensaverPreference } from '@/lib/actions/update-screensaver-preference';
+import { updateProfilePreferences } from '@/lib/actions/update-profile-preferences';
+import { useTheme } from 'next-themes';
 import ProfileClientsTable from '@/components/dashboard/profile-clients-table';
 import { useUser } from '@/components/helper/user-context';
 
 export default function ProfilePage() {
     // 1. Consume data from the central context
-    const { profile, clients, screensaverClickOnly, setScreensaverClickOnly, loading } = useUser();
+    const { profile, clients, screensaverClickOnly, setScreensaverClickOnly, autoFoldSidebar, setAutoFoldSidebar, themePreference, setThemePreference, loading } = useUser();
+    const { setTheme } = useTheme();
 
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -134,6 +137,72 @@ export default function ProfilePage() {
                                     }`}
                             />
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* SECTION 3: APPEARANCE & BEHAVIOR */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-300">
+                    <ShieldCheck size={18} /> Appearance & Behavior
+                </div>
+                <div className="p-6 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <label className="text-sm font-medium text-slate-900 dark:text-white">Auto-Fold Sidebar</label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">When enabled, the side profile will automatically minimize to save screen space.</p>
+                        </div>
+                        <button
+                            onClick={async () => {
+                                setSaving(true);
+                                try {
+                                    const nextValue = !autoFoldSidebar;
+                                    await updateProfilePreferences({ auto_fold_sidebar: nextValue });
+                                    setAutoFoldSidebar(nextValue);
+                                } catch (e) {
+                                    alert("Error updating preference");
+                                } finally {
+                                    setSaving(false);
+                                }
+                            }}
+                            disabled={saving}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${autoFoldSidebar ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-slate-200 dark:bg-slate-800'
+                                }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${autoFoldSidebar ? 'translate-x-6' : 'translate-x-1'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <label className="text-sm font-medium text-slate-900 dark:text-white">Theme Preference</label>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Choose between light, dark, or system default.</p>
+                        </div>
+                        <select
+                            value={themePreference || 'system'}
+                            onChange={async (e) => {
+                                const nextValue = e.target.value;
+                                setSaving(true);
+                                try {
+                                    await updateProfilePreferences({ theme_preference: nextValue });
+                                    setThemePreference(nextValue);
+                                    setTheme(nextValue);
+                                } catch (err) {
+                                    alert("Error updating preference");
+                                } finally {
+                                    setSaving(false);
+                                }
+                            }}
+                            disabled={saving}
+                            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm dark:text-white transition-colors"
+                        >
+                            <option value="system">System</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
                     </div>
                 </div>
             </div>
