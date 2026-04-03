@@ -101,11 +101,26 @@ export default function BulkSalesAdd() {
                 const cutoffPrice = rateMap.get(ticker) || 0;
                 const sharedCustomId = `SALE-${currentLocalId.toString().padStart(4, '0')}`;
 
+                const saleDateOnlyInner = new Date(saleDateStr).toISOString().split('T')[0];
+
                 let availableLots = localPurchases.filter(p =>
                     p.client_name?.trim().toLowerCase() === clientName.toLowerCase() &&
                     p.ticker?.trim().toLowerCase() === ticker.toLowerCase() &&
-                    p.balance_qty > 0
+                    p.balance_qty > 0 &&
+                    new Date(p.date) <= new Date(saleDateStr)
                 );
+
+                const bulkSameDayPurchases = availableLots.filter(p => {
+                    const pDateOnly = new Date(p.date).toISOString().split('T')[0];
+                    return pDateOnly === saleDateOnlyInner;
+                });
+
+                const bulkOtherPurchases = availableLots.filter(p => {
+                    const pDateOnly = new Date(p.date).toISOString().split('T')[0];
+                    return pDateOnly !== saleDateOnlyInner;
+                });
+
+                availableLots = [...bulkSameDayPurchases, ...bulkOtherPurchases];
 
                 let remainingQty = saleQtyRequested;
 

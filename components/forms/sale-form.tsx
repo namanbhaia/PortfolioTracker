@@ -131,7 +131,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             ]);
 
             // 4. Fetch active lots from 'purchases' table directly
-            const { data: lots, error: fetchError } = await supabase
+            const { data: fetchLots, error: fetchError } = await supabase
                 .from('purchases')
                 .select('*')
                 .eq('client_name', clientName)
@@ -142,8 +142,25 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             if (fetchError) throw fetchError;
 
+            // Filter out lots strictly after the sale date
+            let lots = (fetchLots || []).filter((lot: any) => new Date(lot.date) <= new Date(saleDateStr));
+
+            const saleDateOnly = new Date(saleDateStr).toISOString().split('T')[0];
+
+            const sameDayPurchases = lots.filter((lot: any) => {
+                const lotDateOnly = new Date(lot.date).toISOString().split('T')[0];
+                return lotDateOnly === saleDateOnly;
+            });
+
+            const otherPurchases = lots.filter((lot: any) => {
+                const lotDateOnly = new Date(lot.date).toISOString().split('T')[0];
+                return lotDateOnly !== saleDateOnly;
+            });
+
+            lots = [...sameDayPurchases, ...otherPurchases];
+
             // 5. Cumulative Validation
-            const totalAvailable = (lots || []).reduce((sum, lot) => sum + Number(lot.balance_qty), 0);
+            const totalAvailable = lots.reduce((sum: number, lot: any) => sum + Number(lot.balance_qty), 0);
             if (totalAvailable < saleQtyRequested) {
                 setFormError(`Insufficient stock for ${tickerName}. Total available: ${totalAvailable}`);
                 setLoading(false);

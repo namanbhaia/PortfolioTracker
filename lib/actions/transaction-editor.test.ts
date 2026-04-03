@@ -397,4 +397,42 @@ describe('TransactionEditor', () => {
         expect(payload.sales_to_update[0].rate).toBe(160);
         expect(payload.sales_to_update[0].profit_stored).toBe(600); // (160 - 100) * 10
     });
+
+    it('Scenario: Same-day purchase takes precedence over older purchase in FIFO processing', async () => {
+        const clientName = 'TestClient';
+        const ticker = 'RELIANCE';
+        const saleId = 'SALE-1';
+
+        // 1. Initial State Mocks
+        // p1 is an older purchase. p2 is on the exact same day as the sale date.
+        const p1 = { trx_id: 'p1', date: '2023-01-01', rate: 100, purchase_qty: 10, balance_qty: 0, sale_ids: ['s1-1'], ticker, created_at: '2023-01-01T10:00:00Z' };
+        const p2 = { trx_id: 'p2', date: '2023-02-01', rate: 110, purchase_qty: 10, balance_qty: 0, sale_ids: ['s1-2'], ticker, created_at: '2023-02-01T10:00:00Z' };
+
+        // mock older state of sales returning 10 qty to each
+        const s1_1 = { trx_id: 's1-1', custom_id: saleId, date: '2023-02-01', sale_qty: 10, rate: 150, purchase_trx_id: 'p1', purchases: p1 };
+        const s1_2 = { trx_id: 's1-2', custom_id: saleId, date: '2023-02-01', sale_qty: 10, rate: 150, purchase_trx_id: 'p2', purchases: p2 };
+
+        vi.mocked(repo.fetchSingleSaleByCustomId).mockResolvedValue(s1_1 as any);
+        vi.mocked(repo.fetchSalesByDate).mockResolvedValue([s1_1, s1_2] as any);
+        vi.mocked(repo.fetchPurchasesByDate).mockResolvedValue([p1, p2] as any);
+        vi.mocked(repo.getGrandfatheredRate).mockResolvedValue(null);
+
+        // Edit sale amount on 2023-02-01 mapping to 'p2' first
+        await editor.editSaleQty(saleId, 10, clientName, ticker, '2023-02-01');
+
+        expect(repo.atomicLedgerUpdate).toHaveBeenCalled();
+        const payload = vi.mocked(repo.atomicLedgerUpdate).mock.calls[0][0];
+
+        // Should only insert 1 split because total requested is 10, and p2 has 10 balance.
+        expect(payload.sales_to_insert).toHaveLength(1);
+        expect(payload.sales_to_insert[0].sale_qty).toBe(10);
+        // CRITICAL CHECK: Did it map to p2 (same day) instead of p1 (older)?
+        expect(payload.sales_to_insert[0].purchase_trx_id).toBe('p2');
+
+        const p1Update = payload.purchases_to_update.find((p: any) => p.trx_id === 'p1');
+        const p2Update = payload.purchases_to_update.find((p: any) => p.trx_id === 'p2');
+        
+        expect(p1Update.balance_qty).toBe(10); // Unused
+        expect(p2Update.balance_qty).toBe(0); // Fully consumed
+    });
 });

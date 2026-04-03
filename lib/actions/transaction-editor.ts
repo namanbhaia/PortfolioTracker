@@ -302,9 +302,23 @@ export class TransactionEditor {
     for (const order of sortedOrders) {
       let qtyRemaining = order.sale_qty;
 
-      const eligiblePurchases = purchases.filter(p =>
+      let eligiblePurchases = purchases.filter(p =>
         (p.balance_qty > 0) && (new Date(p.date) <= new Date(order.date))
       );
+
+      const orderDateOnly = new Date(order.date).toISOString().split('T')[0];
+
+      const sameDayPurchases = eligiblePurchases.filter(p => {
+        const pDateOnly = new Date(p.date).toISOString().split('T')[0];
+        return pDateOnly === orderDateOnly;
+      });
+
+      const otherPurchases = eligiblePurchases.filter(p => {
+        const pDateOnly = new Date(p.date).toISOString().split('T')[0];
+        return pDateOnly !== orderDateOnly;
+      });
+
+      eligiblePurchases = [...sameDayPurchases, ...otherPurchases];
 
       const totalAvailable = eligiblePurchases.reduce((sum, p) => sum + p.balance_qty, 0);
       if (totalAvailable < qtyRemaining) {

@@ -119,7 +119,10 @@ CREATE INDEX IF NOT EXISTS idx_purchases_sale_ids ON purchases USING GIN (sale_i
 
 -- Sequence for generating custom readable IDs if needed
 CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
-
+-- Command to check the current value of the sale_group_seq
+SELECT last_value, is_called FROM sale_group_seq;
+-- Command to reset the sale_group_seq to be 2
+ALTER SEQUENCE sale_group_seq RESTART WITH 2;
 
 -- =========================================================
 -- 4. VIEWS
