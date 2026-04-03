@@ -120,7 +120,7 @@ export default function HoldingsFilter({
                     onChange={(e) => { setLocalTicker(e.target.value); setTicker?.(e.target.value); }}
                     placeholder="Ticker"
                     autoComplete="off"
-                    className="w-full pl-8 pr-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500 transition-all dark:text-white dark:placeholder-slate-500"
+                    className="w-full pl-8 pr-2 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[11px] outline-none focus:ring-2 ring-indigo-500 transition-all dark:text-white dark:placeholder-slate-500 uppercase"
                 />
             </div>
 

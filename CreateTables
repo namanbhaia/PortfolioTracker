@@ -28,6 +28,8 @@ CREATE TABLE profiles (
     email TEXT UNIQUE NOT NULL,
     screensaver_click_only BOOLEAN DEFAULT FALSE,
     advanced_mode BOOLEAN DEFAULT FALSE,
+    auto_fold_sidebar BOOLEAN DEFAULT FALSE,
+    theme_preference TEXT DEFAULT 'system',
     created_at TIMESTAMPTZ DEFAULT now()
 );
 

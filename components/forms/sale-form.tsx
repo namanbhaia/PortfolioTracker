@@ -271,6 +271,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         placeholder="DP ID"
                         className="w-full p-2.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:placeholder-slate-600 cursor-not-allowed transition-colors"
                         readOnly
+                        tabIndex={-1}
+                        autoComplete="off"
                         data-testid="dp-id-input"
                     />
                 </div>
@@ -282,6 +284,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                         placeholder="Trading ID"
                         className="w-full p-2.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-600 dark:text-slate-400 dark:placeholder-slate-600 cursor-not-allowed transition-colors"
                         readOnly
+                        tabIndex={-1}
+                        autoComplete="off"
                         data-testid="trading-id-input"
                     />
                 </div>

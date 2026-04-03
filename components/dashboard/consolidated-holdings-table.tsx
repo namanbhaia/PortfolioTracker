@@ -78,9 +78,9 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows, isVisible 
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto">
-                <table className="w-full text-left text-[11px] border-collapse">
-                    <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-400 font-bold uppercase transition-colors">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative">
+                <table className="w-full text-left text-[11px] border-collapse min-w-[1200px]">
+                    <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-400 font-bold uppercase transition-colors sticky top-0 z-20 shadow-sm">
                         <tr>
                             {isVisible('ticker') && (
                                 <th className="px-4 py-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => requestSort('ticker')}>

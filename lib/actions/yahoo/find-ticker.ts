@@ -1,12 +1,12 @@
 "use server"
-// import YahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
 
 /**
  * @file find-ticker.ts
  * @description Helpers for fetching stock metadata and prices from Yahoo Finance.
  */
 
-// const yahooFinance = new YahooFinance();
+const yahooFinance = new YahooFinance();
 
 /**
  * Fetches real-time price and metadata for a stock based on a search query.
@@ -15,7 +15,6 @@
  */
 export async function getTickerDetailsFromYahoo(isins: string[]) {
   try {
-    /*
     // STEP 1: Translate all ISINs to Symbols at once
     const translationTasks = isins.map(async (isin) => {
       const search = await yahooFinance.search(isin, {}, { validation: false } as any);
@@ -56,8 +55,6 @@ export async function getTickerDetailsFromYahoo(isins: string[]) {
         price: priceData?.regularMarketPrice || 0
       };
     });
-    */
-    return [];
   } catch (error) {
     console.error("Fetch failed:", error);
     return [];
@@ -71,7 +68,6 @@ export async function getTickerDetailsFromYahoo(isins: string[]) {
  */
 export async function getStockSuggestion(ticker: string) {
   try {
-    /*
     let yfSearchTicker = ticker.toUpperCase().trim();
     if (!yfSearchTicker.includes('.')) {
       const isNumeric = /^\d+$/.test(yfSearchTicker);
@@ -92,8 +88,6 @@ export async function getStockSuggestion(ticker: string) {
         price: quote.regularMarketPrice,
       }
     };
-    */
-    return { success: false, error: "Yahoo Finance API disabled" };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

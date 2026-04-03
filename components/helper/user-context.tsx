@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { useTheme } from 'next-themes';
 
 // 1. Define the Global State Shape
 interface UserContextType {
@@ -11,6 +12,10 @@ interface UserContextType {
     clients: any[]; // Using the 'clients' table data
     screensaverClickOnly: boolean;
     setScreensaverClickOnly: (val: boolean) => void;
+    autoFoldSidebar: boolean;
+    setAutoFoldSidebar: (val: boolean) => void;
+    themePreference: string;
+    setThemePreference: (val: string) => void;
     loading: boolean;
 }
 
@@ -34,9 +39,21 @@ export const UserProvider = ({
     const [profile, setProfile] = useState<any>(initialProfile);
     const [clients, setClients] = useState<any[]>(initialClients);
     const [screensaverClickOnly, setScreensaverClickOnly] = useState(initialProfile?.screensaver_click_only || false);
+    const [autoFoldSidebar, setAutoFoldSidebar] = useState(initialProfile?.auto_fold_sidebar || false);
+    const [themePreference, setThemePreference] = useState(initialProfile?.theme_preference || 'system');
+    
+    // next-themes integration
+    const { setTheme, theme } = useTheme();
 
     // Loading is false immediately if the server provided data
     const [loading, setLoading] = useState(!initialProfile);
+
+    // Sync themePreference to next-themes
+    useEffect(() => {
+        if (themePreference && themePreference !== theme) {
+            setTheme(themePreference);
+        }
+    }, [themePreference, theme, setTheme]);
 
     useEffect(() => {
         // Sync auth state (e.g., logout in another tab)
@@ -46,6 +63,8 @@ export const UserProvider = ({
                 setProfile(null);
                 setClients([]);
                 setScreensaverClickOnly(false);
+                setAutoFoldSidebar(false);
+                setThemePreference('system');
             } else if (session?.user) {
                 setUser(session.user);
             }
@@ -61,6 +80,8 @@ export const UserProvider = ({
                 const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
                 setProfile(p);
                 setScreensaverClickOnly(p?.screensaver_click_only || false);
+                setAutoFoldSidebar(p?.auto_fold_sidebar || false);
+                setThemePreference(p?.theme_preference || 'system');
                 if (p?.client_ids) {
                     const { data: c } = await supabase.from('clients').select('*').in('client_id', p.client_ids);
                     setClients(c || []);
@@ -70,7 +91,7 @@ export const UserProvider = ({
         }
     }, [user?.id, supabase]);
 
-    const value = { user, profile, clients, screensaverClickOnly, setScreensaverClickOnly, loading };
+    const value = { user, profile, clients, screensaverClickOnly, setScreensaverClickOnly, autoFoldSidebar, setAutoFoldSidebar, themePreference, setThemePreference, loading };
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 

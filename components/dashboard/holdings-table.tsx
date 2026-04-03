@@ -46,10 +46,10 @@ export default function HoldingsTable({ holdings, sortConfig, onSort, isVisible 
 
 	return (
 		<div className="space-y-2">
-			<div className="border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm bg-white dark:bg-slate-900 overflow-x-auto">
-				<table className="w-full text-xs text-left border-collapse">
+			<div className="border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm bg-white dark:bg-slate-900 overflow-x-auto h-[calc(100vh-160px)] overflow-y-auto relative">
+				<table className="w-full min-w-[1200px] text-xs text-left border-collapse">
 					{/* Table Header */}
-					<thead className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 uppercase text-gray-600 dark:text-slate-400 font-semibold transition-colors">
+					<thead className="bg-gray-100 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 uppercase text-gray-600 dark:text-slate-400 font-semibold transition-colors sticky top-0 z-20 shadow-sm">
 						<tr>
 							{isVisible("id") && <th className="px-3 py-3 w-16">ID</th>}
 							{isVisible("client_info") && (

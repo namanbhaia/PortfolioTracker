@@ -200,7 +200,7 @@ export default function InfoPage() {
                                 Inspect Schema
                             </Button>
                             <a href="https://github.com/namanbhaia/PortfolioTracker" target="_blank" rel="noopener noreferrer">
-                                <Button variant="outline" className="border-white/20 hover:bg-white hover:text-slate-900 rounded-2xl px-6 py-6 font-bold text-white transition-all">
+                                <Button variant="outline" className="!bg-transparent border-white/20 hover:!bg-white hover:!text-slate-900 rounded-2xl px-6 py-6 font-bold !text-white transition-all">
                                     <Terminal size={18} className="mr-2" />
                                     Source
                                 </Button>
