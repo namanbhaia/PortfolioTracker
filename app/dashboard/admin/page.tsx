@@ -25,7 +25,7 @@ export default function AdminPage() {
         );
     }
 
-    if (!profile?.advanced_mode) {
+    if (!profile?.admin_level || profile.admin_level < 1) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
                 <div className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-full mb-4">
@@ -39,6 +39,8 @@ export default function AdminPage() {
         );
     }
 
+    const isSuperAdmin = profile.admin_level >= 2;
+
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-12 animate-in fade-in duration-500">
             <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-8">
@@ -51,14 +53,16 @@ export default function AdminPage() {
                         Advanced tools for system-wide data management and bulk operations.
                     </p>
                 </div>
-                <div className="px-4 py-2 bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 rounded-full flex items-center gap-2">
-                    <div className="w-2 h-2 bg-rose-500 dark:bg-rose-400 rounded-full animate-pulse" />
-                    <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">Advanced Mode Active</span>
+                <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-full flex items-center gap-2">
+                    <div className="w-2 h-2 bg-indigo-500 dark:bg-indigo-400 rounded-full animate-pulse" />
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
+                        {isSuperAdmin ? "Super Admin Active" : "Admin Level 1 Active"}
+                    </span>
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-                {/* Column 1: Asset Management */}
+            <div className={`grid grid-cols-1 ${isSuperAdmin ? 'md:grid-cols-2 lg:grid-cols-2' : ''} gap-8`}>
+                {/* Column 1: Asset Management (Visible to Level 1 & 2) */}
                 <div className="space-y-8">
                     <section>
                         <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Asset Management</h2>
@@ -70,17 +74,19 @@ export default function AdminPage() {
                     </section>
                 </div>
 
-                {/* Column 2: Ledger Management */}
-                <div className="space-y-8">
-                    <section>
-                        <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Ledger Management</h2>
-                        <div className="space-y-6">
-                            <BulkPurchaseAdd />
-                            <BulkSalesAdd />
-                            <FifoRemapper />
-                        </div>
-                    </section>
-                </div>
+                {/* Column 2: Ledger Management (SuperAdmin Only) */}
+                {isSuperAdmin && (
+                    <div className="space-y-8">
+                        <section>
+                            <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Ledger Management</h2>
+                            <div className="space-y-6">
+                                <BulkPurchaseAdd />
+                                <BulkSalesAdd />
+                                <FifoRemapper />
+                            </div>
+                        </section>
+                    </div>
+                )}
             </div>
 
             <footer className="pt-12 border-t border-slate-100 dark:border-slate-800 text-center">

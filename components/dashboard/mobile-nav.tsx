@@ -225,10 +225,10 @@ export default function MobileNav({ user, profile }: { user: any, profile?: any 
                     </div>
 
                     {/* Admin */}
-                    {profile?.advanced_mode && (
+                    {profile?.admin_level >= 1 && (
                         <div>
                             <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest px-3 mb-2 opacity-80 mt-2">
-                                Advanced Mode
+                                Admin Controls
                             </p>
                             <div className="space-y-1">
                                 {adminItems.map((item) => {

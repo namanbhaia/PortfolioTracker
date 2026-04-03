@@ -195,11 +195,11 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
             </div>
 
             {/* Admin Section (Conditional) */}
-            {profile?.advanced_mode && (
-                <div className="px-3 space-y-1 mb-4">
+            {profile?.admin_level >= 1 && (
+                <div>
                     {!isCollapsed && (
                         <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest px-3 mb-2 opacity-80 mt-2">
-                            Advanced Mode
+                            Admin Controls
                         </p>
                     )}
                     {adminItems.map((item) => {
