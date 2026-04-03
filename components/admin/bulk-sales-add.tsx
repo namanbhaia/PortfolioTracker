@@ -6,6 +6,7 @@ import { UploadCloud, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
 import { bulkLedgerUpdateAction } from '@/lib/actions/admin-bulk-ops';
 import { parse } from 'csv-parse/browser/esm/sync';
+import { useLoading } from '@/components/helper/loading-context';
 
 const formatCsvDate = (dateStr: string) => {
     if (!dateStr) return dateStr;
@@ -21,6 +22,7 @@ const formatCsvDate = (dateStr: string) => {
 };
 
 export default function BulkSalesAdd() {
+    const { setIsLoading } = useLoading();
     const supabase = createClient();
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState("");
@@ -33,6 +35,7 @@ export default function BulkSalesAdd() {
         if (!file) return;
 
         setLoading(true);
+        setIsLoading(true);
         setShortfalls([]);
         setSuccessCount(null);
         setProgress(0);
@@ -191,6 +194,7 @@ export default function BulkSalesAdd() {
             alert(`Bulk Sales Add Failed: ${err.message}`);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     }
 
@@ -198,7 +202,7 @@ export default function BulkSalesAdd() {
         <div className="space-y-6">
             <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors min-h-[250px] flex flex-col justify-between">
                 <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg">
+                    <div className="p-3 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg">
                         <UploadCloud size={24} />
                     </div>
                     <div>
@@ -214,7 +218,7 @@ export default function BulkSalesAdd() {
                             accept=".csv"
                             disabled={loading}
                             onChange={handleFileChange}
-                            className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 dark:file:bg-rose-900/30 file:text-rose-700 dark:file:text-rose-400 hover:file:bg-rose-100 dark:hover:file:bg-rose-900/50 cursor-pointer transition-all"
+                            className="block w-full max-w-xs text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-700 dark:file:text-indigo-400 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50 cursor-pointer transition-all"
                         />
                         <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">Required: client_name, ticker, sale_qty, sale_rate, sale_date</p>
                     </div>
@@ -226,7 +230,7 @@ export default function BulkSalesAdd() {
                                 <span>{progress}%</span>
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5">
-                                <div className="bg-rose-600 dark:bg-rose-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                                <div className="bg-indigo-600 dark:bg-indigo-500 h-1.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
                             </div>
                         </div>
                     )}

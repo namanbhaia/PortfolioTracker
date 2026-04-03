@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { runBseToNseMigrationAction } from '@/lib/actions/admin-bulk-ops';
+import { useLoading } from '@/components/helper/loading-context';
 
 export default function BseToNseMigration() {
+    const { setIsLoading } = useLoading();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -15,6 +17,7 @@ export default function BseToNseMigration() {
         }
 
         setLoading(true);
+        setIsLoading(true);
         setError(null);
         setSuccess(false);
 
@@ -28,6 +31,7 @@ export default function BseToNseMigration() {
             setError(err.message);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     }
 

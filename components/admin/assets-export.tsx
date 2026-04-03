@@ -2,13 +2,16 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { DownloadCloud, Loader2 } from 'lucide-react';
+import { useLoading } from '@/components/helper/loading-context';
 
 export default function AssetsExport() {
+    const { setIsLoading } = useLoading();
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
 
     const handleExportAssets = async () => {
         setLoading(true);
+        setIsLoading(true);
         try {
             const { data, error } = await supabase.from('assets').select('*').csv();
             if (error) throw error;
@@ -30,6 +33,7 @@ export default function AssetsExport() {
             alert(`Assets Export Failed: ${err.message}`);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     };
 

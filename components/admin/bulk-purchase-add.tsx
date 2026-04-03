@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
 import { parse } from 'csv-parse/browser/esm/sync';
 import { bulkLedgerUpdateAction } from '@/lib/actions/admin-bulk-ops';
+import { useLoading } from '@/components/helper/loading-context';
 
 const formatCsvDate = (dateStr: string) => {
     if (!dateStr) return dateStr;
@@ -20,6 +21,7 @@ const formatCsvDate = (dateStr: string) => {
 };
 
 export default function BulkPurchaseAdd() {
+    const { setIsLoading } = useLoading();
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
     const [successCount, setSuccessCount] = useState<number | null>(null);
@@ -30,6 +32,7 @@ export default function BulkPurchaseAdd() {
         if (!file) return;
 
         setLoading(true);
+        setIsLoading(true);
         setError(null);
         setSuccessCount(null);
 
@@ -80,6 +83,7 @@ export default function BulkPurchaseAdd() {
             setError(err.message);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     }
 

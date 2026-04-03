@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
 import { bulkAssetUpdateAction } from '@/lib/actions/admin-bulk-ops';
 import { parse } from 'csv-parse/browser/esm/sync';
+import { useLoading } from '@/components/helper/loading-context';
 
 export default function BulkAssetUpdate() {
+    const { setIsLoading } = useLoading();
     const [loading, setLoading] = useState(false);
     const [successCount, setSuccessCount] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -15,6 +17,7 @@ export default function BulkAssetUpdate() {
         if (!file) return;
 
         setLoading(true);
+        setIsLoading(true);
         setError(null);
         setSuccessCount(null);
 
@@ -56,6 +59,7 @@ export default function BulkAssetUpdate() {
             setError(err.message);
         } finally {
             setLoading(false);
+            setIsLoading(false);
         }
     }
 

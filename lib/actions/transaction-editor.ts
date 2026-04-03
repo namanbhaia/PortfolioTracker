@@ -81,6 +81,10 @@ export class TransactionEditor {
     return crypto.randomUUID();
   }
 
+  async remapEntireLedger(clientName: string, ticker: string) {
+    await this.reprocessLedger(clientName, ticker, { saleImpactDate: '1970-01-01' });
+  }
+
   /**
    * CORE LOGIC: Reprocesses the ledger based on specific impact dates.
    * * LOGIC:
@@ -96,7 +100,7 @@ export class TransactionEditor {
   ) {
     let rawPurchases: Record<string, any>[] = [];
     let rawSales: Record<string, any>[] = [];
-
+ 
     // ---------------------------------------------------------
     // A. FETCH DATA (Branching Logic)
     // ---------------------------------------------------------

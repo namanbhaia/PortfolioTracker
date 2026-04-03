@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { TransactionEditor } from './transaction-editor';
+import { LedgerRepository } from './ledger-repository';
 
 /**
  * @file admin-bulk-ops.ts
@@ -70,6 +72,49 @@ export async function bulkLedgerUpdateAction(payload: {
         throw new Error(error.message);
     }
 
+    revalidatePath('/dashboard');
+    return { success: true };
+}
+
+/**
+ * MIGRATION ONLY: Remaps all sales for all clients to follow the current logic.
+ * Temporary action requested by the user.
+ */
+export async function remapAllLedgersAction() {
+    const supabase = await createClient();
+    const repo = new LedgerRepository(supabase);
+    const editor = new TransactionEditor(repo);
+    
+    // Fetch unique client-ticker pairs from purchases
+    const { data: purchases, error } = await supabase
+        .from('purchases')
+        .select('client_name, ticker');
+        
+    if (error) throw new Error(error.message);
+    if (!purchases) return { success: true };
+    
+    const uniquePairsArray: { client_name: string, ticker: string }[] = [];
+    const seen = new Set<string>();
+    
+    for (const p of purchases) {
+        const key = `${p.client_name}::${p.ticker}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            if (p.client_name && p.ticker) {
+                uniquePairsArray.push({ client_name: p.client_name, ticker: p.ticker });
+            }
+        }
+    }
+    
+    for (const pair of uniquePairsArray) {
+        try {
+            console.log(`Remapping ${pair.client_name} - ${pair.ticker}`);
+            await editor.remapEntireLedger(pair.client_name, pair.ticker);
+        } catch (err: any) {
+            console.error(`Failed remapping for ${pair.client_name} - ${pair.ticker}:`, err);
+        }
+    }
+    
     revalidatePath('/dashboard');
     return { success: true };
 }

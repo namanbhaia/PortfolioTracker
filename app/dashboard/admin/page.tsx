@@ -7,6 +7,7 @@ import BulkPurchaseAdd from '@/components/admin/bulk-purchase-add';
 import BulkSalesAdd from '@/components/admin/bulk-sales-add';
 import BseToNseMigration from '@/components/admin/bse-to-nse-migration';
 import AssetsExport from '@/components/admin/assets-export';
+import FifoRemapper from '@/components/admin/fifo-remapper';
 import { useUser } from '@/components/helper/user-context';
 
 export default function AdminPage() {
@@ -76,6 +77,7 @@ export default function AdminPage() {
                         <div className="space-y-6">
                             <BulkPurchaseAdd />
                             <BulkSalesAdd />
+                            <FifoRemapper />
                         </div>
                     </section>
                 </div>
