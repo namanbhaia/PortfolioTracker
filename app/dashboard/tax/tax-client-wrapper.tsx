@@ -5,17 +5,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, LayoutList } from 'lucide-react';
 import { DateRangeFilter } from './date-range-filter';
+import { useUser } from '@/components/helper/user-context';
 import Link from 'next/link';
 
 export default function TaxClientWrapper({
-    initialClients,
     initialSales,
     initialDates
 }: {
-    initialClients: any[],
     initialSales: any[],
     initialDates: { startDate: string, endDate: string }
 }) {
+    const { clients } = useUser();
     const [startDate, setStartDate] = useState(initialDates.startDate || "");
     const [endDate, setEndDate] = useState(initialDates.endDate || "");
 
@@ -28,22 +28,25 @@ export default function TaxClientWrapper({
         if (!hasDates) return result;
 
         const filtered = initialSales.filter(sale =>
-            sale.date >= startDate && sale.date <= endDate
+            sale.sale_date >= startDate && sale.sale_date <= endDate
         );
 
         filtered.forEach(sale => {
-            if (!result[sale.client_id]) {
-                result[sale.client_id] = { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
+            const cid = sale.client_id;
+            if (!result[cid]) {
+                result[cid] = { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
             }
             if (sale.long_term) {
-                result[sale.client_id].ltcg += Number(sale.profit_stored);
-                result[sale.client_id].altcg += Number(sale.adjusted_profit_stored);
+                result[cid].ltcg += Number(sale.pl || 0);
+                result[cid].altcg += Number(sale.adjusted_pl || 0);
             }
             else if (sale.is_square_off) {
-                result[sale.client_id].sqoff += Number(sale.profit_stored);
+                result[cid].sqoff += Number(sale.pl || 0);
             }
-            else result[sale.client_id].stcg += Number(sale.profit_stored);
-            result[sale.client_id].count++;
+            else {
+                result[cid].stcg += Number(sale.pl || 0);
+            }
+            result[cid].count++;
         });
 
         return result;
@@ -61,7 +64,7 @@ export default function TaxClientWrapper({
 
             {hasDates ? (
                 <div className="grid grid-cols-1 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {initialClients?.map((client) => {
+                    {clients?.map((client) => {
                         const stats = salesByClient[client.client_id] || { stcg: 0, ltcg: 0, altcg: 0, sqoff: 0, count: 0 };
                         const params = new URLSearchParams({
                             client_ids: client.client_id,

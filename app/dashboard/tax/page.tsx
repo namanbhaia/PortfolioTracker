@@ -14,20 +14,27 @@ export default async function TaxReportOverviewPage({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
+    // 1. Fetch Profile to get authorized client IDs (Required for database-level RLS filtering)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('client_ids')
+        .eq('id', user.id)
+        .single();
+    
+    const authorizedClientIds = profile?.client_ids || [];
+
     const startDate = resolvedParams.start_date as string || "";
     const endDate = resolvedParams.end_date as string || getTodayDate();
 
-    // Fetch clients
-    const { data: clients } = await supabase
-        .from('clients')
-        .select('client_id, client_name')
-        .order('client_name');
+    // 2. Fetch Sales from sales_view for robust aggregation (handles missing client_ids and calculates 'pl')
+    const { data: sales, error } = await supabase
+        .from('sales_view')
+        .select('client_id, pl, adjusted_pl, long_term, is_square_off, sale_date')
+        .in('client_id', authorizedClientIds);
 
-    // Fetch all sales for authorized clients (to allow client-side filtering)
-    // We only fetch the minimal columns needed for the overview
-    const { data: sales } = await supabase
-        .from('sales')
-        .select('client_id, profit_stored, long_term, adjusted_profit_stored, is_square_off, date');
+    if (error) {
+        console.error("Sales View Fetch Error:", error.message);
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
@@ -37,7 +44,6 @@ export default async function TaxReportOverviewPage({
             </header>
 
             <TaxClientWrapper
-                initialClients={clients || []}
                 initialSales={sales || []}
                 initialDates={{ startDate, endDate }}
             />
