@@ -54,7 +54,6 @@ const navItems = [
 const secondaryItems = [
     { name: 'Export Data', href: '/dashboard/export', icon: FileSpreadsheet },
     { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
-    { name: 'Info & Rules', href: '/dashboard/info', icon: Info },
 ];
 
 const adminItems = [
@@ -194,35 +193,7 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                 ))}
             </div>
 
-            {/* Admin Section (Conditional) */}
-            {profile?.admin_level >= 1 && (
-                <div>
-                    {!isCollapsed && (
-                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest px-3 mb-2 opacity-80 mt-2">
-                            Admin Controls
-                        </p>
-                    )}
-                    {adminItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                onClick={() => {
-                                    if (pathname !== item.href) setIsLoading(true);
-                                }}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${isActive
-                                    ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
-                                    : 'hover:bg-slate-800 hover:text-slate-100'
-                                    }`}
-                            >
-                                <item.icon size={18} className={`shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
-                                {!isCollapsed && <span className="truncate">{item.name}</span>}
-                            </Link>
-                        );
-                    })}
-                </div>
-            )}
+
 
             {/* User Profile Footer */}
             <div className={`p-4 border-t border-slate-800 ${isCollapsed ? 'px-2' : 'px-4'}`}>
@@ -261,6 +232,32 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                                 <span>Profile Settings</span>
                             </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link 
+                                href="/dashboard/info" 
+                                className="cursor-pointer flex items-center gap-2"
+                                onClick={() => {
+                                    if (pathname !== '/dashboard/info') setIsLoading(true);
+                                }}
+                            >
+                                <Info size={16} />
+                                <span>Info & Rules</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        {profile?.admin_level >= 1 && (
+                            <DropdownMenuItem asChild>
+                                <Link 
+                                    href="/dashboard/admin" 
+                                    className="cursor-pointer flex items-center gap-2"
+                                    onClick={() => {
+                                        if (pathname !== '/dashboard/admin') setIsLoading(true);
+                                    }}
+                                >
+                                    <Wrench size={16} />
+                                    <span>Admin Controls</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator className="bg-slate-700" />
                         <DropdownMenuItem onClick={handleLogout} className="text-rose-400 cursor-pointer flex items-center gap-2">
                             <LogOut size={16} />

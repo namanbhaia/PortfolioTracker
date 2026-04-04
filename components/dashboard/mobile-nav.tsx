@@ -47,7 +47,6 @@ const navItems = [
 const secondaryItems = [
     { name: 'Export Data', href: '/dashboard/export', icon: FileSpreadsheet },
     { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
-    { name: 'Info & Rules', href: '/dashboard/info', icon: Info },
 ];
 
 const adminItems = [
@@ -134,7 +133,7 @@ export default function MobileNav({ user, profile }: { user: any, profile?: any 
                                 <p className="text-[10px] text-slate-500 truncate">{displayEmail}</p>
                             </div>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
+                             <DropdownMenuItem asChild>
                                 <Link 
                                     href="/dashboard/profile" 
                                     className="cursor-pointer flex items-center gap-2 w-full"
@@ -146,6 +145,32 @@ export default function MobileNav({ user, profile }: { user: any, profile?: any 
                                     <span>Profile Settings</span>
                                 </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link 
+                                    href="/dashboard/info" 
+                                    className="cursor-pointer flex items-center gap-2 w-full"
+                                    onClick={() => {
+                                        if (pathname !== '/dashboard/info') setIsLoading(true);
+                                    }}
+                                >
+                                    <Info size={16} />
+                                    <span>Info & Rules</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            {profile?.admin_level >= 1 && (
+                                <DropdownMenuItem asChild>
+                                    <Link 
+                                        href="/dashboard/admin" 
+                                        className="cursor-pointer flex items-center gap-2 w-full"
+                                        onClick={() => {
+                                            if (pathname !== '/dashboard/admin') setIsLoading(true);
+                                        }}
+                                    >
+                                        <Wrench size={16} />
+                                        <span>Admin Controls</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={handleLogout} className="text-rose-500 cursor-pointer flex items-center gap-2">
                                 <LogOut size={16} />
                                 <span>Sign Out</span>
@@ -224,36 +249,7 @@ export default function MobileNav({ user, profile }: { user: any, profile?: any 
                         </div>
                     </div>
 
-                    {/* Admin */}
-                    {profile?.admin_level >= 1 && (
-                        <div>
-                            <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest px-3 mb-2 opacity-80 mt-2">
-                                Admin Controls
-                            </p>
-                            <div className="space-y-1">
-                                {adminItems.map((item) => {
-                                    const isActive = pathname === item.href;
-                                    return (
-                                        <Link
-                                            key={item.name}
-                                            href={item.href}
-                                            onClick={() => {
-                                                if (pathname !== item.href) setIsLoading(true);
-                                            }}
-                                            className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all group ${
-                                                isActive
-                                                    ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
-                                                    : 'hover:bg-slate-800 hover:text-slate-100'
-                                            }`}
-                                        >
-                                            <item.icon size={18} className={`shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
-                                            <span className="truncate">{item.name}</span>
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+
                 </div>
             </aside>
         </div>
