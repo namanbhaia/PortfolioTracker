@@ -101,6 +101,9 @@ export default function BulkSalesAdd() {
 
                 currentLocalId++;
                 const clientId = clientMap.get(clientName.toLowerCase());
+                if (!clientId) {
+                    throw new Error(`Client "${clientName}" not found at row ${i + 2}. Please create the client first.`);
+                }
                 const cutoffPrice = rateMap.get(ticker) || 0;
                 const sharedCustomId = `SALE-${currentLocalId.toString().padStart(4, '0')}`;
 

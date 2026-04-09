@@ -38,6 +38,15 @@ export default function BulkPurchaseAdd() {
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
+            
+            // 1. Fetch current clients for mapping
+            const { data: allClients, error: clientError } = await supabase
+                .from('clients')
+                .select('client_id, client_name');
+            
+            if (clientError) throw new Error(`Failed to fetch clients: ${clientError.message}`);
+
+            const clientMap = new Map(allClients?.map(c => [c.client_name.trim().toLowerCase(), c.client_id]));
             const fileContent = await file.text();
 
             const data = parse(fileContent, {
@@ -59,9 +68,15 @@ export default function BulkPurchaseAdd() {
                     throw new Error(`Invalid data at row ${idx + 2}`);
                 }
 
+                const client_id = clientMap.get(client_name.toLowerCase());
+                if (!client_id) {
+                    throw new Error(`Client "${client_name}" not found at row ${idx + 2}. Please create the client first.`);
+                }
+
                 return {
                     user_id: user?.id,
                     client_name,
+                    client_id,
                     ticker,
                     date,
                     rate,
