@@ -13,6 +13,7 @@ import {
     aggregateCsvHoldings
 } from '@/components/helper/verification-utils';
 import { VerificationDisplay } from '@/components/dashboard/verification-display';
+import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
 
 export default function VerificationPage() {
     const supabase = createClient();
@@ -163,10 +164,21 @@ export default function VerificationPage() {
                 discrepancies.forEach(d => allDiscrepancies.push(d));
 
                 if (discrepancies.length === 0) {
-                    await supabase.from('clients').update({ last_verified: new Date().toISOString() }).eq('dp_id', dp_id);
-                    results[clientName] = { status: 'MATCH', db_client_name: clientName, discrepancies: [] };
+                    const newDate = new Date().toISOString();
+                    await supabase.from('clients').update({ last_verified: newDate }).eq('dp_id', dp_id);
+                    results[clientName] = { 
+                        status: 'MATCH', 
+                        db_client_name: clientName, 
+                        discrepancies: [],
+                        last_verified: newDate
+                    };
                 } else {
-                    results[clientName] = { status: 'MISMATCH', db_client_name: clientName, discrepancies };
+                    results[clientName] = { 
+                        status: 'MISMATCH', 
+                        db_client_name: clientName, 
+                        discrepancies,
+                        last_verified: client.last_verified
+                    };
                 }
             }
 
@@ -232,6 +244,11 @@ export default function VerificationPage() {
                 }
             }
             */
+
+            // Trigger revalidation if any client was processed
+            if (Object.keys(results).length > 0) {
+                await revalidateDashboard();
+            }
         } catch (err: any) {
             setViewState(prev => ({ ...prev, loading: false }));
             alert(err.message);

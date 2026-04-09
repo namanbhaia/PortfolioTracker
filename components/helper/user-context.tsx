@@ -54,6 +54,11 @@ export const UserProvider = ({
             setTheme(themePreference);
         }
     }, [themePreference, theme, setTheme]);
+    
+    // Sync clients state when server-provided data refreshes
+    useEffect(() => {
+        setClients(initialClients);
+    }, [initialClients]);
 
     useEffect(() => {
         // Sync auth state (e.g., logout in another tab)

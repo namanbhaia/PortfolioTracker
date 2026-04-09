@@ -37,7 +37,7 @@ export default async function DashboardLayout({
 
     const { data: clients } = await supabase
         .from('clients')
-        .select('client_id, client_name, trading_id, dp_id')
+        .select('client_id, client_name, trading_id, dp_id, last_verified')
         .in('client_id', profile?.client_ids || []);
 
     return (
