@@ -21,11 +21,12 @@ export function VerificationDisplay({ selectedResult }: VerificationDisplayProps
             <div className="p-12 flex flex-col items-center text-center gap-4 text-emerald-600 dark:text-emerald-400 transition-colors">
                 <CheckCircle size={64} />
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">All Clear!</h2>
-                <p className="text-slate-600 dark:text-slate-400 max-w-md transition-colors">
-                    Holdings match perfectly between Website and DP Manager.
-                    <br />
-                    Timestamp updated successfully.
-                </p>
+                <div className="text-slate-600 dark:text-slate-400 max-w-md transition-colors space-y-1">
+                    <p>Holdings match perfectly between Website and DP Manager.</p>
+                    <p className="text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-500 py-1 px-3 rounded-full inline-block">
+                        Verified: {selectedResult.last_verified ? new Date(selectedResult.last_verified).toLocaleString('en-IN') : 'Just Now'}
+                    </p>
+                </div>
             </div>
         );
     }
@@ -33,9 +34,14 @@ export function VerificationDisplay({ selectedResult }: VerificationDisplayProps
     if (selectedResult.status === 'MISMATCH') {
         return (
             <div>
-                <div className="bg-rose-50 dark:bg-rose-950/20 border-b border-rose-100 dark:border-rose-900/30 p-4 flex items-center gap-3 text-rose-700 dark:text-rose-400 transition-colors">
-                    <AlertTriangle size={20} />
-                    <span className="font-bold">Discrepancies Found</span>
+                <div className="bg-rose-50 dark:bg-rose-950/20 border-b border-rose-100 dark:border-rose-900/30 p-4 flex items-center justify-between text-rose-700 dark:text-rose-400 transition-colors">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle size={20} />
+                        <span className="font-bold">Discrepancies Found</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-100 dark:bg-rose-900/40 px-2.5 py-1 rounded-md">
+                        Last Successful Sync: {selectedResult.last_verified ? new Date(selectedResult.last_verified).toLocaleString('en-IN') : 'Never'}
+                    </span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">

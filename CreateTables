@@ -26,12 +26,14 @@ CREATE TABLE profiles (
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
+    client_ids UUID[] DEFAULT '{}', -- List of clients owned by this profile
     screensaver_click_only BOOLEAN DEFAULT FALSE,
-    admin_level INTEGER DEFAULT 0, -- 0: No Admin, 1: Intermediate (Assets), 2: Superadmin (All)
+    admin_level INTEGER DEFAULT 0 CHECK (admin_level IN (0, 1, 2)), -- 0: No Admin, 1: Intermediate, 2: Superadmin
     auto_fold_sidebar BOOLEAN DEFAULT FALSE,
     theme_preference TEXT DEFAULT 'system',
     created_at TIMESTAMPTZ DEFAULT now()
 );
+COMMENT ON COLUMN profiles.admin_level IS 'Will the user get advanced controls. Manually set';
 
 -- 2. CLIENTS (The Accounts)
 -- Represents distinct portfolios or family members
@@ -40,6 +42,7 @@ CREATE TABLE clients (
     trading_id TEXT UNIQUE NOT NULL,
     client_id UUID UNIQUE DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    dp_id TEXT UNIQUE, -- Added DP ID for reporting
     last_verified TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -51,6 +54,7 @@ CREATE TABLE assets (
     stock_name TEXT NOT NULL,
     isin TEXT, -- Removed UNIQUE as requested
     current_price NUMERIC DEFAULT 0,
+    cutoff DOUBLE PRECISION, -- Grandfathering rate/price
     beta NUMERIC,
     trailing_pe NUMERIC,
     eps NUMERIC,
@@ -72,10 +76,12 @@ CREATE TABLE purchases (
     trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES profiles(id) NOT NULL,
     client_name TEXT REFERENCES clients(client_name) ON DELETE CASCADE,
+    client_id UUID REFERENCES clients(client_id), -- Linked UUID for faster joins
     ticker TEXT REFERENCES assets(ticker),
     date DATE NOT NULL,
     rate NUMERIC NOT NULL,
     purchase_qty NUMERIC NOT NULL CHECK (purchase_qty > 0),
+    balance_qty NUMERIC DEFAULT 0, -- Current quantity held
     comments TEXT,
     sale_ids UUID[] DEFAULT '{}', -- Array to track partial sales linked to this purchase
     created_at TIMESTAMPTZ DEFAULT now()
@@ -118,6 +124,9 @@ CREATE TABLE pledges (
 
 -- Performance index for querying purchases by specific sale IDs (GIN index for Arrays)
 CREATE INDEX IF NOT EXISTS idx_purchases_sale_ids ON purchases USING GIN (sale_ids);
+
+-- Performance index for client lookup in profiles (GIN index for Arrays)
+CREATE INDEX IF NOT EXISTS idx_profiles_client_ids ON profiles USING GIN (client_ids);
 
 -- Sequence for generating custom readable IDs if needed
 CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
@@ -590,22 +599,29 @@ $$ LANGUAGE plpgsql;
 -- Automatically creates Profile and Default Client entries on Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
+DECLARE
+  generated_client_id UUID := gen_random_uuid();
 BEGIN
-  -- 1. Insert into Profiles
-  INSERT INTO public.profiles (id, username, full_name, email)
+  -- STEP 1: Insert into Profiles FIRST (This satisfies the Foreign Key)
+  -- We initialize the array with the client ID we are about to create
+  INSERT INTO public.profiles (id, username, full_name, email, client_ids)
   VALUES (
     new.id, 
     new.raw_user_meta_data->>'username', 
     new.raw_user_meta_data->>'full_name', 
-    new.email
+    new.email,
+    ARRAY[generated_client_id]
   );
 
-  -- 2. Insert into Clients (Primary trading account)
-  INSERT INTO public.clients (client_name, trading_id, user_id)
+  -- STEP 2: Insert into Clients SECOND
+  -- Now that the profile exists, the foreign key constraint 'clients_user_id_fkey' will pass
+  INSERT INTO public.clients (client_id, user_id, client_name, trading_id, dp_id)
   VALUES (
-    new.raw_user_meta_data->>'primary_client_name', 
+    generated_client_id,
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'primary_client_name', new.raw_user_meta_data->>'full_name'),
     new.raw_user_meta_data->>'trading_id', 
-    new.id
+    new.raw_user_meta_data->>'dp_id'
   );
 
   RETURN new;
