@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, X } from 'lucide-react';
+import { Search, Calendar, X, Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ClientMultiSelect } from './client-filter';
 
@@ -18,6 +18,8 @@ export default function HoldingsFilter({
     availableClients,
     showLongTermToggle = true,
     showBalanceToggle = true,
+    showPledgedToggle = false,
+    showDateFilter = true,
 
     ticker: controlledTicker, setTicker,
     shareName: controlledShareName, setShareName,
@@ -25,6 +27,7 @@ export default function HoldingsFilter({
     endDate: controlledEndDate, setEndDate,
     showAll: controlledShowAll, setShowAll,
     longTerm: controlledLongTerm, setLongTerm,
+    pledgedOnly: controlledPledgedOnly, setPledgedOnly,
     selectedClientIds: controlledClientIds, setSelectedClientIds,
     onSubmit,
     onClear,
@@ -33,6 +36,8 @@ export default function HoldingsFilter({
     availableClients: Record<string, any>[],
     showLongTermToggle?: boolean,
     showBalanceToggle?: boolean,
+    showPledgedToggle?: boolean,
+    showDateFilter?: boolean,
 
     ticker?: string,
     setTicker?: (val: string) => void,
@@ -46,6 +51,8 @@ export default function HoldingsFilter({
     setShowAll?: (val: boolean) => void,
     longTerm?: boolean | null | 'square_off',
     setLongTerm?: (val: boolean | null | 'square_off') => void,
+    pledgedOnly?: boolean,
+    setPledgedOnly?: (val: boolean) => void,
     selectedClientIds?: string[],
     setSelectedClientIds?: (val: string[]) => void,
     onSubmit?: (e: React.FormEvent) => void,
@@ -60,7 +67,8 @@ export default function HoldingsFilter({
     const [localEndDate, setLocalEndDate] = useState(controlledEndDate || '');
     const [localShowAll, setLocalShowAll] = useState(controlledShowAll || false);
     const [localLongTerm, setLocalLongTerm] = useState<boolean | null | 'square_off'>(controlledLongTerm || null);
-    const [localClientIds, setLocalClientIds] = useState<string[]>(controlledClientIds || []);
+    const [localPledgedOnly, setLocalPledgedOnly] = useState(controlledPledgedOnly || false);
+    const [localClientIds, setLocalClientIds] = useState(controlledClientIds || []);
 
     // Sync local state if props change (for controlled usage)
     useEffect(() => { if (controlledTicker !== undefined) setLocalTicker(controlledTicker); }, [controlledTicker]);
@@ -69,6 +77,7 @@ export default function HoldingsFilter({
     useEffect(() => { if (controlledEndDate !== undefined) setLocalEndDate(controlledEndDate); }, [controlledEndDate]);
     useEffect(() => { if (controlledShowAll !== undefined) setLocalShowAll(controlledShowAll); }, [controlledShowAll]);
     useEffect(() => { if (controlledLongTerm !== undefined) setLocalLongTerm(controlledLongTerm); }, [controlledLongTerm]);
+    useEffect(() => { if (controlledPledgedOnly !== undefined) setLocalPledgedOnly(controlledPledgedOnly); }, [controlledPledgedOnly]);
     useEffect(() => { if (controlledClientIds !== undefined) setLocalClientIds(controlledClientIds); }, [controlledClientIds]);
 
     const handleClientChange = (id: string) => {
@@ -87,6 +96,7 @@ export default function HoldingsFilter({
         setLocalEndDate(''); setEndDate?.('');
         setLocalShowAll(false); setShowAll?.(false);
         setLocalLongTerm(null); setLongTerm?.(null);
+        setLocalPledgedOnly(false); setPledgedOnly?.(false);
         setLocalClientIds([]); setSelectedClientIds?.([]);
 
         if (resetPath) {
@@ -96,7 +106,7 @@ export default function HoldingsFilter({
     };
 
     const content = (
-        <div className="flex flex-col lg:flex-row flex-wrap lg:flex-nowrap items-center gap-2">
+        <div className="flex flex-row flex-wrap items-center gap-2 lg:gap-3">
             {/* 0. Hidden Inputs for form submission (client_ids) */}
             <input type="hidden" name="client_ids" value={localClientIds.join(',')} />
             <input type="hidden" name="long_term" value={localLongTerm === null ? '' : String(localLongTerm)} />
@@ -108,11 +118,11 @@ export default function HoldingsFilter({
                 selectedKeys={localClientIds}
                 onChange={handleClientChange}
                 identifier="client_id"
-                className="w-full lg:w-48 shrink-0"
+                className="w-full sm:w-64 lg:w-48 shrink-0"
             />
 
             {/* 2. Ticker */}
-            <div className="relative w-full lg:w-48 shrink-0">
+            <div className="relative w-full sm:w-32 lg:w-40 shrink-0">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
                 <input
                     name="ticker"
@@ -125,7 +135,7 @@ export default function HoldingsFilter({
             </div>
 
             {/* 3. Share Name (Flexible Width) */}
-            <div className="relative flex-grow w-full">
+            <div className="relative flex-grow min-w-[200px] w-full lg:w-auto">
                 <input
                     name="share_name"
                     value={localShareName}
@@ -185,64 +195,87 @@ export default function HoldingsFilter({
             )}
 
             {/* 5. Date Range */}
-            <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl">
-                <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
-                <input
-                    name="start_date"
-                    type="date" value={localStartDate}
-                    autoComplete="off"
-                    onChange={(e) => { setLocalStartDate(e.target.value); setStartDate?.(e.target.value); }}
-                    className="bg-transparent text-[10px] outline-none w-[95px] dark:text-white dark:[color-scheme:dark]"
-                />
-                <span className="text-slate-300 dark:text-slate-700">-</span>
-                <input
-                    name="end_date"
-                    type="date" value={localEndDate}
-                    autoComplete="off"
-                    onChange={(e) => { setLocalEndDate(e.target.value); setEndDate?.(e.target.value); }}
-                    className="bg-transparent text-[10px] outline-none w-[95px] dark:text-white dark:[color-scheme:dark]"
-                />
-            </div>
-
-            {/* 6. Balance Toggle - Conditional Rendering */}
-            {showBalanceToggle && (
-                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl shrink-0">
-                    <button
-                        type="button"
-                        onClick={() => { setLocalShowAll(false); setShowAll?.(false); }}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!localShowAll 
-                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' 
-                            : 'text-slate-500 dark:text-slate-400'}`}
-                    >
-                        Active
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setLocalShowAll(true); setShowAll?.(true); }}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${localShowAll 
-                            ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' 
-                            : 'text-slate-500 dark:text-slate-400'}`}
-                    >
-                        All
-                    </button>
+            {showDateFilter && (
+                <div className="flex items-center gap-1.5 shrink-0 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2 py-1.5 rounded-xl">
+                    <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+                    <input
+                        name="start_date"
+                        type="date" value={localStartDate}
+                        autoComplete="off"
+                        onChange={(e) => { setLocalStartDate(e.target.value); setStartDate?.(e.target.value); }}
+                        className="bg-transparent text-[10px] outline-none w-[95px] dark:text-white dark:[color-scheme:dark]"
+                    />
+                    <span className="text-slate-300 dark:text-slate-700">-</span>
+                    <input
+                        name="end_date"
+                        type="date" value={localEndDate}
+                        autoComplete="off"
+                        onChange={(e) => { setLocalEndDate(e.target.value); setEndDate?.(e.target.value); }}
+                        className="bg-transparent text-[10px] outline-none w-[95px] dark:text-white dark:[color-scheme:dark]"
+                    />
                 </div>
             )}
 
-            {/* 7. Action Buttons */}
-            <div className="flex items-center gap-1 shrink-0 ml-auto">
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white text-[11px] font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
-                >
-                    Search
-                </button>
-                <button
-                    type="button"
-                    onClick={clearAll}
-                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                >
-                    <X size={16} />
-                </button>
+            <div className="flex flex-wrap items-center gap-2 shrink-0 ml-auto">
+                {/* Balance Toggle - Conditional Rendering */}
+                {showBalanceToggle && (
+                    <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => { setLocalShowAll(false); setShowAll?.(false); }}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${!localShowAll 
+                                ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' 
+                                : 'text-slate-500 dark:text-slate-400'}`}
+                        >
+                            Active
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setLocalShowAll(true); setShowAll?.(true); }}
+                            className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${localShowAll 
+                                ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' 
+                                : 'text-slate-500 dark:text-slate-400'}`}
+                        >
+                            All
+                        </button>
+                    </div>
+                )}
+
+                {/* Pledged Only Toggle */}
+                {showPledgedToggle && (
+                    <button
+                        type="button"
+                        onClick={() => { 
+                            const next = !localPledgedOnly;
+                            setLocalPledgedOnly(next); 
+                            setPledgedOnly?.(next); 
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl transition-all border shrink-0 ${localPledgedOnly
+                            ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                    >
+                        <Lock size={12} className={localPledgedOnly ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
+                        Pledged
+                    </button>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        type="submit"
+                        className="px-4 py-2 bg-indigo-600 text-white text-[11px] font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                        Search
+                    </button>
+                    <button
+                        type="button"
+                        onClick={clearAll}
+                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
             </div>
         </div>
     );

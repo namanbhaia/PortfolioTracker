@@ -53,8 +53,8 @@ export function ClientMultiSelect({
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute right-0 z-20 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl dark:shadow-indigo-500/20 overflow-hidden animate-in fade-in zoom-in duration-100">
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute right-0 z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl dark:shadow-indigo-500/20 overflow-hidden animate-in fade-in zoom-in duration-100">
             <div className="p-2 space-y-1 max-h-60 overflow-y-auto">
               {clients.map((client) => {
                 const key = client[identifier];

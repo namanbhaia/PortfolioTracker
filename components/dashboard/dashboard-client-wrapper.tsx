@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Users } from "lucide-react";
-import { ClientMultiSelect } from "@/components/ui/client-filter";
+import HoldingsFilter from "@/components/ui/holdings-filters";
 import ConsolidatedHoldingsTable, { consolidated_columns } from "@/components/dashboard/consolidated-holdings-table";
 import { RefreshButton } from "@/components/ui/refresh-button";
 import { SyncPricesButton } from "@/components/ui/sync-prices-button";
@@ -36,18 +36,26 @@ export default function DashboardClientWrapper({
         "consolidated_holdings",
         consolidated_columns.map(c => c.id)
     );
-    // 1. Filter State (Local instead of URL search params)
-    const [selectedClientNames, setSelectedClientNames] = useState<string[]>([]);
+    // 1. Filter State
+    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+    const [ticker, setTicker] = useState('');
+    const [shareName, setShareName] = useState('');
+    const [pledgedOnly, setPledgedOnly] = useState(false);
 
     // 2. Client-side Aggregation and Metrics Logic
     const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {
-        // Filter holdings and pledges by selected client names
-        const filteredHoldings = selectedClientNames.length > 0
-            ? initialHoldings.filter(h => selectedClientNames.includes(h.client_name))
+        // Filter holdings and pledges by selected client IDs/Names
+        const filteredHoldings = selectedClientIds.length > 0
+            ? initialHoldings.filter(h => selectedClientIds.includes(h.client_id))
             : initialHoldings;
 
-        const filteredPledges = selectedClientNames.length > 0
-            ? initialPledges.filter(p => selectedClientNames.includes(p.client_name))
+        // Map client IDs to Names for pledge filtering
+        const selectedNames = availableClients
+            .filter(c => selectedClientIds.includes(c.client_id))
+            .map(c => c.client_name);
+
+        const filteredPledges = selectedNames.length > 0
+            ? initialPledges.filter(p => selectedNames.includes(p.client_name))
             : initialPledges;
 
         // Aggregate by Ticker
@@ -102,6 +110,13 @@ export default function DashboardClientWrapper({
                     pl_percent,
                 };
             })
+            // APPLY NEW FILTERS HERE
+            .filter((row: any) => {
+                const matchesTicker = ticker ? row.ticker.toLowerCase().includes(ticker.toLowerCase()) : true;
+                const matchesStock = shareName ? row.stock_name.toLowerCase().includes(shareName.toLowerCase()) : true;
+                const matchesPledged = pledgedOnly ? row.total_pledged > 0 : true;
+                return matchesTicker && matchesStock && matchesPledged;
+            })
             .sort((a, b) => a.ticker.localeCompare(b.ticker));
 
         // Global Metrics
@@ -117,23 +132,15 @@ export default function DashboardClientWrapper({
             totalPL: pl,
             plPercentage: plPct
         };
-    }, [initialHoldings, initialPledges, selectedClientNames]);
-
-    const handleToggleFilter = (clientName: string) => {
-        setSelectedClientNames(prev =>
-            prev.includes(clientName)
-                ? prev.filter(name => name !== clientName)
-                : [...prev, clientName]
-        );
-    };
+    }, [initialHoldings, initialPledges, selectedClientIds, ticker, shareName, pledgedOnly, availableClients]);
 
     return (
-        <div className="p-6 space-y-8 mx-auto transition-colors">
+        <div className="p-6 space-y-6 max-w-[1400px] mx-auto transition-colors">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Executive Summary</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Consolidated overview for <span className="font-semibold text-indigo-600 dark:text-indigo-400">{userName}</span>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">Executive Summary</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">
+                        Consolidated wealth overview for <span className="font-semibold text-indigo-600 dark:text-indigo-400">{userName}</span>
                     </p>
                 </div>
 
@@ -144,18 +151,27 @@ export default function DashboardClientWrapper({
                         visibleColumns={visibleColumns}
                         onToggle={toggleColumn}
                     />
-                    <SyncPricesButton />
                     <RefreshButton />
-                    <div className="w-full md:w-48">
-                        <ClientMultiSelect
-                            clients={availableClients}
-                            selectedKeys={selectedClientNames}
-                            onChange={handleToggleFilter}
-                            identifier="client_name"
-                        />
-                    </div>
+                    <SyncPricesButton />
                 </div>
             </header>
+
+            {/* FILTER BAR */}
+            <HoldingsFilter
+                availableClients={availableClients}
+                selectedClientIds={selectedClientIds}
+                setSelectedClientIds={setSelectedClientIds}
+                ticker={ticker}
+                setTicker={setTicker}
+                shareName={shareName}
+                setShareName={setShareName}
+                showPledgedToggle={true}
+                pledgedOnly={pledgedOnly}
+                setPledgedOnly={setPledgedOnly}
+                showLongTermToggle={false}
+                showBalanceToggle={false}
+                showDateFilter={false}
+            />
 
             {/* SUMMARY CARDS */}
             <SummaryCards

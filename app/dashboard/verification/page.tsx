@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { UploadCloud, FileCheck } from 'lucide-react';
+import { UploadCloud, FileCheck, Download } from 'lucide-react';
 import { getTickerDetailsFromYahoo } from '@/lib/actions/yahoo/find-ticker';
 import {
     CsvRow,
@@ -240,16 +240,58 @@ export default function VerificationPage() {
 
     const selectedResult = viewState.verificationResults[selectedClientKey];
 
+    const handleExportDiscrepancies = () => {
+        const results = viewState.verificationResults;
+        const allDiscrepancies: DiscrepancyRow[] = [];
+
+        Object.values(results).forEach(res => {
+            res.discrepancies.forEach(d => allDiscrepancies.push(d));
+        });
+
+        if (allDiscrepancies.length === 0) {
+            alert("No discrepancies found to export.");
+            return;
+        }
+
+        const headers = ["Client Name", "DP ID", "ISIN", "Ticker", "Stock Name", "DP Balance", "Web Balance", "Difference"];
+        const csvRows = [
+            headers.join(','),
+            ...allDiscrepancies.map(row => [
+                `"${row.client_name}"`,
+                `"${row.dp_id}"`,
+                `"${row.isin}"`,
+                `"${row.ticker}"`,
+                `"${row.stock_name}"`,
+                row.dp_balance,
+                row.web_balance,
+                row.difference
+            ].join(','))
+        ];
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `discrepancies_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
-            <header>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-3 transition-colors">
-                    <FileCheck className="text-indigo-600 dark:text-indigo-400" size={32} />
-                    Holdings Verification
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-2 transition-colors">
-                    Upload DP-Manager export (CSV) to validate system accuracy.
-                </p>
+        <div className="p-6 space-y-6 max-w-[1400px] mx-auto transition-colors">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors flex items-center gap-3">
+                        <FileCheck className="text-indigo-600 dark:text-indigo-400" size={28} />
+                        Holdings Verification
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">
+                        Upload DP-Manager export (CSV) to validate system accuracy.
+                    </p>
+                </div>
             </header>
 
             {/* Upload Section */}
@@ -302,6 +344,13 @@ export default function VerificationPage() {
                                 </option>
                             ))}
                         </select>
+                        <button
+                            onClick={handleExportDiscrepancies}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-semibold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-all border border-indigo-100 dark:border-indigo-800"
+                        >
+                            <Download size={18} />
+                            Export Discrepancies
+                        </button>
                     </div>
 
                     {/* Result Display Logic */}

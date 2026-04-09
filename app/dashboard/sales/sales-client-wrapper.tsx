@@ -126,9 +126,14 @@ export default function SalesClientWrapper({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="p-6 space-y-6 max-w-[1400px] mx-auto transition-colors">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Portfolio Sales (P/L)</h1>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">Portfolio Sales (P/L)</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">
+                        Historical tracking of real-world gains and capital losses.
+                    </p>
+                </div>
                 <div className="flex items-center gap-3">
                     <ColumnVisibilityToggle
                         columns={sales_columns}

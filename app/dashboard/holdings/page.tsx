@@ -35,12 +35,9 @@ export default async function HoldingsPage() {
     }
 
     return (
-        <div className="p-4 space-y-4 mx-auto">
-            {/* The wrapper will handle the header with Refresh/Sync Buttons and Column Toggle */}
-            <HoldingsClientWrapper
-                initialHoldings={holdings || []}
-                availableClients={availableClients || []}
-            />
-        </div>
+        <HoldingsClientWrapper
+            initialHoldings={holdings || []}
+            availableClients={availableClients || []}
+        />
     );
 }
