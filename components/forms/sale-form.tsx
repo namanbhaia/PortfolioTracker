@@ -325,19 +325,6 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 </div>
 
                 <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Sale Rate (₹)</label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        autoComplete="off"
-                        required
-                        {...register("sale_rate", { required: true, min: 0.01 })}
-                        placeholder="0.00"
-                        className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 dark:text-white dark:placeholder-slate-500 transition-all"
-                    />
-                </div>
-
-                <div className="space-y-1">
                     <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Sale Quantity</label>
                     <input
                         type="number"
@@ -360,6 +347,19 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                             ⚠️ SELLING PLEDGED SHARES ({pledgedQty} PLEDGED)
                         </p>
                     )}
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Sale Rate (₹)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        autoComplete="off"
+                        required
+                        {...register("sale_rate", { required: true, min: 0.01 })}
+                        placeholder="0.00"
+                        className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-rose-500/20 focus:border-rose-500 dark:text-white dark:placeholder-slate-500 transition-all"
+                    />
                 </div>
             </div>
 

@@ -97,7 +97,7 @@ export default function EditTransactionSimple({ row, type, totalQty }: { row: an
                             </div>
                         </div>
 
-                        {/* Date & Rate Row */}
+                        {/* Date & Quantity Row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-[10px]  uppercase text-slate-500 dark:text-slate-400 ml-1">Date</label>
@@ -117,6 +117,23 @@ export default function EditTransactionSimple({ row, type, totalQty }: { row: an
                                 </div>
                             </div>
                             <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-normal ml-1">Quantity</label>
+                                <input
+                                    name="qty"
+                                    type="number"
+                                    step="any"
+                                    autoComplete="off"
+                                    value={liveQty}
+                                    onChange={(e) => setLiveQty(Number(e.target.value))}
+                                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none bg-white dark:bg-slate-800 font-normal text-slate-900 dark:text-white transition-colors"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Rate & Live Value */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
                                 <label className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-normal ml-1">Trade Rate</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500 text-xs font-normal">₹</span>
@@ -131,23 +148,6 @@ export default function EditTransactionSimple({ row, type, totalQty }: { row: an
                                         required
                                     />
                                 </div>
-                            </div>
-                        </div>
-
-                        {/* Qty & Live Value */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-normal ml-1">Quantity</label>
-                                <input
-                                    name="qty"
-                                    type="number"
-                                    step="any"
-                                    autoComplete="off"
-                                    value={liveQty}
-                                    onChange={(e) => setLiveQty(Number(e.target.value))}
-                                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm outline-none bg-white dark:bg-slate-800 font-normal text-slate-900 dark:text-white transition-colors"
-                                    required
-                                />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] uppercase text-slate-500 dark:text-slate-400 ml-1 text-right block">Calculated Total</label>

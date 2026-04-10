@@ -255,6 +255,17 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                         />
                     </div>
                     <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Purchase Quantity</label>
+                        <input
+                            type="number"
+                            required
+                            autoComplete="off"
+                            {...register("purchase_qty", { required: true, min: 0.01 })}
+                            placeholder="0"
+                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-indigo-500 dark:text-white dark:placeholder-slate-500 transition-colors"
+                        />
+                    </div>
+                    <div className="space-y-1">
                         <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Purchase Rate (₹)</label>
                         <input
                             type="number"
@@ -263,17 +274,6 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
                             autoComplete="off"
                             {...register("purchase_rate", { required: true, min: 0.01 })}
                             placeholder="0.00"
-                            className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-indigo-500 dark:text-white dark:placeholder-slate-500 transition-colors"
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Purchase Quantity</label>
-                        <input
-                            type="number"
-                            required
-                            autoComplete="off"
-                            {...register("purchase_qty", { required: true, min: 0.01 })}
-                            placeholder="0"
                             className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 ring-indigo-500 dark:text-white dark:placeholder-slate-500 transition-colors"
                         />
                     </div>
