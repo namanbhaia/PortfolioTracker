@@ -19,10 +19,15 @@ export interface PriceAlert {
     snoozed_until?: string;
 }
 
-export async function getAlerts() {
+async function getAuthSession() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
+    return { supabase, user };
+}
+
+export async function getAlerts() {
+    const { supabase, user } = await getAuthSession();
 
     const { data, error } = await supabase
         .from('price_alerts')
@@ -35,9 +40,7 @@ export async function getAlerts() {
 }
 
 export async function createAlert(alertData: PriceAlert) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { supabase, user } = await getAuthSession();
 
     const { data, error } = await supabase
         .from('price_alerts')
@@ -54,9 +57,7 @@ export async function createAlert(alertData: PriceAlert) {
 }
 
 export async function updateAlert(id: string, updates: Partial<PriceAlert>) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { supabase, user } = await getAuthSession();
 
     const { error } = await supabase
         .from('price_alerts')
@@ -70,9 +71,7 @@ export async function updateAlert(id: string, updates: Partial<PriceAlert>) {
 }
 
 export async function deleteAlert(id: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const { supabase, user } = await getAuthSession();
 
     const { error } = await supabase
         .from('price_alerts')
