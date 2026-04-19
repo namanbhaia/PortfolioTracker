@@ -27,7 +27,8 @@ import {
     Wrench,
     Lightbulb,
     Moon,
-    Sun
+    Sun,
+    Bell
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -39,6 +40,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useLoading } from '@/components/helper/loading-context';
 import { useUser } from '@/components/helper/user-context';
+import { AlertsBell } from './alerts-bell';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -52,7 +54,6 @@ const navItems = [
 ];
 
 const secondaryItems = [
-    { name: 'Export Data', href: '/dashboard/export', icon: FileSpreadsheet },
     { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
 ];
 
@@ -144,6 +145,11 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                 </div>
             </div>
 
+            {/* Notification Bell section */}
+            <div className="px-3 mb-2">
+                <AlertsBell showLabel={!isCollapsed} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all group hover:bg-slate-800 hover:text-slate-100 text-slate-300" />
+            </div>
+
             {/* Primary Navigation */}
             <nav className="flex-1 px-3 space-y-1 mt-4 overflow-y-auto overflow-x-hidden">
                 {!isCollapsed && (
@@ -177,7 +183,17 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
             </nav>
 
             {/* Secondary Items */}
-            <div className="px-3 space-y-1 mb-4">
+            <div className="px-3 space-y-1 mb-4 border-t border-slate-800/50 pt-4 mt-4">
+                <Link
+                    href="/dashboard/alerts"
+                    onClick={() => {
+                        if (pathname !== '/dashboard/alerts') setIsLoading(true);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors group"
+                >
+                    <Bell size={18} className="shrink-0 text-slate-500 group-hover:text-amber-400" />
+                    {!isCollapsed && <span className="truncate">Configure Alerts</span>}
+                </Link>
                 {secondaryItems.map((item) => (
                     <Link
                         key={item.name}
@@ -258,6 +274,18 @@ export default function Sidebar({ user, profile }: { user: any, profile?: any })
                                 </Link>
                             </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem asChild>
+                            <Link 
+                                href="/dashboard/export" 
+                                className="cursor-pointer flex items-center gap-2"
+                                onClick={() => {
+                                    if (pathname !== '/dashboard/export') setIsLoading(true);
+                                }}
+                            >
+                                <FileSpreadsheet size={16} />
+                                <span>Export Data</span>
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-slate-700" />
                         <DropdownMenuItem onClick={handleLogout} className="text-rose-400 cursor-pointer flex items-center gap-2">
                             <LogOut size={16} />

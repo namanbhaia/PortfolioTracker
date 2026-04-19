@@ -33,9 +33,9 @@ vi.mock("@/components/ui/card", () => ({
 }));
 
 describe('GeminiTab', () => {
-    const mockHoldings = [];
-    const mockTransactions = [];
-    const mockClients = [];
+    const mockHoldings: any[] = [];
+    const mockTransactions: any[] = [];
+    const mockClients: any[] = [];
 
     beforeEach(() => {
         vi.clearAllMocks();

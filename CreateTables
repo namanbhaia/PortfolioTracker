@@ -117,6 +117,29 @@ CREATE TABLE pledges (
     PRIMARY KEY (client_name, ticker) 
 );
 
+-- 7. PRICE ALERTS (User Notifications)
+-- User configured alerts to be triggered dynamically based on price or volume spikes
+CREATE TYPE alert_condition AS ENUM ('greater_than', 'less_than', 'crossing_up', 'crossing_down', 'volume_spike', 'percentage_change_up', 'percentage_change_down');
+
+CREATE TABLE price_alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    ticker TEXT REFERENCES assets(ticker) ON DELETE CASCADE,
+    
+    condition alert_condition NOT NULL,
+    target_type TEXT NOT NULL, 
+    target_value NUMERIC, 
+    
+    is_triggered BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_one_time BOOLEAN DEFAULT FALSE, 
+    
+    note TEXT, 
+    expires_at TIMESTAMPTZ, 
+    snoozed_until TIMESTAMPTZ,
+    
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 
 -- =========================================================
 -- 3. INDEXES & SEQUENCES
@@ -595,6 +618,99 @@ $$ LANGUAGE plpgsql;
 -- =========================================================
 -- 6. TRIGGERS
 -- =========================================================
+
+-- Function & Trigger: Check Price Alerts
+-- Evaluates all active alerts for a given ticker when market data updates
+CREATE OR REPLACE FUNCTION public.check_price_alerts()
+RETURNS trigger AS $$
+DECLARE
+    alert_record RECORD;
+    is_met BOOLEAN;
+    target_number NUMERIC;
+BEGIN
+    -- Only evaluate if current_price or market_volume has changed
+    IF NEW.current_price IS NOT DISTINCT FROM OLD.current_price AND NEW.market_volume IS NOT DISTINCT FROM OLD.market_volume THEN
+        RETURN NEW;
+    END IF;
+
+    -- Exit early if no active alerts exist for this ticker to save DB cycles
+    IF NOT EXISTS (SELECT 1 FROM public.price_alerts WHERE ticker = NEW.ticker AND is_active = TRUE) THEN
+        RETURN NEW;
+    END IF;
+
+    -- Loop through active alerts for this ticker
+    FOR alert_record IN SELECT * FROM public.price_alerts WHERE ticker = NEW.ticker AND is_active = TRUE
+    LOOP
+        -- Soft delete if expired
+        IF alert_record.expires_at IS NOT NULL AND alert_record.expires_at < NOW() THEN
+            DELETE FROM public.price_alerts WHERE id = alert_record.id;
+            CONTINUE;
+        END IF;
+
+        -- Skip if snoozed
+        IF alert_record.snoozed_until IS NOT NULL AND alert_record.snoozed_until > NOW() THEN
+            CONTINUE;
+        END IF;
+
+        is_met := FALSE;
+        
+        -- Resolve the dynamic target value
+        IF alert_record.target_type = 'manual' THEN
+            target_number := alert_record.target_value;
+        ELSIF alert_record.target_type = 'today_open' THEN
+            target_number := NEW.today_open;
+        ELSIF alert_record.target_type = 'fifty_two_week_high' THEN
+            target_number := NEW.fifty_two_week_high;
+        ELSIF alert_record.target_type = 'fifty_two_week_low' THEN
+            target_number := NEW.fifty_two_week_low;
+        ELSIF alert_record.target_type = 'avg_volume' THEN
+            target_number := NEW.avg_volume;
+        ELSE
+            target_number := alert_record.target_value; -- fallback
+        END IF;
+
+        -- Evaluate condition
+        IF alert_record.condition = 'greater_than' THEN
+            is_met := (NEW.current_price > target_number);
+        ELSIF alert_record.condition = 'less_than' THEN
+            is_met := (NEW.current_price < target_number);
+        ELSIF alert_record.condition = 'crossing_up' THEN
+            is_met := (OLD.current_price <= target_number AND NEW.current_price > target_number);
+        ELSIF alert_record.condition = 'crossing_down' THEN
+            is_met := (OLD.current_price >= target_number AND NEW.current_price < target_number);
+        ELSIF alert_record.condition = 'volume_spike' THEN
+            -- target_value is used as a multiplier (e.g., 1.5)
+             IF alert_record.target_value IS NOT NULL AND target_number IS NOT NULL THEN
+                 is_met := (NEW.market_volume > (target_number * alert_record.target_value));
+             END IF;
+        ELSIF alert_record.condition = 'percentage_change_up' THEN
+             IF alert_record.target_value IS NOT NULL AND target_number IS NOT NULL AND target_number > 0 THEN
+                 is_met := (((NEW.current_price - target_number) / target_number) * 100) >= alert_record.target_value;
+             END IF;
+        ELSIF alert_record.condition = 'percentage_change_down' THEN
+             IF alert_record.target_value IS NOT NULL AND target_number IS NOT NULL AND target_number > 0 THEN
+                 is_met := (((target_number - NEW.current_price) / target_number) * 100) >= alert_record.target_value;
+             END IF;
+        END IF;
+
+        IF is_met THEN
+            -- Update alert
+            UPDATE public.price_alerts
+            SET 
+                is_triggered = TRUE,
+                is_active = CASE WHEN alert_record.is_one_time THEN FALSE ELSE TRUE END
+            WHERE id = alert_record.id;
+        END IF;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_asset_updated_check_alerts
+  AFTER UPDATE ON public.assets
+  FOR EACH ROW EXECUTE FUNCTION public.check_price_alerts();
+
 -- Function & Trigger: Handle New User (Auth Hook)
 -- Automatically creates Profile and Default Client entries on Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()

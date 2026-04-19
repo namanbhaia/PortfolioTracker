@@ -38,7 +38,7 @@ vi.mock("@/components/ui/tabs", () => ({
 }));
 
 describe('TechnicalTab', () => {
-    const mockHoldings = [];
+    const mockHoldings: any[] = [];
 
     beforeEach(() => {
         vi.clearAllMocks();

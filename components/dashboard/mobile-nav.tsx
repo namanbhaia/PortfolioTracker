@@ -20,7 +20,8 @@ import {
     Wrench,
     Lightbulb,
     Menu,
-    X
+    X,
+    Bell
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { createClient } from '@/lib/supabase/client';
@@ -32,6 +33,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLoading } from '@/components/helper/loading-context';
+import { AlertsBell } from './alerts-bell';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -45,8 +47,8 @@ const navItems = [
 ];
 
 const secondaryItems = [
-    { name: 'Export Data', href: '/dashboard/export', icon: FileSpreadsheet },
     { name: 'Tax Calculation', href: '/dashboard/tax', icon: BadgeDollarSign },
+    { name: 'Configure Alerts', href: '/dashboard/alerts', icon: Bell },
 ];
 
 const adminItems = [
@@ -119,6 +121,7 @@ export default function MobileNav({ user, profile }: { user: any, profile?: any 
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <AlertsBell />
                     <ThemeToggle />
                     
                     <DropdownMenu>
@@ -155,6 +158,18 @@ export default function MobileNav({ user, profile }: { user: any, profile?: any 
                                 >
                                     <Info size={16} />
                                     <span>Info & Rules</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link 
+                                    href="/dashboard/export" 
+                                    className="cursor-pointer flex items-center gap-2 w-full"
+                                    onClick={() => {
+                                        if (pathname !== '/dashboard/export') setIsLoading(true);
+                                    }}
+                                >
+                                    <FileSpreadsheet size={16} />
+                                    <span>Export Data</span>
                                 </Link>
                             </DropdownMenuItem>
                             {profile?.admin_level >= 1 && (
