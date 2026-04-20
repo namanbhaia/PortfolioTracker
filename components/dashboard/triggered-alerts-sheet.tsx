@@ -5,7 +5,15 @@ import { snoozeAlert, markAlertAsRead } from '@/lib/actions/price-alerts';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export function TriggeredAlertsSheet({ dialogRef, alerts }: { dialogRef: React.RefObject<HTMLDialogElement | null>, alerts: any[] }) {
+export function TriggeredAlertsSheet({ 
+    dialogRef, 
+    alerts, 
+    onRemove 
+}: { 
+    dialogRef: React.RefObject<HTMLDialogElement | null>, 
+    alerts: any[],
+    onRemove: (id: string) => void
+}) {
     const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
     const router = useRouter();
 
@@ -21,6 +29,10 @@ export function TriggeredAlertsSheet({ dialogRef, alerts }: { dialogRef: React.R
         setLoadingIds(prev => new Set(prev).add(id));
         try {
             await snoozeAlert(id, hours);
+            onRemove(id);
+        } catch (e) {
+            console.error("Failed to snooze alert:", e);
+            alert("Failed to snooze alert.");
         } finally {
             setLoadingIds(prev => {
                 const newSet = new Set(prev);
@@ -34,6 +46,10 @@ export function TriggeredAlertsSheet({ dialogRef, alerts }: { dialogRef: React.R
         setLoadingIds(prev => new Set(prev).add(id));
         try {
             await markAlertAsRead(id);
+            onRemove(id);
+        } catch (e) {
+            console.error("Failed to dismiss alert:", e);
+            alert("Failed to dismiss alert. Check console for details.");
         } finally {
             setLoadingIds(prev => {
                 const newSet = new Set(prev);

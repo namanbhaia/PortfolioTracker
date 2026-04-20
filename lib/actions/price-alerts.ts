@@ -59,13 +59,18 @@ export async function createAlert(alertData: PriceAlert) {
 export async function updateAlert(id: string, updates: Partial<PriceAlert>) {
     const { supabase, user } = await getAuthSession();
 
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('price_alerts')
         .update(updates)
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+        throw new Error("Target alert not found or you don't have permission to update it.");
+    }
+
     revalidatePath('/dashboard/alerts');
     return { success: true };
 }

@@ -3,6 +3,7 @@ import { getAlerts } from "@/lib/actions/price-alerts";
 import { AlertForm } from "@/components/forms/alert-form";
 import { Clock, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DeleteAlertButton } from "@/components/dashboard/delete-alert-button";
 
 export const metadata: Metadata = {
     title: "Price Alerts | Portfolio Tracker",
@@ -77,6 +78,9 @@ export default async function AlertsPage() {
                                                 {a.target_type !== 'manual' && a.target_value ? ` * ${a.target_value}` : ''}
                                             </p>
                                             {a.note && <p className="text-xs mt-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 w-fit px-2 py-1 rounded inline-flex items-center gap-1"><Info size={10} /> {a.note}</p>}
+                                        </div>
+                                        <div className="pl-4 border-l border-slate-200 dark:border-slate-800 flex items-center justify-center">
+                                            <DeleteAlertButton id={a.id} />
                                         </div>
                                     </div>
                                 ))}

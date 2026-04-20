@@ -37,17 +37,26 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
     useEffect(() => {
         if (!userId) return;
 
-        const channel = supabase.channel('price_alerts_changes')
+        const channel = supabase.channel(`price_alerts_changes_${userId}`)
             .on('postgres_changes', {
-                event: 'UPDATE',
+                event: '*',
                 schema: 'public',
                 table: 'price_alerts',
-                filter: `user_id=eq.${userId}`
             }, (payload) => {
-                const newRecord = payload.new;
+                console.log("🔔 [DEBUG] ANY REALTIME PAYLOAD RECEIVED:", payload);
+                const newRecord = payload.new as any;
+                const oldRecord = payload.old as any;
                 
-                // If it just triggered
-                if (newRecord.is_triggered && !payload.old.is_triggered) {
+                if (!newRecord) {
+                    console.log("Empty newRecord in payload.");
+                    return;
+                }
+                
+                console.log(`Payload details - Ticker: ${newRecord.ticker}, Triggered: ${newRecord.is_triggered}, Record UserID: ${newRecord.user_id}, Local UserID: ${userId}`);
+
+                // Proceed even if mismatch during debug
+                if (newRecord.is_triggered && (!oldRecord || !oldRecord.is_triggered)) {
+                    console.log("Trigger condition met in Realtime payload!");
                     setTriggeredAlerts((prev) => {
                         const exists = prev.find(a => a.id === newRecord.id);
                         if (exists) return prev;
@@ -55,22 +64,29 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
                     });
                     setUnreadCount((prev) => prev + 1);
                     
-                    // Show silent popup push notification
                     setToastMessage({
                         id: newRecord.id,
-                        message: `Alert Trigerred: ${newRecord.ticker} ${newRecord.note ? '- ' + newRecord.note : ''}`
+                        message: `Alert Triggered: ${newRecord.ticker} ${newRecord.note ? '- ' + newRecord.note : ''}`
                     });
                     
-                    setTimeout(() => setToastMessage(null), 5000); // 5 seconds
+                    setTimeout(() => setToastMessage(null), 5000);
                 }
                 
-                // If someone cleared/snoozed it
-                if (!newRecord.is_triggered && payload.old.is_triggered) {
-                    setTriggeredAlerts((prev) => prev.filter(a => a.id !== newRecord.id));
-                    setUnreadCount((prev) => Math.max(0, prev - 1));
+                // --- UPDATE to DISMISSED/SNOOZED ---
+                if (!newRecord.is_triggered && oldRecord?.is_triggered) {
+                    console.log("Dismiss condition met in Realtime payload!");
+                    setTriggeredAlerts((prev) => {
+                        const exists = prev.some(a => a.id === newRecord.id);
+                        if (!exists) return prev;
+                        
+                        setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
+                        return prev.filter(a => a.id !== newRecord.id);
+                    });
                 }
             })
-            .subscribe();
+            .subscribe((status) => {
+                console.log(`📡 Alert Sync Status for ${userId}:`, status);
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -78,6 +94,15 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
     }, [userId, supabase]);
 
     const openModal = () => dialogRef.current?.showModal();
+
+    const removeAlertFromState = (id: string) => {
+        setTriggeredAlerts((prev) => {
+            const exists = prev.some(a => a.id === id);
+            if (!exists) return prev;
+            setUnreadCount((count) => Math.max(0, count - 1));
+            return prev.filter(a => a.id !== id);
+        });
+    };
 
     return (
         <>
@@ -94,7 +119,11 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
             </button>
 
             {/* Slide-out Sheet using dialog */}
-            <TriggeredAlertsSheet dialogRef={dialogRef} alerts={triggeredAlerts} />
+            <TriggeredAlertsSheet 
+                dialogRef={dialogRef} 
+                alerts={triggeredAlerts} 
+                onRemove={removeAlertFromState} 
+            />
 
             {/* Custom Toast Pop-up */}
             {toastMessage && (
