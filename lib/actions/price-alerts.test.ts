@@ -80,7 +80,7 @@ describe('Price Alerts Actions', () => {
         const now = new Date('2024-01-01T12:00:00Z');
         vi.setSystemTime(now);
 
-        mockQueryBuilder.then = vi.fn((resolve) => resolve({ error: null }));
+        mockQueryBuilder.then = vi.fn((resolve) => resolve({ data: [{ id: 'alert-1' }], error: null }));
 
         await actions.snoozeAlert('alert-1', 2);
 
@@ -105,7 +105,7 @@ describe('Price Alerts Actions', () => {
     });
 
     it('markAlertAsRead should set is_triggered to false', async () => {
-        mockQueryBuilder.then = vi.fn((resolve) => resolve({ error: null }));
+        mockQueryBuilder.then = vi.fn((resolve) => resolve({ data: [{ id: 'alert-2' }], error: null }));
 
         await actions.markAlertAsRead('alert-2');
 

@@ -37,55 +37,45 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
     useEffect(() => {
         if (!userId) return;
 
-        const channel = supabase.channel(`price_alerts_changes_${userId}`)
+        const channel = supabase.channel('price_alerts_realtime')
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
                 table: 'price_alerts',
             }, (payload) => {
-                console.log("🔔 [DEBUG] ANY REALTIME PAYLOAD RECEIVED:", payload);
+                console.log("🔔 REALTIME PAYLOAD:", payload);
                 const newRecord = payload.new as any;
                 const oldRecord = payload.old as any;
                 
-                if (!newRecord) {
-                    console.log("Empty newRecord in payload.");
-                    return;
-                }
+                if (!newRecord || !userId) return;
                 
-                console.log(`Payload details - Ticker: ${newRecord.ticker}, Triggered: ${newRecord.is_triggered}, Record UserID: ${newRecord.user_id}, Local UserID: ${userId}`);
-
-                // Proceed even if mismatch during debug
+                // Manual User ID check
+                if (newRecord.user_id !== userId) return;
+                
+                // --- TRIGGERED ---
                 if (newRecord.is_triggered && (!oldRecord || !oldRecord.is_triggered)) {
-                    console.log("Trigger condition met in Realtime payload!");
-                    setTriggeredAlerts((prev) => {
-                        const exists = prev.find(a => a.id === newRecord.id);
-                        if (exists) return prev;
+                    console.log("Alert triggered via Realtime!");
+                    setTriggeredAlerts(prev => {
+                        if (prev.some(a => a.id === newRecord.id)) return prev;
                         return [newRecord, ...prev];
                     });
-                    setUnreadCount((prev) => prev + 1);
-                    
-                    setToastMessage({
-                        id: newRecord.id,
-                        message: `Alert Triggered: ${newRecord.ticker} ${newRecord.note ? '- ' + newRecord.note : ''}`
-                    });
-                    
+                    setUnreadCount(c => c + 1);
+                    setToastMessage({ id: newRecord.id, message: `Alert: ${newRecord.ticker}` });
                     setTimeout(() => setToastMessage(null), 5000);
                 }
                 
-                // --- UPDATE to DISMISSED/SNOOZED ---
+                // --- CLEARED ---
                 if (!newRecord.is_triggered && oldRecord?.is_triggered) {
-                    console.log("Dismiss condition met in Realtime payload!");
-                    setTriggeredAlerts((prev) => {
-                        const exists = prev.some(a => a.id === newRecord.id);
-                        if (!exists) return prev;
-                        
-                        setUnreadCount((prevCount) => Math.max(0, prevCount - 1));
-                        return prev.filter(a => a.id !== newRecord.id);
-                    });
+                    console.log("Alert cleared via Realtime!");
+                    setTriggeredAlerts(prev => prev.filter(a => a.id !== newRecord.id));
+                    setUnreadCount(c => Math.max(0, c - 1));
                 }
             })
-            .subscribe((status) => {
-                console.log(`📡 Alert Sync Status for ${userId}:`, status);
+            .subscribe(async (status) => {
+                console.log(`📡 Sync Status for ${userId}:`, status);
+                if (status === 'SUBSCRIBED') {
+                    console.log("Successfully connected to Realtime channel.");
+                }
             });
 
         return () => {
