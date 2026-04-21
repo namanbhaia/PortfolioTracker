@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useLoading } from '@/components/helper/loading-context';
 import { useUser } from '@/components/helper/user-context';
-import { AlertsBell } from './alerts-bell';
+import { AlertsBell } from './alerts/alerts-bell';
 
 const navItems = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },

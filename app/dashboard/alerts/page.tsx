@@ -3,7 +3,7 @@ import { getAlerts } from "@/lib/actions/price-alerts";
 import { AlertForm } from "@/components/forms/alert-form";
 import { Clock, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DeleteAlertButton } from "@/components/dashboard/delete-alert-button";
+import { DeleteAlertButton } from "@/components/dashboard/alerts/delete-alert-button";
 
 export const metadata: Metadata = {
     title: "Price Alerts | Portfolio Tracker",

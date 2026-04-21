@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { Bell, X, Info } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { TriggeredAlertsSheet } from './triggered-alerts-sheet';
 
@@ -13,73 +13,64 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
     const [toastMessage, setToastMessage] = useState<{ id: string, message: string } | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
 
+    const refreshAlerts = async (uid: string) => {
+        const { data, error } = await supabase
+            .from('price_alerts')
+            .select('*')
+            .eq('user_id', uid)
+            .eq('is_triggered', true)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error("Error refetching alerts:", error);
+            return;
+        }
+
+        if (data) {
+            setTriggeredAlerts(prev => {
+                const newTriggers = data.filter(alert => !prev.some(p => p.id === alert.id));
+                if (newTriggers.length > 0) {
+                    const latest = newTriggers[0];
+                    setToastMessage({ id: latest.id, message: `Alert: ${latest.ticker}` });
+                    setTimeout(() => setToastMessage(null), 5000);
+                }
+                return data;
+            });
+            setUnreadCount(data.length);
+        }
+    };
+
     useEffect(() => {
         const fetchInitial = async () => {
              const { data: { user } } = await supabase.auth.getUser();
              if (user) {
                  setUserId(user.id);
-                 const { data } = await supabase
-                     .from('price_alerts')
-                     .select('*')
-                     .eq('user_id', user.id)
-                     .eq('is_triggered', true)
-                     .order('created_at', { ascending: false });
-                 
-                 if (data) {
-                     setTriggeredAlerts(data);
-                     setUnreadCount(data.length);
-                 }
+                 refreshAlerts(user.id);
              }
         };
         fetchInitial();
     }, [supabase]);
 
     useEffect(() => {
-        if (!userId) return;
+        const handleGlobalRefresh = async () => {
+            let uid = userId;
+            if (!uid) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    setUserId(user.id);
+                    uid = user.id;
+                }
+            }
 
-        const channel = supabase.channel('price_alerts_realtime')
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'price_alerts',
-            }, (payload) => {
-                console.log("🔔 REALTIME PAYLOAD:", payload);
-                const newRecord = payload.new as any;
-                const oldRecord = payload.old as any;
-                
-                if (!newRecord || !userId) return;
-                
-                // Manual User ID check
-                if (newRecord.user_id !== userId) return;
-                
-                // --- TRIGGERED ---
-                if (newRecord.is_triggered && (!oldRecord || !oldRecord.is_triggered)) {
-                    console.log("Alert triggered via Realtime!");
-                    setTriggeredAlerts(prev => {
-                        if (prev.some(a => a.id === newRecord.id)) return prev;
-                        return [newRecord, ...prev];
-                    });
-                    setUnreadCount(c => c + 1);
-                    setToastMessage({ id: newRecord.id, message: `Alert: ${newRecord.ticker}` });
-                    setTimeout(() => setToastMessage(null), 5000);
-                }
-                
-                // --- CLEARED ---
-                if (!newRecord.is_triggered && oldRecord?.is_triggered) {
-                    console.log("Alert cleared via Realtime!");
-                    setTriggeredAlerts(prev => prev.filter(a => a.id !== newRecord.id));
-                    setUnreadCount(c => Math.max(0, c - 1));
-                }
-            })
-            .subscribe(async (status) => {
-                console.log(`📡 Sync Status for ${userId}:`, status);
-                if (status === 'SUBSCRIBED') {
-                    console.log("Successfully connected to Realtime channel.");
-                }
-            });
+            if (uid) {
+                refreshAlerts(uid);
+            }
+        };
+
+        window.addEventListener('dashboard-refresh', handleGlobalRefresh);
 
         return () => {
-            supabase.removeChannel(channel);
+            window.removeEventListener('dashboard-refresh', handleGlobalRefresh);
         };
     }, [userId, supabase]);
 
@@ -108,14 +99,12 @@ export function AlertsBell({ className, showLabel }: { className?: string, showL
                 {showLabel && <span className="text-sm font-medium">Alerts</span>}
             </button>
 
-            {/* Slide-out Sheet using dialog */}
             <TriggeredAlertsSheet 
                 dialogRef={dialogRef} 
                 alerts={triggeredAlerts} 
                 onRemove={removeAlertFromState} 
             />
 
-            {/* Custom Toast Pop-up */}
             {toastMessage && (
                 <div className="fixed bottom-4 right-4 z-[9999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl p-4 flex gap-4 items-center animate-in slide-in-from-bottom-5 fade-in duration-300">
                     <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 p-2 rounded-xl">

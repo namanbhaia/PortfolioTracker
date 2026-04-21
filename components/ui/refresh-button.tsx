@@ -21,6 +21,9 @@ export function RefreshButton() {
         // router.refresh() triggers a server-side re-fetch of the current route
         router.refresh();
 
+        // Dispatch a custom event so other components can refresh their state
+        window.dispatchEvent(new CustomEvent('dashboard-refresh'));
+
         // Simulating a brief loading state for user feedback
         setTimeout(() => setIsRefreshing(false), 1000);
     };

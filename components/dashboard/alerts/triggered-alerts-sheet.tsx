@@ -32,7 +32,6 @@ export function TriggeredAlertsSheet({
             onRemove(id);
         } catch (e) {
             console.error("Failed to snooze alert:", e);
-            alert("Failed to snooze alert.");
         } finally {
             setLoadingIds(prev => {
                 const newSet = new Set(prev);
@@ -49,7 +48,6 @@ export function TriggeredAlertsSheet({
             onRemove(id);
         } catch (e) {
             console.error("Failed to dismiss alert:", e);
-            alert("Failed to dismiss alert. Check console for details.");
         } finally {
             setLoadingIds(prev => {
                 const newSet = new Set(prev);
@@ -127,7 +125,6 @@ export function TriggeredAlertsSheet({
                 </div>
             </div>
             
-            {/* Custom CSS to animate the standard dialog like a sheet */}
             <style jsx>{`
                 dialog[open] {
                     transform: translateX(0);
