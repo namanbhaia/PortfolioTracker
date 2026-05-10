@@ -47,20 +47,35 @@ export async function appendAndSortAsset(assetData: {
       return;
     }
 
-    // 2. Append new row
-    // Columns: complex_ticker, ticker, stock_name, isin, current_price, ...
-    const complexTicker = `NSE:${newTicker}`; // Assuming NSE prefix as default
+    // 2. Append new row with Google Finance formulas
+    // Columns:
+    // A: complex_ticker, B: ticker, C: stock_name, D: isin, E: current_price,
+    // F: beta, G: pe, H: high52, I: low52, J: marketcap, K: volumeavg, L: volume, M: high, N: low, O: priceopen, P: eps
+    const complexTicker = `NSE:${newTicker}`; 
+    const nextRow = existingTickers.length + 1;
+    
     const newRow = [
-      complexTicker,
-      newTicker,
-      assetData.name,
-      assetData.isin,
-      assetData.price,
+      complexTicker,   // A
+      newTicker,       // B
+      assetData.name,   // C
+      assetData.isin,   // D
+      assetData.price,  // E
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "beta"))`,      // F
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "pe"))`,        // G
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "high52"))`,    // H
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "low52"))`,     // I
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "marketcap"))`, // J
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "volumeavg"))`, // K
+      `=IF(ISBLANK(A${nextRow}), "", GOOGLEFINANCE(A${nextRow}, "volume"))`,    // L
+      `=IF(A${nextRow}="","",GOOGLEFINANCE(A${nextRow}, "high"))`,              // M
+      `=IF(A${nextRow}="","",GOOGLEFINANCE(A${nextRow}, "low"))`,               // N
+      `=IF(A${nextRow}="","",GOOGLEFINANCE(A${nextRow}, "priceopen"))`,         // O
+      `=IF(A${nextRow}="","",GOOGLEFINANCE(A${nextRow}, "eps"))`,               // P
     ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'Sheet1!A:E',
+      range: 'Sheet1!A:P',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [newRow],
