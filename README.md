@@ -31,6 +31,9 @@ Detailed documentation is available in the [docs/](file:///c:/Users/naman/source
     - **Screensaver HUD**: Dynamic idle-time screensaver to hide sensitive financial data.
     - **Flexible Dismissal**: Configure "Click-to-Dismiss" vs "Any-Activity-Dismiss" in user settings.
 -   **Market Data**: Real-time price updates via Yahoo Finance integration.
+-   **Stock Price Alerts**:
+    - **Real-Time Notifications**: Instant Alerts Bell notifications when target prices are triggered.
+    - **Sync-on-Refresh**: Robust event-driven architecture ensuring consistent alert states across the application.
 -   **CSV Reconciliation**: Verify local ledger accuracy against NSDL holdings exports.
 
 ---

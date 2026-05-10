@@ -18,7 +18,8 @@ import {
     X,
     UserCircle,
     Download,
-    FileCheck
+    FileCheck,
+    Bell
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Zoom from 'react-medium-image-zoom';
@@ -97,6 +98,21 @@ const SECTIONS = [
                 "CSV Reconciliation: Upload exports from your DP and let the engine identify discrepancies.",
                 "Ticker Discovery: Integration with Yahoo Finance for finding ISINs and authenticating stock names.",
                 "Diff View: Visual identification of quantity mismatches between your records and the depository."
+            ]
+        }
+    },
+    {
+        id: 'alerts',
+        label: 'Price Alerts',
+        icon: <Bell size={18} />,
+        color: 'bg-red-500',
+        content: {
+            title: "Real-Time Target Tracking",
+            subtitle: "Never miss a trading opportunity with our robust, event-driven alert system.",
+            details: [
+                "Sync-on-Refresh Architecture: Replaces unreliable WebSockets with a deterministic, event-driven global sync for 100% reliable state updates.",
+                "Global Alerts Bell: A centralized notification hub that alerts you the moment a stock crosses your predefined threshold.",
+                "Instant Dismissal: Quickly acknowledge and dismiss triggered alerts right from the application HUD."
             ]
         }
     },
@@ -333,7 +349,7 @@ export default function InfoPage() {
                     { label: "Privacy", icon: <Lock size={20} />, text: "Click-to-Wake security", color: "text-indigo-500" },
                     { label: "Tax-Ready", icon: <FileCheck size={20} />, text: "LT/ST classification", color: "text-emerald-500" },
                     { label: "Verified", icon: <RefreshCw size={20} />, text: "CDSL/NSDL reconciliation", color: "text-purple-500" },
-                    { label: "Export", icon: <FileCheck size={20} />, text: "One-click Excel reports", color: "text-rose-500" },
+                    { label: "Alerts", icon: <Bell size={20} />, text: "Real-time price targets", color: "text-red-500" },
                     { label: "Admin", icon: <Cpu size={20} />, text: "Bulk system operations", color: "text-orange-500" }
                 ].map((tile, i) => (
                     <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:shadow-xl dark:hover:shadow-indigo-500/10 transition-all group flex flex-col gap-4">
