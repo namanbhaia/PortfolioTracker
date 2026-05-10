@@ -170,7 +170,7 @@ export default function DashboardClientWrapper({
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white transition-colors">Executive Summary</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">
-                        Consolidated wealth overview for <span className="font-semibold text-indigo-600 dark:text-indigo-400">{userName}</span>
+                        Consolidated wealth overview for clients managed by: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{userName}</span>
                     </p>
                 </div>
 
@@ -185,6 +185,14 @@ export default function DashboardClientWrapper({
                     <SyncPricesButton />
                 </div>
             </header>
+
+            {/* SUMMARY CARDS */}
+            <SummaryCards
+                totalInvested={totalInvested}
+                currentTotalValue={currentTotalValue}
+                totalPL={totalPL}
+                plPercentage={plPercentage}
+            />
 
             {/* FILTER BAR */}
             <HoldingsFilter
@@ -201,14 +209,6 @@ export default function DashboardClientWrapper({
                 showLongTermToggle={false}
                 showBalanceToggle={false}
                 showDateFilter={false}
-            />
-
-            {/* SUMMARY CARDS */}
-            <SummaryCards
-                totalInvested={totalInvested}
-                currentTotalValue={currentTotalValue}
-                totalPL={totalPL}
-                plPercentage={plPercentage}
             />
 
             {/* CONSOLIDATED HOLDINGS TABLE */}
