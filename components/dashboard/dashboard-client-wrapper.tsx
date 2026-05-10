@@ -61,39 +61,69 @@ export default function DashboardClientWrapper({
         // Aggregate by Ticker
         const aggregatedMap = (filteredHoldings || []).reduce((acc: any, curr) => {
             const key = curr.ticker;
-            if (!acc[key]) {
-                acc[key] = {
-                    ticker: curr.ticker,
-                    isin: curr.isin,
-                    stock_name: curr.stock_name,
-                    total_qty: 0,
-                    total_purchase_value: 0,
-                    market_rate: Number(curr.market_rate),
-                    total_market_value: 0,
-                    total_pledged: 0,
-                    beta: curr.beta,
-                    trailing_pe: curr.trailing_pe,
-                    today_high: curr.today_high,
-                    today_low: curr.today_low,
-                    today_open: curr.today_open,
-                    eps: curr.eps,
-                };
+
+            // Diagnostic: Log rows missing a ticker
+            if (!key) {
+                console.warn("Dashboard: Skipping holding row missing a ticker:", curr);
+                return acc;
             }
 
             const qty = Number(curr.balance_qty);
             const purchaseRate = Number(curr.rate || curr.purchase_rate);
+            const marketRate = Number(curr.market_rate);
 
-            acc[key].total_qty += qty;
-            acc[key].total_purchase_value += qty * purchaseRate;
-            acc[key].total_market_value += qty * Number(curr.market_rate);
+            // Diagnostic: Log rows with NaN metrics
+            if (isNaN(qty) || isNaN(purchaseRate) || isNaN(marketRate)) {
+                console.error(`Dashboard: Found NaN metrics for ticker ${key}:`, {
+                    balance_qty: curr.balance_qty,
+                    rate: curr.rate || curr.purchase_rate,
+                    market_rate: curr.market_rate
+                });
+            }
+
+            if (!acc[key]) {
+                acc[key] = {
+                    ticker: curr.ticker,
+                    isin: curr.isin || '',
+                    stock_name: curr.stock_name || 'Unknown',
+                    total_qty: 0,
+                    total_purchase_value: 0,
+                    market_rate: isNaN(marketRate) ? 0 : marketRate,
+                    total_market_value: 0,
+                    total_pledged: 0,
+                    beta: Number(curr.beta || 0),
+                    trailing_pe: Number(curr.trailing_pe || 0),
+                    today_high: Number(curr.today_high || 0),
+                    today_low: Number(curr.today_low || 0),
+                    today_open: Number(curr.today_open || 0),
+                    eps: Number(curr.eps || 0),
+                };
+            }
+
+            const safeQty = isNaN(qty) ? 0 : qty;
+            const safePurchaseRate = isNaN(purchaseRate) ? 0 : purchaseRate;
+            const safeMarketRate = isNaN(marketRate) ? 0 : marketRate;
+
+            acc[key].total_qty += safeQty;
+            acc[key].total_purchase_value += safeQty * safePurchaseRate;
+            acc[key].total_market_value += safeQty * safeMarketRate;
 
             return acc;
         }, {});
 
         // Add pledged totals
         (filteredPledges || []).forEach(pledge => {
+            if (!pledge.ticker) {
+                console.warn("Dashboard: Skipping pledge missing a ticker:", pledge);
+                return;
+            }
+
             if (aggregatedMap[pledge.ticker]) {
-                aggregatedMap[pledge.ticker].total_pledged += Number(pledge.pledged_qty);
+                const pQty = Number(pledge.pledged_qty);
+                if (isNaN(pQty)) {
+                    console.error(`Dashboard: NaN pledged_qty for ticker ${pledge.ticker}:`, pledge);
+                }
+                aggregatedMap[pledge.ticker].total_pledged += isNaN(pQty) ? 0 : pQty;
             }
         });
 
