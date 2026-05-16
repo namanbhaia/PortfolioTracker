@@ -12,10 +12,12 @@ export interface TaxLossSuggestion {
     loss_percent: number;
     is_long_term: boolean;
     balance_qty: number;
+    purchase_date: string;
+    trx_id: string;
 }
 
 /**
- * Identifies potential positions for tax-loss harvesting.
+ * Identifies potential positions for tax-loss harvesting based on FIFO rules.
  * @param {any[]} holdings - The user's active portfolio holdings.
  * @returns {Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number }>}
  */
@@ -23,19 +25,41 @@ export async function getTaxLossHarvestingSuggestions(
     holdings: any[]
 ): Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number }> {
 
-    // Filter out active holdings (qty > 0) that have a negative PL
-    const lossMakingHoldings = holdings.filter(h =>
-        Number(h.balance_qty) > 0 && Number(h.pl) < 0
-    );
+    const activeHoldings = holdings.filter(h => Number(h.balance_qty) > 0);
 
-    const suggestions: TaxLossSuggestion[] = lossMakingHoldings.map(h => ({
-        ticker: h.ticker,
-        stock_name: h.stock_name,
-        loss_amount: Math.abs(Number(h.pl)),
-        loss_percent: h.pl_percent,
-        is_long_term: h.long_term,
-        balance_qty: Number(h.balance_qty)
-    }));
+    // Group by ticker
+    const tickerGroups = new Map<string, any[]>();
+    for (const h of activeHoldings) {
+        if (!tickerGroups.has(h.ticker)) {
+            tickerGroups.set(h.ticker, []);
+        }
+        tickerGroups.get(h.ticker)!.push(h);
+    }
+
+    const suggestions: TaxLossSuggestion[] = [];
+
+    // For each ticker, evaluate FIFO queue
+    for (const lots of tickerGroups.values()) {
+        // Sort lots by date ascending (oldest first)
+        lots.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Under FIFO, the oldest lot is sold first.
+        const oldestLot = lots[0];
+
+        // If the oldest lot is at a loss, it is a valid harvest opportunity
+        if (Number(oldestLot.pl) < 0) {
+            suggestions.push({
+                ticker: oldestLot.ticker,
+                stock_name: oldestLot.stock_name,
+                loss_amount: Math.abs(Number(oldestLot.pl)),
+                loss_percent: oldestLot.pl_percent,
+                is_long_term: oldestLot.long_term,
+                balance_qty: Number(oldestLot.balance_qty),
+                purchase_date: oldestLot.date,
+                trx_id: oldestLot.trx_id
+            });
+        }
+    }
 
     // Sort by largest loss amount first
     suggestions.sort((a, b) => b.loss_amount - a.loss_amount);

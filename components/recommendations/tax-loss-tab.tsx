@@ -34,6 +34,7 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                         <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100/50 dark:bg-slate-800/50 transition-colors">
                             <tr>
                                 <th scope="col" className="px-6 py-3">Asset</th>
+                                <th scope="col" className="px-6 py-3 text-right">Purchase Date</th>
                                 <th scope="col" className="px-6 py-3 text-right">Qty</th>
                                 <th scope="col" className="px-6 py-3 text-right">Loss Amount (₹)</th>
                                 <th scope="col" className="px-6 py-3 text-right">Loss %</th>
@@ -48,6 +49,9 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                                             <span>{item.ticker}</span>
                                             <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{item.stock_name}</span>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {new Date(item.purchase_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                                     </td>
                                     <td className="px-6 py-4 text-right">{item.balance_qty}</td>
                                     <td className="px-6 py-4 text-right text-rose-500 dark:text-rose-400 font-semibold flex items-center justify-end gap-1">
