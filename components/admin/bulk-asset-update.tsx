@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
-import { bulkAssetUpdateAction } from '@/lib/actions/admin-bulk-ops';
+import { bulkAssetUpdateAction } from '@/lib/actions/admin/admin-bulk-ops';
 import { parse } from 'csv-parse/browser/esm/sync';
 import { useLoading } from '@/components/helper/loading-context';
 

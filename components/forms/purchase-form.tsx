@@ -5,10 +5,10 @@ import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { getTodayDate } from '../helper/utility';
 import { Button } from "@/components/ui/button";
-import { SubmitButton } from '@/components/ui/submit-button';
-import { upsertInAsset } from '@/lib/actions/update-assets-table';
+import { SubmitButton } from '@/components/shared/submit-button';
+import { upsertInAsset } from '@/lib/actions/assets/update-assets-table';
 import { getStockSuggestion as getStockInformation } from '@/lib/actions/yahoo/find-ticker';
-import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
+import { revalidateDashboard } from '@/lib/actions/admin/cache-revalidate';
 import { AlertCircle } from 'lucide-react';
 
 const supabase = createClient();

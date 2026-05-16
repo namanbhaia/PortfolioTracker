@@ -23,7 +23,7 @@ import {
     X,
     Bell
 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { createClient } from '@/lib/supabase/client';
 import {
     DropdownMenu,

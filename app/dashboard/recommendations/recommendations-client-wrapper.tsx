@@ -12,7 +12,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ClientMultiSelect } from '@/components/ui/client-filter';
+import { ClientMultiSelect } from '@/components/tables/client-filter';
 
 import GeminiTab from '@/components/recommendations/gemini-tab';
 import TaxLossTab from '@/components/recommendations/tax-loss-tab';

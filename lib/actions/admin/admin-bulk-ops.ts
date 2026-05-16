@@ -2,8 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { TransactionEditor } from './transaction-editor';
-import { LedgerRepository } from './ledger-repository';
+import { TransactionEditor } from '../transactions/transaction-editor';
+import { LedgerRepository } from '../transactions/ledger-repository';
 
 /**
  * @file admin-bulk-ops.ts

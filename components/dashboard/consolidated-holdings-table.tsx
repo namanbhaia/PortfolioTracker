@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { ArrowUpDown, ChevronUp, ChevronDown, Settings2 } from 'lucide-react';
-import TickerCell from '@/components/ui/ticker-cell';
+import TickerCell from '@/components/tables/ticker-cell';
 
 export const consolidated_columns = [
     { id: 'ticker', label: 'Ticker / ISIN' },

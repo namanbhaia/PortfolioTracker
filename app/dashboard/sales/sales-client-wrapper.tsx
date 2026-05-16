@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import HoldingsFilters from '@/components/ui/holdings-filters';
+import HoldingsFilters from '@/components/tables/holdings-filters';
 import SalesTable, { sales_columns } from '@/components/dashboard/sales-table';
 import { useColumnVisibility } from '@/hooks/use-column-visibility';
-import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
-import { RefreshButton } from '@/components/ui/refresh-button';
+import { ColumnVisibilityToggle } from '@/components/tables/column-visibility-toggle';
+import { RefreshButton } from '@/components/shared/refresh-button';
 
 export type SortFieldSales = 'client_name' | 'ticker' | 'stock_name' | 'sale_date' | 'pl_percentage' | 'pl' | 'long_term';
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { RefreshCw, CheckCircle2 } from 'lucide-react';
-import { remapAllLedgersAction } from '@/lib/actions/admin-bulk-ops';
+import { remapAllLedgersAction } from '@/lib/actions/admin/admin-bulk-ops';
 import { useLoading } from '@/components/helper/loading-context';
 
 export default function FifoRemapper() {

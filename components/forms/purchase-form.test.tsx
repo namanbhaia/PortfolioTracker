@@ -21,11 +21,11 @@ vi.mock('@/lib/actions/yahoo/find-ticker', () => ({
     getStockSuggestion: vi.fn(),
 }));
 
-vi.mock('@/lib/actions/cache-revalidate', () => ({
+vi.mock('@/lib/actions/admin/cache-revalidate', () => ({
     revalidateDashboard: vi.fn(),
 }));
 
-vi.mock('@/lib/actions/update-assets-table', () => ({
+vi.mock('@/lib/actions/assets/update-assets-table', () => ({
     upsertInAsset: vi.fn(),
 }));
 

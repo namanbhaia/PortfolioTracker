@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
 import { Lock, Unlock, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-import { pledgeShares, unpledgeShares } from '@/lib/actions/pledge-actions';
-import { SubmitButton } from '@/components/ui/submit-button';
+import { pledgeShares, unpledgeShares } from '@/lib/actions/assets/pledge-actions';
+import { SubmitButton } from '@/components/shared/submit-button';
 
 export function PledgeForm({ clients }: { clients: any[] }) {
     const supabase = createClient();

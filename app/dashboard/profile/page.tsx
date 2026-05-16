@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Check, Pencil, Loader2, ShieldCheck } from 'lucide-react';
-import { updateProfileName } from '@/lib/actions/update-profile-name';
-import { updateScreensaverPreference } from '@/lib/actions/update-screensaver-preference';
-import { updateProfilePreferences } from '@/lib/actions/update-profile-preferences';
+import { updateProfileName } from '@/lib/actions/profile/update-profile-name';
+import { updateScreensaverPreference } from '@/lib/actions/profile/update-screensaver-preference';
+import { updateProfilePreferences } from '@/lib/actions/profile/update-profile-preferences';
 import { useTheme } from 'next-themes';
 import ProfileClientsTable from '@/components/dashboard/profile-clients-table';
 import { useUser } from '@/components/helper/user-context';

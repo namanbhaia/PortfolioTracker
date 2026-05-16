@@ -5,10 +5,10 @@
 
 import { Info } from 'lucide-react';
 
-import TrxIdCell from '@/components/ui/trx-id-cell';
-import CommentCell from '@/components/ui/comment-cell';
-import TickerCell from '@/components/ui/ticker-cell';
-import SortArrow from '@/components/ui/sort-arrow';
+import TrxIdCell from '@/components/tables/trx-id-cell';
+import CommentCell from '@/components/tables/comment-cell';
+import TickerCell from '@/components/tables/ticker-cell';
+import SortArrow from '@/components/tables/sort-arrow';
 import type { SortFieldSales } from '@/app/dashboard/sales/sales-client-wrapper';
 
 interface SalesTableProps {

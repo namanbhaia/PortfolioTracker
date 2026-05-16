@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { UploadCloud, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm } from '@/components/helper/utility';
-import { bulkLedgerUpdateAction } from '@/lib/actions/admin-bulk-ops';
+import { bulkLedgerUpdateAction } from '@/lib/actions/admin/admin-bulk-ops';
 import { parse } from 'csv-parse/browser/esm/sync';
 import { useLoading } from '@/components/helper/loading-context';
 

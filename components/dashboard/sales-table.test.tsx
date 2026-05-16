@@ -4,16 +4,16 @@ import SalesTable from './sales-table';
 import React from 'react';
 
 // Mock UI components
-vi.mock("@/components/ui/trx-id-cell", () => ({
+vi.mock("@/components/tables/trx-id-cell", () => ({
     default: ({ id }: { id: string }) => <span>{id}</span>
 }));
-vi.mock("@/components/ui/comment-cell", () => ({
+vi.mock("@/components/tables/comment-cell", () => ({
     default: ({ comment }: { comment: string }) => <span>{comment}</span>
 }));
-vi.mock("@/components/ui/ticker-cell", () => ({
+vi.mock("@/components/tables/ticker-cell", () => ({
     default: ({ ticker }: { ticker: string }) => <td>{ticker}</td>
 }));
-vi.mock("@/components/ui/sort-arrow", () => ({
+vi.mock("@/components/tables/sort-arrow", () => ({
     default: () => <span>^</span>
 }));
 

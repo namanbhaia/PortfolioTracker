@@ -3,10 +3,10 @@
  * @description Renders a detailed table of individual purchase transactions (holdings) with sorting.
  */
 
-import TrxIdCell from "@/components/ui/trx-id-cell";
-import CommentCell from "@/components/ui/comment-cell";
-import TickerCell from "@/components/ui/ticker-cell";
-import SortArrow from "@/components/ui/sort-arrow";
+import TrxIdCell from "@/components/tables/trx-id-cell";
+import CommentCell from "@/components/tables/comment-cell";
+import TickerCell from "@/components/tables/ticker-cell";
+import SortArrow from "@/components/tables/sort-arrow";
 import type { SortFieldHoldings } from "@/app/dashboard/holdings/holdings-client-wrapper";
 interface HoldingsTableProps {
 	holdings: Record<string, any>[];

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Trash2, Loader2 } from "lucide-react";
-import { deleteAlert } from "@/lib/actions/price-alerts";
+import { deleteAlert } from "@/lib/actions/assets/price-alerts";
 
 export function DeleteAlertButton({ id }: { id: string }) {
     const [isDeleting, setIsDeleting] = useState(false);

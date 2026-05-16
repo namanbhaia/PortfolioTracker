@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import GlobalSpinner from '@/components/ui/global-spinner';
+import GlobalSpinner from '@/components/shared/global-spinner';
 
 /**
  * @file loading-context.tsx

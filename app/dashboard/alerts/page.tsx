@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { getAlerts } from "@/lib/actions/price-alerts";
+import { getAlerts } from "@/lib/actions/assets/price-alerts";
 import { AlertForm } from "@/components/forms/alert-form";
 import { Clock, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
-import { SubmitButton } from '@/components/ui/submit-button';
+import { SubmitButton } from '@/components/shared/submit-button';
 import { calculateProfitMetrics, getGrandfatheredRate, isLongTerm, isSquareOff } from '@/components/helper/utility';
-import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
+import { revalidateDashboard } from '@/lib/actions/admin/cache-revalidate';
 import { AlertCircle } from 'lucide-react';
 
 const supabase = createClient();
@@ -227,7 +227,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
 
             if (saleQtyRequested > availableUnpledged) {
                 const deficit = saleQtyRequested - availableUnpledged;
-                const { unpledgeShares } = await import('@/lib/actions/pledge-actions');
+                const { unpledgeShares } = await import('@/lib/actions/assets/pledge-actions');
                 await unpledgeShares(clientName, tickerName, deficit);
                 setPledgeWarning(`Sold shares were pledged. System has automatically un-pledged ${deficit} shares for ${tickerName}.`);
             }

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
-import { runBseToNseMigrationAction } from '@/lib/actions/admin-bulk-ops';
+import { runBseToNseMigrationAction } from '@/lib/actions/admin/admin-bulk-ops';
 import { useLoading } from '@/components/helper/loading-context';
 
 export default function BseToNseMigration() {

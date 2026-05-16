@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { createAlert } from "@/lib/actions/price-alerts";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { createAlert } from "@/lib/actions/assets/price-alerts";
+import { SubmitButton } from "@/components/shared/submit-button";
 
 export function AlertForm() {
     const [loading, setLoading] = useState(false);

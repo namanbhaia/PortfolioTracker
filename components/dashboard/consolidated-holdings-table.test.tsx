@@ -4,7 +4,7 @@ import ConsolidatedHoldingsTable from './consolidated-holdings-table';
 import React from 'react';
 
 // Mock UI components
-vi.mock("@/components/ui/ticker-cell", () => ({
+vi.mock("@/components/tables/ticker-cell", () => ({
     default: ({ ticker }: { ticker: string }) => <td data-testid="ticker-cell-mock">{ticker}</td>
 }));
 

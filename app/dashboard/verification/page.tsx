@@ -13,7 +13,7 @@ import {
     aggregateCsvHoldings
 } from '@/components/helper/verification-utils';
 import { VerificationDisplay } from '@/components/dashboard/verification-display';
-import { revalidateDashboard } from '@/lib/actions/cache-revalidate';
+import { revalidateDashboard } from '@/lib/actions/admin/cache-revalidate';
 
 export default function VerificationPage() {
     const supabase = createClient();

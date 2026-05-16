@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Clock, Check, BellOff, Info } from 'lucide-react';
-import { snoozeAlert, markAlertAsRead } from '@/lib/actions/price-alerts';
+import { snoozeAlert, markAlertAsRead } from '@/lib/actions/assets/price-alerts';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 

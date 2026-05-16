@@ -28,7 +28,7 @@ vi.mock('@/components/helper/utility', () => ({
     isSquareOff: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock('@/lib/actions/cache-revalidate', () => ({
+vi.mock('@/lib/actions/admin/cache-revalidate', () => ({
     revalidateDashboard: vi.fn(),
 }));
 

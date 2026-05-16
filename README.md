@@ -48,6 +48,19 @@ Detailed documentation is available in the [docs/](file:///c:/Users/naman/source
 
 ---
 
+## 📁 Directory Structure
+
+The project is structured by domain and purpose to ensure scalability and maintainability:
+
+- **`components/ui/`**: Generic, reusable UI primitives (e.g., buttons, cards, tabs).
+- **`components/tables/`**: Domain-specific components related to data tables, filtering, and cell rendering.
+- **`components/forms/`**: Complex forms and data-entry sheets (e.g., transaction editing).
+- **`components/dashboard/`**: High-level dashboard layouts, metrics, and visualization wrappers.
+- **`components/shared/`**: Widgets and utilities shared across multiple domains (e.g., theme toggles, sync buttons).
+- **`lib/actions/`**: Server actions categorized by feature domain (`admin`, `assets`, `export`, `profile`, `transactions`).
+
+---
+
 ## 🏁 Quick Start
 
 1. **Clone & Install**:

@@ -1,14 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Search, ArrowDownToLine, ArrowUpFromLine, AlertCircle, Info } from 'lucide-react';
-import { Input } from '@/components/ui/transaction-input';
-import { searchTransactions } from '@/lib/actions/search-transactions';
-import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from '@/components/ui/transaction-table';
-import TrxIdCell from '@/components/ui/trx-id-cell';
-import CommentCell from '@/components/ui/comment-cell';
-import TickerCell from '@/components/ui/ticker-cell';
-import EditTransactionSimple from '@/components/ui/edit-transaction-sheet';
-import HoldingsFilter from '@/components/ui/holdings-filters';
+import { Input } from '@/components/tables/transaction-input';
+import { searchTransactions } from '@/lib/actions/transactions/search-transactions';
+import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from '@/components/tables/transaction-table';
+import TrxIdCell from '@/components/tables/trx-id-cell';
+import CommentCell from '@/components/tables/comment-cell';
+import TickerCell from '@/components/tables/ticker-cell';
+import EditTransactionSimple from '@/components/forms/edit-transaction-sheet';
+import HoldingsFilter from '@/components/tables/holdings-filters';
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<any> }) {
     const resolvedParams = await searchParams;

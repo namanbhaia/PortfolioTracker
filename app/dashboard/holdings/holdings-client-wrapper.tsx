@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import HoldingsFilters from '@/components/ui/holdings-filters';
+import HoldingsFilters from '@/components/tables/holdings-filters';
 import HoldingsTable, { holdings_columns } from '@/components/dashboard/holdings-table';
 import { useColumnVisibility } from '@/hooks/use-column-visibility';
-import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
-import { RefreshButton } from '@/components/ui/refresh-button';
-import { SyncPricesButton } from '@/components/ui/sync-prices-button';
+import { ColumnVisibilityToggle } from '@/components/tables/column-visibility-toggle';
+import { RefreshButton } from '@/components/shared/refresh-button';
+import { SyncPricesButton } from '@/components/shared/sync-prices-button';
 
 export type SortFieldHoldings = 'client_name' | 'ticker' | 'stock_name' | 'date' | 'pl_percent' | 'pl' | 'long_term';
 

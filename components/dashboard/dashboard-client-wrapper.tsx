@@ -2,13 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { Users } from "lucide-react";
-import HoldingsFilter from "@/components/ui/holdings-filters";
+import HoldingsFilter from "@/components/tables/holdings-filters";
 import ConsolidatedHoldingsTable, { consolidated_columns } from "@/components/dashboard/consolidated-holdings-table";
-import { RefreshButton } from "@/components/ui/refresh-button";
-import { SyncPricesButton } from "@/components/ui/sync-prices-button";
-import SummaryCards from "@/components/ui/summary-cards";
+import { RefreshButton } from "@/components/shared/refresh-button";
+import { SyncPricesButton } from "@/components/shared/sync-prices-button";
+import SummaryCards from "@/components/dashboard/summary-cards";
 import { useColumnVisibility } from '@/hooks/use-column-visibility';
-import { ColumnVisibilityToggle } from '@/components/ui/column-visibility-toggle';
+import { ColumnVisibilityToggle } from '@/components/tables/column-visibility-toggle';
 
 /**
  * @file dashboard-client-wrapper.tsx
