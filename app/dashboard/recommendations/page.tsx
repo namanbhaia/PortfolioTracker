@@ -36,6 +36,17 @@ export default async function RecommendationsPage() {
         .in('client_id', profile.client_ids)
         .order('date', { ascending: false });
 
+    // Fetch pledges
+    const clientNames = availableClients?.map(c => c.client_name) || [];
+    let pledges: any[] = [];
+    if (clientNames.length > 0) {
+        const { data: pledgesData } = await supabase
+            .from('pledges')
+            .select('*')
+            .in('client_name', clientNames);
+        pledges = pledgesData || [];
+    }
+
     if (error) {
         console.error("Supabase Error:", error.message);
         return <div className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200">Error loading portfolio data: {error.message}</div>;
@@ -51,6 +62,7 @@ export default async function RecommendationsPage() {
                 initialHoldings={holdings || []}
                 availableClients={availableClients || []}
                 transactions={transactions || []}
+                initialPledges={pledges}
             />
         </div>
     );

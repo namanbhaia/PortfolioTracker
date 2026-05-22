@@ -16,14 +16,30 @@ export interface TaxLossSuggestion {
     trx_id: string;
 }
 
+export interface TaxGainSuggestion {
+    ticker: string;
+    stock_name: string;
+    gain_amount: number;
+    gain_percent: number;
+    balance_qty: number;
+    purchase_date: string;
+    trx_id: string;
+}
+
 /**
- * Identifies potential positions for tax-loss harvesting based on FIFO rules.
+ * Identifies potential positions for tax-loss and tax-gain harvesting based on FIFO rules.
  * @param {any[]} holdings - The user's active portfolio holdings.
- * @returns {Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number }>}
+ * @returns {Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number, longTermGains: TaxGainSuggestion[], totalGainVal: number }>}
  */
 export async function getTaxLossHarvestingSuggestions(
     holdings: any[]
-): Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number }> {
+): Promise<{
+    shortTerm: TaxLossSuggestion[],
+    longTerm: TaxLossSuggestion[],
+    totalLossVal: number,
+    longTermGains: TaxGainSuggestion[],
+    totalGainVal: number
+}> {
 
     const activeHoldings = holdings.filter(h => Number(h.balance_qty) > 0);
 
@@ -36,7 +52,8 @@ export async function getTaxLossHarvestingSuggestions(
         tickerGroups.get(h.ticker)!.push(h);
     }
 
-    const suggestions: TaxLossSuggestion[] = [];
+    const lossSuggestions: TaxLossSuggestion[] = [];
+    const gainSuggestions: TaxGainSuggestion[] = [];
 
     // For each ticker, evaluate FIFO queue
     for (const lots of tickerGroups.values()) {
@@ -48,7 +65,7 @@ export async function getTaxLossHarvestingSuggestions(
 
         // If the oldest lot is at a loss, it is a valid harvest opportunity
         if (Number(oldestLot.pl) < 0) {
-            suggestions.push({
+            lossSuggestions.push({
                 ticker: oldestLot.ticker,
                 stock_name: oldestLot.stock_name,
                 loss_amount: Math.abs(Number(oldestLot.pl)),
@@ -58,20 +75,37 @@ export async function getTaxLossHarvestingSuggestions(
                 purchase_date: oldestLot.date,
                 trx_id: oldestLot.trx_id
             });
+        } else if (oldestLot.long_term && Number(oldestLot.pl) > 0) {
+            // Oldest lot is long-term and has unrealized profit -> Tax Gain Harvesting opportunity
+            gainSuggestions.push({
+                ticker: oldestLot.ticker,
+                stock_name: oldestLot.stock_name,
+                gain_amount: Number(oldestLot.pl),
+                gain_percent: Number(oldestLot.pl_percent),
+                balance_qty: Number(oldestLot.balance_qty),
+                purchase_date: oldestLot.date,
+                trx_id: oldestLot.trx_id
+            });
         }
     }
 
-    // Sort by largest loss amount first
-    suggestions.sort((a, b) => b.loss_amount - a.loss_amount);
+    // Sort loss suggestions by largest loss amount first
+    lossSuggestions.sort((a, b) => b.loss_amount - a.loss_amount);
+    
+    // Sort gain suggestions by largest gain amount first
+    gainSuggestions.sort((a, b) => b.gain_amount - a.gain_amount);
 
-    const shortTerm = suggestions.filter(s => !s.is_long_term);
-    const longTerm = suggestions.filter(s => s.is_long_term);
+    const shortTerm = lossSuggestions.filter(s => !s.is_long_term);
+    const longTerm = lossSuggestions.filter(s => s.is_long_term);
 
-    const totalLossVal = suggestions.reduce((acc, curr) => acc + curr.loss_amount, 0);
+    const totalLossVal = lossSuggestions.reduce((acc, curr) => acc + curr.loss_amount, 0);
+    const totalGainVal = gainSuggestions.reduce((acc, curr) => acc + curr.gain_amount, 0);
 
     return {
         shortTerm,
         longTerm,
-        totalLossVal
+        totalLossVal,
+        longTermGains: gainSuggestions,
+        totalGainVal
     };
 }

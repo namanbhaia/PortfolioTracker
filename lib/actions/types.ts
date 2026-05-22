@@ -14,6 +14,14 @@ export interface StockPosition {
     averagePrice: number;
     currentPrice?: number;
     balance_qty?: number;
+    rate?: number;
+    market_rate?: number;
+    market_value?: number;
+    pl?: number;
+    pl_percent?: number;
+    long_term?: boolean;
+    stock_name?: string;
+    date?: string;
 }
 
 export interface Suggestion {

@@ -89,8 +89,8 @@ export function calculateProfitMetrics(
 
   // Only apply logic if bought before cutoff and a valid cutoff price exists
   if (pDate < grandFatherDate && cutoffPrice !== null && cutoffPrice > 0) {
-    if (salePrice > purchasePrice && salePrice < cutoffPrice) adjustedProfit = 0;
-    else if (salePrice > cutoffPrice) adjustedProfit = (salePrice - purchasePrice) * quantity;
+    const costOfAcquisition = Math.max(purchasePrice, Math.min(cutoffPrice, salePrice));
+    adjustedProfit = (salePrice - costOfAcquisition) * quantity;
   }
 
   return {

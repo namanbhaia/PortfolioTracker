@@ -22,23 +22,42 @@ export interface VolatilityAlert {
     warning: string;
 }
 
+export interface PledgedVolatilityAlert {
+    ticker: string;
+    stock_name: string;
+    pledged_qty: number;
+    beta: number;
+    warning: string;
+}
+
 /**
- * Calculates concentration and volatility alerts for the given holdings.
+ * Calculates concentration, volatility, and pledged asset alerts for the given holdings and pledges.
  * @param {any[]} holdings - The user's active portfolio holdings.
- * @returns {Promise<{concentration: ConcentrationAlert[], volatility: VolatilityAlert[]}>}
+ * @param {any[]} pledges - The user's active pledges.
+ * @returns {Promise<{concentration: ConcentrationAlert[], volatility: VolatilityAlert[], pledgedVolatility: PledgedVolatilityAlert[]}>}
  */
-export async function getStatisticalSuggestions(holdings: any[]): Promise<{
+export async function getStatisticalSuggestions(
+    holdings: any[],
+    pledges: any[] = []
+): Promise<{
     concentration: ConcentrationAlert[],
-    volatility: VolatilityAlert[]
+    volatility: VolatilityAlert[],
+    pledgedVolatility: PledgedVolatilityAlert[]
 }> {
     const activeHoldings = holdings.filter(h => Number(h.balance_qty) > 0);
+
+    // Group pledges by ticker
+    const pledgedMap = new Map<string, number>();
+    for (const p of pledges) {
+        pledgedMap.set(p.ticker, (pledgedMap.get(p.ticker) || 0) + Number(p.pledged_qty));
+    }
 
     // Group by ticker for concentration and deduplication
     const tickerGroups = new Map<string, { ticker: string, stock_name: string, total_value: number, beta: number }>();
     let totalPortfolioValue = 0;
 
     for (const h of activeHoldings) {
-        const value = Number(h.balance_qty) * Number(h.current_price || h.average_price);
+        const value = h.market_value ? Number(h.market_value) : Number(h.balance_qty) * Number(h.market_rate || h.rate || 0);
         totalPortfolioValue += value;
         
         if (!tickerGroups.has(h.ticker)) {
@@ -54,6 +73,7 @@ export async function getStatisticalSuggestions(holdings: any[]): Promise<{
 
     const concentration: ConcentrationAlert[] = [];
     const volatility: VolatilityAlert[] = [];
+    const pledgedVolatility: PledgedVolatilityAlert[] = [];
 
     if (totalPortfolioValue > 0) {
         for (const group of tickerGroups.values()) {
@@ -89,15 +109,29 @@ export async function getStatisticalSuggestions(holdings: any[]): Promise<{
                         warning: `Low Volatility (Defensive): A Beta of ${beta.toFixed(2)} indicates this stock may act as a stabilizer during market downturns.`
                     });
                 }
+
+                // 3. Pledged Asset Volatility Alert
+                const pledgedQty = pledgedMap.get(group.ticker) || 0;
+                if (pledgedQty > 0 && beta > 1.5) {
+                    pledgedVolatility.push({
+                        ticker: group.ticker,
+                        stock_name: group.stock_name,
+                        pledged_qty: pledgedQty,
+                        beta,
+                        warning: `High-Risk Pledge: You have pledged ${pledgedQty.toLocaleString('en-IN')} shares of ${group.ticker} which is highly volatile (Beta: ${beta.toFixed(2)}). A sharp price drop could trigger a margin call or automatic liquidation by your broker.`
+                    });
+                }
             }
         }
     }
     
     concentration.sort((a, b) => b.percentage - a.percentage);
     volatility.sort((a, b) => b.beta - a.beta);
+    pledgedVolatility.sort((a, b) => b.beta - a.beta);
 
     return {
         concentration,
-        volatility
+        volatility,
+        pledgedVolatility
     };
 }

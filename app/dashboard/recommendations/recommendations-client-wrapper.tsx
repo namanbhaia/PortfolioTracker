@@ -23,11 +23,13 @@ import GraphsTab from '@/components/recommendations/graphs-tab';
 export default function RecommendationsClientWrapper({
     initialHoldings,
     availableClients,
-    transactions
+    transactions,
+    initialPledges = []
 }: {
     initialHoldings: any[],
     availableClients: any[],
-    transactions: any[]
+    transactions: any[],
+    initialPledges?: any[]
 }) {
     // 1. Client Selection State - default to all
     const [selectedClientIds, setSelectedClientIds] = useState<string[]>(
@@ -88,6 +90,17 @@ export default function RecommendationsClientWrapper({
     const filteredTransactions = React.useMemo(() =>
         transactions.filter(t => selectedClientIds.includes(t.client_id)),
         [transactions, selectedClientIds]);
+
+    // Map selected client IDs to client names for filtering pledges
+    const selectedClientNames = React.useMemo(() => {
+        return availableClients
+            .filter(c => selectedClientIds.includes(c.client_id))
+            .map(c => c.client_name);
+    }, [availableClients, selectedClientIds]);
+
+    const filteredPledges = React.useMemo(() => {
+        return initialPledges.filter(p => selectedClientNames.includes(p.client_name));
+    }, [initialPledges, selectedClientNames]);
 
     const handleClientToggle = (clientId: string) => {
         setSelectedClientIds(prev =>
@@ -244,7 +257,7 @@ export default function RecommendationsClientWrapper({
 
                 {enabledTabs.stats && (
                     <TabsContent value="stats" className="focus-visible:outline-none focus-visible:ring-0 mt-0">
-                        <StatsTab holdings={filteredHoldings} transactions={filteredTransactions} clients={availableClients} />
+                        <StatsTab holdings={filteredHoldings} transactions={filteredTransactions} clients={availableClients} pledges={filteredPledges} />
                     </TabsContent>
                 )}
 

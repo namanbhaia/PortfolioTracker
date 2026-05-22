@@ -24,31 +24,94 @@ export async function getStockSuggestions(
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const model = "gemini-3-flash-preview";
 
+    const activeHoldings = positions.filter(p => Number(p.balance_qty) > 0);
+    
+    let totalCost = 0;
+    let totalValue = 0;
+    let totalLtcgUnrealized = 0;
+    let totalStcgUnrealized = 0;
+    let totalLtLossUnrealized = 0;
+    let totalStLossUnrealized = 0;
+
+    const formattedPositions = activeHoldings.map(h => {
+        const qty = Number(h.balance_qty || h.quantity || 0);
+        const buyRate = Number(h.rate || h.averagePrice || 0);
+        const currentRate = Number(h.market_rate || h.currentPrice || 0);
+        const costBasis = qty * buyRate;
+        const currentVal = h.market_value ? Number(h.market_value) : qty * currentRate;
+        const plVal = h.pl !== undefined ? Number(h.pl) : (currentVal - costBasis);
+        const plPct = h.pl_percent !== undefined ? Number(h.pl_percent) : (buyRate > 0 ? (plVal / costBasis) * 100 : 0);
+        const isLt = h.long_term !== undefined ? Boolean(h.long_term) : false;
+
+        totalCost += costBasis;
+        totalValue += currentVal;
+
+        if (plVal > 0) {
+            if (isLt) totalLtcgUnrealized += plVal;
+            else totalStcgUnrealized += plVal;
+        } else {
+            if (isLt) totalLtLossUnrealized += Math.abs(plVal);
+            else totalStLossUnrealized += Math.abs(plVal);
+        }
+
+        const holdingDays = h.date ? Math.ceil(Math.abs(new Date().getTime() - new Date(h.date).getTime()) / (1000 * 60 * 60 * 24)) : undefined;
+
+        return {
+            ticker: h.ticker,
+            stock_name: h.stock_name || '',
+            quantity: qty,
+            purchase_price: buyRate,
+            current_price: currentRate,
+            current_value: currentVal,
+            cost_basis: costBasis,
+            unrealized_pl: plVal,
+            unrealized_pl_percentage: plPct,
+            purchase_date: h.date || '',
+            holding_period_days: holdingDays,
+            is_long_term: isLt
+        };
+    });
+
+    const netPl = totalValue - totalCost;
+    const netPlPercent = totalCost > 0 ? (netPl / totalCost) * 100 : 0;
+
     const systemPrompt = `You are an expert SEBI-registered portfolio manager and financial advisor specializing in the Indian Stock Market (NSE/BSE).
-    Analyze the user's stock portfolio using the following 7 advanced strategies. You MUST select and return EXACTLY the top 5 most urgent and actionable recommendations from these 7 areas:
+    Analyze the user's stock portfolio and suggest the top 5 most urgent and actionable recommendations using the following 7 advanced strategies:
     
-    1. Sector Diversification & Rebalancing: If heavily skewed towards one sector, suggest reallocating.
-    2. Tax-Loss Harvesting or Profit Booking: Identify bleeding stocks to sell for tax loss, or highly profitable ones to book profits.
-    3. Averaging Down Opportunities: Identify fundamentally strong stocks trading below the user's average buy price to buy more.
-    4. Portfolio Risk & Volatility: Analyze the mix of Large Cap vs Mid/Small Cap and suggest adding stability if it's too risky.
-    5. Dividend Yield Strategies: Suggest rotating stagnant capital into high dividend-yielding stocks if appropriate.
-    6. Position Sizing (Anti-Clutter): If the user holds 'micro-positions' (e.g. 1-2 shares of many companies making up < 2% of the portfolio), suggest liquidating them to concentrate capital in high-conviction stocks.
-    7. Opportunity Cost / Dead Money: Identify capital tied up in old, stagnant stocks with 0% return over long periods during bull runs, and suggest moving it to Index ETFs or momentum plays.
+    1. Sector Diversification & Rebalancing: Identify if the portfolio is heavily skewed towards one sector (e.g., >40%) or a single stock (>20%). Suggest reallocating to diversify.
+    2. Tax-Loss Harvesting: Identify bleeding stocks (unrealized losses) that can be sold to offset taxable gains.
+    3. Tax-Gain Harvesting & Profit Booking: Identify long-term holdings (held > 365 days) with gains that can be harvested up to the ₹1,00,000 tax-free LTCG limit, or book profits in overvalued/fully-valued positions.
+    4. Averaging Down Opportunities: Identify fundamentally strong stocks trading below the user's average purchase rate to average down.
+    5. Portfolio Risk & Volatility: Analyze the mix of high-beta vs defensive stocks. Recommend adding defensive low-beta stocks if the overall risk is too high.
+    6. Position Sizing (Anti-Clutter): Identify tiny 'dust' holdings (positions making up < 2% of the portfolio, e.g., 1-2 shares of many different stocks) and suggest consolidating them into high-conviction positions.
+    7. Opportunity Cost / Stagnant Capital: Identify stagnant stocks (zero or negative returns over 6+ months in a bull market) and suggest moving that capital to momentum plays or Index ETFs.
     
-    Instructions for Reasoning:
-    1. Be specific: Mention exact percentages, prices, and refer to specific portfolio allocations if relevant.
-    2. Sound professional and calm, avoiding hype.
-    3. Include technical or fundamental reasoning if the stock is well known.`;
+    Guidelines for Recommendations:
+    - Focus on NSE/BSE listed equities.
+    - Each recommendation MUST include specific, concrete target ranges or percentage weights (e.g., "reduce position weight from 22% to 15%", or "accumulate in the range of ₹450-₹475").
+    - Incorporate Indian tax rules (LTCG exempt up to ₹1 Lakh/year, STCG taxed higher) when recommending tax actions.
+    - Maintain a highly professional, objective, SEBI-compliant advisor tone. Avoid hype and buzzwords. Provide specific mathematical or fundamental rationale for every action.`;
 
     const prompt = `
-    You MUST return EXACTLY 5 items. Pick the 5 most impactful recommendations. Do not return an empty array.
-    If the portfolio is empty, suggest 5 high-conviction, fundamentally strong Indian stocks across different sectors and market caps for a new investor to 'BUY'.
+    You MUST analyze the following portfolio metrics and return EXACTLY 5 actionable recommendations in the JSON schema.
+    If the portfolio is empty, suggest 5 high-conviction, fundamentally strong Indian stocks across different sectors (e.g., HDFC Bank, Reliance Industries, TCS) for a new investor to BUY.
 
-    Portfolio History (Recent Transactions):
-    \${JSON.stringify(transactions.slice(0, 50), null, 2)}
+    --- PORTFOLIO SUMMARY ---
+    Total Portfolio Value: ₹${totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+    Total Cost Basis: ₹${totalCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+    Net Unrealized P&L: ₹${netPl.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (${netPlPercent.toFixed(2)}%)
     
-    Current Active Holdings:
-    \${JSON.stringify(positions.filter(p => Number(p.balance_qty) > 0), null, 2)}
+    --- TAX METRICS (INDIAN INCOME TAX RULES) ---
+    Unrealized Long-Term Capital Gains (LTCG): ₹${totalLtcgUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (Tax-free up to ₹1,00,000/year)
+    Unrealized Short-Term Capital Gains (STCG): ₹${totalStcgUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (Taxed at 20%)
+    Unrealized Long-Term Capital Loss: ₹${totalLtLossUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (Can offset LTCG)
+    Unrealized Short-Term Capital Loss: ₹${totalStLossUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (Can offset STCG/LTCG)
+    
+    --- PORTFOLIO HOLDINGS ---
+    ${JSON.stringify(formattedPositions, null, 2)}
+    
+    --- RECENT TRANSACTIONS ---
+    ${JSON.stringify(transactions.slice(0, 30), null, 2)}
     `;
 
     const response = await ai.models.generateContent({

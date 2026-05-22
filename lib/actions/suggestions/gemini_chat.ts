@@ -21,17 +21,81 @@ export async function sendRecommendationChat(
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const model = "gemini-3-flash-preview";
 
-    const systemPrompt = `You are a SEBI-registered portfolio manager and financial advisor in the Indian Stock Market.
+    const activeHoldings = positions.filter(p => Number(p.balance_qty) > 0);
+    
+    let totalCost = 0;
+    let totalValue = 0;
+    let totalLtcgUnrealized = 0;
+    let totalStcgUnrealized = 0;
+    let totalLtLossUnrealized = 0;
+    let totalStLossUnrealized = 0;
+
+    const formattedPositions = activeHoldings.map(h => {
+        const qty = Number(h.balance_qty || h.quantity || 0);
+        const buyRate = Number(h.rate || h.averagePrice || 0);
+        const currentRate = Number(h.market_rate || h.currentPrice || 0);
+        const costBasis = qty * buyRate;
+        const currentVal = h.market_value ? Number(h.market_value) : qty * currentRate;
+        const plVal = h.pl !== undefined ? Number(h.pl) : (currentVal - costBasis);
+        const plPct = h.pl_percent !== undefined ? Number(h.pl_percent) : (buyRate > 0 ? (plVal / costBasis) * 100 : 0);
+        const isLt = h.long_term !== undefined ? Boolean(h.long_term) : false;
+
+        totalCost += costBasis;
+        totalValue += currentVal;
+
+        if (plVal > 0) {
+            if (isLt) totalLtcgUnrealized += plVal;
+            else totalStcgUnrealized += plVal;
+        } else {
+            if (isLt) totalLtLossUnrealized += Math.abs(plVal);
+            else totalStLossUnrealized += Math.abs(plVal);
+        }
+
+        const holdingDays = h.date ? Math.ceil(Math.abs(new Date().getTime() - new Date(h.date).getTime()) / (1000 * 60 * 60 * 24)) : undefined;
+
+        return {
+            ticker: h.ticker,
+            stock_name: h.stock_name || '',
+            quantity: qty,
+            purchase_price: buyRate,
+            current_price: currentRate,
+            current_value: currentVal,
+            cost_basis: costBasis,
+            unrealized_pl: plVal,
+            unrealized_pl_percentage: plPct,
+            purchase_date: h.date || '',
+            holding_period_days: holdingDays,
+            is_long_term: isLt
+        };
+    });
+
+    const netPl = totalValue - totalCost;
+    const netPlPercent = totalCost > 0 ? (netPl / totalCost) * 100 : 0;
+
+    const systemPrompt = `You are an expert SEBI-registered portfolio manager and financial advisor in the Indian Stock Market.
     You generated 5 specific recommendations for the user based on their portfolio.
     The user is now discussing these recommendations, or their portfolio in general, with you.
-    ANSWER THEIR QUESTIONS Professionally, concisely, and with specific references to their portfolio data. Keep responses user-friendly and formatted in markdown.
+    Answer their questions professionally, concisely, and with specific references to their portfolio metrics. Format your answers in markdown.
     
-    Current User Portfolio:
-    Positions: \${JSON.stringify(positions.filter(p => Number(p.balance_qty) > 0), null, 2)}
-    Transactions (Last 50): \${JSON.stringify(transactions.slice(0, 50), null, 2)}
+    --- PORTFOLIO SUMMARY ---
+    Total Portfolio Value: ₹${totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+    Total Cost Basis: ₹${totalCost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+    Net Unrealized P&L: ₹${netPl.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (${netPlPercent.toFixed(2)}%)
     
-    The AI Recommendations you just successfully gave them:
-    \${JSON.stringify(suggestions, null, 2)}
+    --- TAX METRICS ---
+    Unrealized LTCG: ₹${totalLtcgUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (Tax-free up to ₹1,00,000/year)
+    Unrealized STCG: ₹${totalStcgUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (Taxed at 20%)
+    Unrealized Long-Term Capital Loss: ₹${totalLtLossUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+    Unrealized Short-Term Capital Loss: ₹${totalStLossUnrealized.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+    
+    --- PORTFOLIO HOLDINGS ---
+    ${JSON.stringify(formattedPositions, null, 2)}
+    
+    --- RECENT TRANSACTIONS ---
+    ${JSON.stringify(transactions.slice(0, 30), null, 2)}
+    
+    --- THE AI RECOMMENDATIONS RECENTLY GENERATED ---
+    ${JSON.stringify(suggestions, null, 2)}
     `;
 
     try {

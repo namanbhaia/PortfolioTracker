@@ -49,10 +49,10 @@ describe('Utility Functions', () => {
 
         it('should apply grandfathering logic correctly (purchase before 2018-02-01)', () => {
             // Case: bought at 100, cutoff is 150, sold at 200
-            // Adjusted profit should be (200 - 100) * 10 = 1000 since sale > cutoff
+            // Adjusted profit should be (200 - 150) * 10 = 500 since sale > cutoff
             const result = calculateProfitMetrics(100, '2017-01-01', 200, 150, 10);
             expect(result.profit).toBe(1000);
-            expect(result.adjusted_profit).toBe(1000);
+            expect(result.adjusted_profit).toBe(500);
         });
 
         it('should apply grandfathering logic correctly (sale between purchase and cutoff)', () => {
