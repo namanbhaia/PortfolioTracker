@@ -23,8 +23,35 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
         setLoading(true);
         setError(null);
         try {
-            // Simplify data to reduce prompt size if needed, but passing directly for now.
-            const result = await getStockSuggestions(transactions, holdings);
+            // Clean and minimize data on the client side to avoid Next.js Server Action 1MB limit
+            const cleanedTransactions = (transactions || []).slice(0, 30).map(t => ({
+                id: t.id,
+                ticker: t.ticker,
+                action: t.action,
+                quantity: Number(t.quantity || 0),
+                price: Number(t.price || 0),
+                date: t.date || ''
+            }));
+
+            const cleanedHoldings = (holdings || [])
+                .filter(h => Number(h.balance_qty || h.quantity || 0) > 0)
+                .map(h => ({
+                    ticker: h.ticker,
+                    stock_name: h.stock_name,
+                    balance_qty: h.balance_qty !== undefined ? Number(h.balance_qty) : undefined,
+                    quantity: Number(h.quantity ?? h.balance_qty ?? 0),
+                    rate: h.rate !== undefined ? Number(h.rate) : undefined,
+                    averagePrice: Number(h.averagePrice ?? h.rate ?? 0),
+                    market_rate: h.market_rate !== undefined ? Number(h.market_rate) : undefined,
+                    currentPrice: h.currentPrice !== undefined ? Number(h.currentPrice) : undefined,
+                    market_value: h.market_value !== undefined ? Number(h.market_value) : undefined,
+                    pl: h.pl !== undefined ? Number(h.pl) : undefined,
+                    pl_percent: h.pl_percent !== undefined ? Number(h.pl_percent) : undefined,
+                    long_term: h.long_term,
+                    date: h.date
+                }));
+
+            const result = await getStockSuggestions(cleanedTransactions, cleanedHoldings);
             if (result && result.length > 0) {
                 setSuggestions(result);
             } else {
@@ -49,11 +76,38 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
         setIsChatting(true);
         
         try {
+            const cleanedTransactions = (transactions || []).slice(0, 30).map(t => ({
+                id: t.id,
+                ticker: t.ticker,
+                action: t.action,
+                quantity: Number(t.quantity || 0),
+                price: Number(t.price || 0),
+                date: t.date || ''
+            }));
+
+            const cleanedHoldings = (holdings || [])
+                .filter(h => Number(h.balance_qty || h.quantity || 0) > 0)
+                .map(h => ({
+                    ticker: h.ticker,
+                    stock_name: h.stock_name,
+                    balance_qty: h.balance_qty !== undefined ? Number(h.balance_qty) : undefined,
+                    quantity: Number(h.quantity ?? h.balance_qty ?? 0),
+                    rate: h.rate !== undefined ? Number(h.rate) : undefined,
+                    averagePrice: Number(h.averagePrice ?? h.rate ?? 0),
+                    market_rate: h.market_rate !== undefined ? Number(h.market_rate) : undefined,
+                    currentPrice: h.currentPrice !== undefined ? Number(h.currentPrice) : undefined,
+                    market_value: h.market_value !== undefined ? Number(h.market_value) : undefined,
+                    pl: h.pl !== undefined ? Number(h.pl) : undefined,
+                    pl_percent: h.pl_percent !== undefined ? Number(h.pl_percent) : undefined,
+                    long_term: h.long_term,
+                    date: h.date
+                }));
+
             const result = await sendRecommendationChat(
                 chatHistory, 
                 newUserMsg.parts[0].text, 
-                transactions, 
-                holdings, 
+                cleanedTransactions, 
+                cleanedHoldings, 
                 suggestions
             );
 

@@ -19,7 +19,7 @@ export async function sendRecommendationChat(
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const model = "gemini-3-flash-preview";
+    const model = "gemini-2.5-flash";
 
     const activeHoldings = positions.filter(p => Number(p.balance_qty) > 0);
     
