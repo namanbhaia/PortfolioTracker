@@ -54,6 +54,11 @@ export default function DashboardClientWrapper({
             .filter(c => selectedClientIds.includes(c.client_id))
             .map(c => c.client_name);
 
+        const clientNameMap = availableClients.reduce((acc, c) => {
+            acc[c.client_id] = c.client_name;
+            return acc;
+        }, {} as Record<string, string>);
+
         const filteredPledges = selectedNames.length > 0
             ? initialPledges.filter(p => selectedNames.includes(p.client_name))
             : initialPledges;
@@ -97,6 +102,7 @@ export default function DashboardClientWrapper({
                     today_low: Number(curr.today_low || 0),
                     today_open: Number(curr.today_open || 0),
                     eps: Number(curr.eps || 0),
+                    client_breakdown: {} as Record<string, number>,
                 };
             }
 
@@ -107,6 +113,9 @@ export default function DashboardClientWrapper({
             acc[key].total_qty += safeQty;
             acc[key].total_purchase_value += safeQty * safePurchaseRate;
             acc[key].total_market_value += safeQty * safeMarketRate;
+
+            const clientName = clientNameMap[curr.client_id] || curr.client_id;
+            acc[key].client_breakdown[clientName] = (acc[key].client_breakdown[clientName] || 0) + safeQty;
 
             return acc;
         }, {});

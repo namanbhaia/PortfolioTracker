@@ -1,8 +1,9 @@
 "use client"
 
 import React, { useState, useMemo } from 'react';
-import { ArrowUpDown, ChevronUp, ChevronDown, Settings2 } from 'lucide-react';
+import { ArrowUpDown, ChevronUp, ChevronDown, Settings2, Info } from 'lucide-react';
 import TickerCell from '@/components/tables/ticker-cell';
+import { SimpleTooltip } from '@/components/ui/simple-tooltip';
 
 export const consolidated_columns = [
     { id: 'ticker', label: 'Ticker / ISIN' },
@@ -138,7 +139,28 @@ export default function ConsolidatedHoldingsTable({ consolidatedRows, isVisible 
                         <tr key={row.ticker} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                             {isVisible('ticker') && <TickerCell ticker={row.ticker} isin={row.isin} />}
                             {isVisible('stock_name') && <td className="px-4 py-4 font-medium text-slate-700 dark:text-slate-300">{row.stock_name}</td>}
-                            {isVisible('total_qty') && <td className="px-4 py-4 text-right font-mono text-slate-700 dark:text-slate-300">{row.total_qty}</td>}
+                            {isVisible('total_qty') && (
+                                <td className="px-4 py-4 text-right font-mono text-slate-700 dark:text-slate-300">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        {row.total_qty}
+                                        <SimpleTooltip
+                                            content={
+                                                <div className="space-y-1 text-left min-w-[120px]">
+                                                    <p className="font-bold border-b border-slate-700 pb-1 mb-1">Holdings by Client</p>
+                                                    {Object.entries(row.client_breakdown || {}).map(([client, qty]) => (
+                                                        <div key={client} className="flex justify-between gap-4">
+                                                            <span className="opacity-80">{client}:</span>
+                                                            <span className="font-mono">{Number(qty).toLocaleString()}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            }
+                                        >
+                                            <Info size={12} className="text-slate-400 hover:text-indigo-500 cursor-help transition-colors" />
+                                        </SimpleTooltip>
+                                    </div>
+                                </td>
+                            )}
                             {isVisible('total_pledged') && <td className="px-4 py-4 text-right font-mono text-amber-600 dark:text-amber-500 font-bold">{row.total_pledged || '-'}</td>}
                             {isVisible('avg_purchase_price') && <td className="px-4 py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{row.avg_purchase_price.toFixed(2)}</td>}
                             {isVisible('total_purchase_value') && <td className="px-4 py-4 text-right font-semibold text-slate-700 dark:text-slate-300">₹{row.total_purchase_value.toLocaleString('en-IN')}</td>}

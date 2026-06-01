@@ -25,7 +25,8 @@ describe('ConsolidatedHoldingsTable', () => {
             trailing_pe: 25,
             eps: 120.5,
             today_high: 2610,
-            today_low: 2580
+            today_low: 2580,
+            client_breakdown: { 'Client A': 4, 'Client B': 6 }
         }
     ];
 
@@ -46,5 +47,23 @@ describe('ConsolidatedHoldingsTable', () => {
 
         // Sorting is internal state, we just verify it doesn't crash
         expect(screen.getByText('RELIANCE')).toBeDefined();
+    });
+
+    it('shows tooltip content on hover', async () => {
+        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
+
+        // The info icon is rendered inside the qty cell
+        // We look for the text "Client A" which should be in the tooltip
+        // Note: queryByText returns null if not found. toBeDefined() on null is true in some environments but usually we want to be explicit.
+        expect(screen.queryByText(/Client A:/i)).not.toBeNull();
+        expect(screen.queryByText(/Client B:/i)).not.toBeNull();
+
+        // Use getAllByText since these numbers might appear elsewhere in the table (e.g. PL %)
+        const elementsWith4 = screen.getAllByText(/4/i);
+        expect(elementsWith4.length).toBeGreaterThan(0);
+
+        // Verify specifically that one of them is in the breakdown
+        const breakdownElement = screen.queryByText(/Client A:/i);
+        expect(breakdownElement).not.toBeNull();
     });
 });
