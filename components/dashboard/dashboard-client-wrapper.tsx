@@ -43,7 +43,19 @@ export default function DashboardClientWrapper({
     const [pledgedOnly, setPledgedOnly] = useState(false);
 
     // 2. Client-side Aggregation and Metrics Logic
-    const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {
+
+    // BOLT OPTIMIZATION: Memoize client name mapping separately to avoid redundant object creation
+    const clientNameMap = useMemo(() => {
+        return availableClients.reduce((acc, c) => {
+            acc[c.client_id] = c.client_name;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [availableClients]);
+
+    // BOLT OPTIMIZATION: Stage 1 - Aggregate raw holdings into ticker-level data.
+    // This is an O(N) operation where N is the total number of holdings.
+    // It only re-runs when the data or client selection changes, not on text filtering.
+    const aggregatedRowsBase = useMemo(() => {
         // Filter holdings and pledges by selected client IDs/Names
         const filteredHoldings = selectedClientIds.length > 0
             ? initialHoldings.filter(h => selectedClientIds.includes(h.client_id))
@@ -53,11 +65,6 @@ export default function DashboardClientWrapper({
         const selectedNames = availableClients
             .filter(c => selectedClientIds.includes(c.client_id))
             .map(c => c.client_name);
-
-        const clientNameMap = availableClients.reduce((acc, c) => {
-            acc[c.client_id] = c.client_name;
-            return acc;
-        }, {} as Record<string, string>);
 
         const filteredPledges = selectedNames.length > 0
             ? initialPledges.filter(p => selectedNames.includes(p.client_name))
@@ -137,7 +144,7 @@ export default function DashboardClientWrapper({
         });
 
         // Convert to array and calculate P/L
-        const rows = Object.values(aggregatedMap)
+        return Object.values(aggregatedMap)
             .map((item: any) => {
                 const avg_purchase_price = item.total_qty > 0 ? item.total_purchase_value / item.total_qty : 0;
                 const pl = item.total_market_value - item.total_purchase_value;
@@ -148,17 +155,27 @@ export default function DashboardClientWrapper({
                     pl,
                     pl_percent,
                 };
-            })
-            // APPLY NEW FILTERS HERE
+            });
+    }, [initialHoldings, initialPledges, selectedClientIds, availableClients, clientNameMap]);
+
+    // BOLT OPTIMIZATION: Stage 2 - Filter and Sort the aggregated results.
+    // This is an O(M) operation where M is the number of unique tickers (much smaller than N).
+    // This re-runs on every keystroke but is extremely fast because it operates on a reduced dataset.
+    const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {
+        const t = ticker.toLowerCase();
+        const s = shareName.toLowerCase();
+
+        const rows = aggregatedRowsBase
+            // APPLY FILTERS HERE
             .filter((row: any) => {
-                const matchesTicker = ticker ? row.ticker.toLowerCase().includes(ticker.toLowerCase()) : true;
-                const matchesStock = shareName ? row.stock_name.toLowerCase().includes(shareName.toLowerCase()) : true;
+                const matchesTicker = t ? row.ticker.toLowerCase().includes(t) : true;
+                const matchesStock = s ? row.stock_name.toLowerCase().includes(s) : true;
                 const matchesPledged = pledgedOnly ? row.total_pledged > 0 : true;
                 return matchesTicker && matchesStock && matchesPledged;
             })
             .sort((a, b) => a.ticker.localeCompare(b.ticker));
 
-        // Global Metrics
+        // Global Metrics - based on filtered view
         const invested = rows.reduce((acc, row) => acc + row.total_purchase_value, 0);
         const currentVal = rows.reduce((acc, row) => acc + row.total_market_value, 0);
         const pl = currentVal - invested;
@@ -171,7 +188,7 @@ export default function DashboardClientWrapper({
             totalPL: pl,
             plPercentage: plPct
         };
-    }, [initialHoldings, initialPledges, selectedClientIds, ticker, shareName, pledgedOnly, availableClients]);
+    }, [aggregatedRowsBase, ticker, shareName, pledgedOnly]);
 
     return (
         <div className="p-6 space-y-6 max-w-[1400px] mx-auto transition-colors">

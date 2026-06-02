@@ -36,8 +36,11 @@ export default function HoldingsClientWrapper({
     });
 
     // 2. Client-side Filtering and Sorting logic via useMemo
-    const processedHoldings = useMemo(() => {
-        let result = [...initialHoldings];
+
+    // BOLT OPTIMIZATION: Stage 1 - Filter holdings.
+    // This runs when any filter criteria changes.
+    const filteredHoldings = useMemo(() => {
+        let result = initialHoldings;
 
         // Apply filters
         if (selectedClientIds.length > 0) {
@@ -45,19 +48,23 @@ export default function HoldingsClientWrapper({
         }
 
         if (ticker) {
-            result = result.filter(h => h.ticker?.toLowerCase().includes(ticker.toLowerCase()));
+            const t = ticker.toLowerCase();
+            result = result.filter(h => h.ticker?.toLowerCase().includes(t));
         }
 
         if (shareName) {
-            result = result.filter(h => h.stock_name?.toLowerCase().includes(shareName.toLowerCase()));
+            const s = shareName.toLowerCase();
+            result = result.filter(h => h.stock_name?.toLowerCase().includes(s));
         }
 
         if (startDate) {
-            result = result.filter(h => new Date(h.date) >= new Date(startDate));
+            const start = new Date(startDate);
+            result = result.filter(h => new Date(h.date) >= start);
         }
 
         if (endDate) {
-            result = result.filter(h => new Date(h.date) <= new Date(endDate));
+            const end = new Date(endDate);
+            result = result.filter(h => new Date(h.date) <= end);
         }
 
         if (!showAll) {
@@ -67,6 +74,15 @@ export default function HoldingsClientWrapper({
         if (longTerm !== null) {
             result = result.filter(h => h.long_term === longTerm);
         }
+
+        return result;
+    }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds]);
+
+    // BOLT OPTIMIZATION: Stage 2 - Sort the filtered holdings.
+    // This only re-runs when the filter results change OR when the sort configuration changes.
+    // Changing the sort column now bypasses all filter predicate evaluations.
+    const processedHoldings = useMemo(() => {
+        const result = [...filteredHoldings];
 
         // Apply sort
         result.sort((a, b) => {
@@ -101,7 +117,7 @@ export default function HoldingsClientWrapper({
         });
 
         return result;
-    }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds, sortConfig]);
+    }, [filteredHoldings, sortConfig]);
 
     const handleSort = (key: SortFieldHoldings) => {
         setSortConfig(prev => ({

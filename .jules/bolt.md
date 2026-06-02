@@ -1,0 +1,3 @@
+## 2025-05-14 - Multi-stage Memoization for Large Datasets
+**Learning:** In applications like this portfolio tracker that handle thousands of raw records (holdings), a monolithic `useMemo` that combines heavy O(N) aggregation with fast O(M) filtering/sorting causes noticeable UI lag (main thread blocking) during text input.
+**Action:** Always split data processing into a multi-stage pipeline. Stage 1 should handle the heavy data transformations (aggregation, complex joins) and depend only on the base data. Stage 2 should handle lightweight filtering and sorting and depend on the output of Stage 1. This ensures that typing in a filter only triggers the fast O(M) stage.
