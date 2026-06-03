@@ -162,14 +162,11 @@ export default function DashboardClientWrapper({
     // This is an O(M) operation where M is the number of unique tickers (much smaller than N).
     // This re-runs on every keystroke but is extremely fast because it operates on a reduced dataset.
     const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {
-        const t = ticker.toLowerCase();
-        const s = shareName.toLowerCase();
-
         const rows = aggregatedRowsBase
             // APPLY FILTERS HERE
             .filter((row: any) => {
-                const matchesTicker = t ? row.ticker.toLowerCase().includes(t) : true;
-                const matchesStock = s ? row.stock_name.toLowerCase().includes(s) : true;
+                const matchesTicker = ticker ? row.ticker.toLowerCase().includes(ticker.toLowerCase()) : true;
+                const matchesStock = shareName ? row.stock_name.toLowerCase().includes(shareName.toLowerCase()) : true;
                 const matchesPledged = pledgedOnly ? row.total_pledged > 0 : true;
                 return matchesTicker && matchesStock && matchesPledged;
             })

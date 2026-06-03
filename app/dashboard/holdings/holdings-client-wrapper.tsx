@@ -48,23 +48,19 @@ export default function HoldingsClientWrapper({
         }
 
         if (ticker) {
-            const t = ticker.toLowerCase();
-            result = result.filter(h => h.ticker?.toLowerCase().includes(t));
+            result = result.filter(h => h.ticker?.toLowerCase().includes(ticker.toLowerCase()));
         }
 
         if (shareName) {
-            const s = shareName.toLowerCase();
-            result = result.filter(h => h.stock_name?.toLowerCase().includes(s));
+            result = result.filter(h => h.stock_name?.toLowerCase().includes(shareName.toLowerCase()));
         }
 
         if (startDate) {
-            const start = new Date(startDate);
-            result = result.filter(h => new Date(h.date) >= start);
+            result = result.filter(h => new Date(h.date) >= new Date(startDate));
         }
 
         if (endDate) {
-            const end = new Date(endDate);
-            result = result.filter(h => new Date(h.date) <= end);
+            result = result.filter(h => new Date(h.date) <= new Date(endDate));
         }
 
         if (!showAll) {
