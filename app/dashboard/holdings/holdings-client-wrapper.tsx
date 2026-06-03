@@ -36,8 +36,11 @@ export default function HoldingsClientWrapper({
     });
 
     // 2. Client-side Filtering and Sorting logic via useMemo
-    const processedHoldings = useMemo(() => {
-        let result = [...initialHoldings];
+
+    // Stage 1 - Filter holdings.
+    // This runs when any filter criteria changes.
+    const filteredHoldings = useMemo(() => {
+        let result = initialHoldings;
 
         // Apply filters
         if (selectedClientIds.length > 0) {
@@ -67,6 +70,15 @@ export default function HoldingsClientWrapper({
         if (longTerm !== null) {
             result = result.filter(h => h.long_term === longTerm);
         }
+
+        return result;
+    }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds]);
+
+    // Stage 2 - Sort the filtered holdings.
+    // This only re-runs when the filter results change OR when the sort configuration changes.
+    // Changing the sort column now bypasses all filter predicate evaluations.
+    const processedHoldings = useMemo(() => {
+        const result = [...filteredHoldings];
 
         // Apply sort
         result.sort((a, b) => {
@@ -101,7 +113,7 @@ export default function HoldingsClientWrapper({
         });
 
         return result;
-    }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds, sortConfig]);
+    }, [filteredHoldings, sortConfig]);
 
     const handleSort = (key: SortFieldHoldings) => {
         setSortConfig(prev => ({
