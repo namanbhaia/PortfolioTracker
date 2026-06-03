@@ -37,7 +37,7 @@ export default function HoldingsClientWrapper({
 
     // 2. Client-side Filtering and Sorting logic via useMemo
 
-    // BOLT OPTIMIZATION: Stage 1 - Filter holdings.
+    // Stage 1 - Filter holdings.
     // This runs when any filter criteria changes.
     const filteredHoldings = useMemo(() => {
         let result = initialHoldings;
@@ -74,7 +74,7 @@ export default function HoldingsClientWrapper({
         return result;
     }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds]);
 
-    // BOLT OPTIMIZATION: Stage 2 - Sort the filtered holdings.
+    // Stage 2 - Sort the filtered holdings.
     // This only re-runs when the filter results change OR when the sort configuration changes.
     // Changing the sort column now bypasses all filter predicate evaluations.
     const processedHoldings = useMemo(() => {

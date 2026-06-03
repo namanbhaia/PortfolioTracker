@@ -44,7 +44,7 @@ export default function DashboardClientWrapper({
 
     // 2. Client-side Aggregation and Metrics Logic
 
-    // BOLT OPTIMIZATION: Memoize client name mapping separately to avoid redundant object creation
+    // Memoize client name mapping separately to avoid redundant object creation
     const clientNameMap = useMemo(() => {
         return availableClients.reduce((acc, c) => {
             acc[c.client_id] = c.client_name;
@@ -52,7 +52,7 @@ export default function DashboardClientWrapper({
         }, {} as Record<string, string>);
     }, [availableClients]);
 
-    // BOLT OPTIMIZATION: Stage 1 - Aggregate raw holdings into ticker-level data.
+    // Stage 1 - Aggregate raw holdings into ticker-level data.
     // This is an O(N) operation where N is the total number of holdings.
     // It only re-runs when the data or client selection changes, not on text filtering.
     const aggregatedRowsBase = useMemo(() => {
@@ -158,7 +158,7 @@ export default function DashboardClientWrapper({
             });
     }, [initialHoldings, initialPledges, selectedClientIds, availableClients, clientNameMap]);
 
-    // BOLT OPTIMIZATION: Stage 2 - Filter and Sort the aggregated results.
+    // Stage 2 - Filter and Sort the aggregated results.
     // This is an O(M) operation where M is the number of unique tickers (much smaller than N).
     // This re-runs on every keystroke but is extremely fast because it operates on a reduced dataset.
     const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {

@@ -43,7 +43,7 @@ export default function SalesClientWrapper({
 
     // 2. Client-side Filtering and Sorting logic via useMemo
 
-    // BOLT OPTIMIZATION: Stage 1 - Filter sales.
+    // Stage 1 - Filter sales.
     const filteredSales = useMemo(() => {
         let result = initialSales;
 
@@ -80,7 +80,7 @@ export default function SalesClientWrapper({
         return result;
     }, [initialSales, ticker, shareName, startDate, endDate, longTerm, selectedClientIds]);
 
-    // BOLT OPTIMIZATION: Stage 2 - Sort the filtered sales.
+    // Stage 2 - Sort the filtered sales.
     const processedSales = useMemo(() => {
         const result = [...filteredSales];
 
