@@ -20,4 +20,19 @@ describe('TickerCell', () => {
         expect(link.getAttribute('href')).toBe('https://www.screener.in/company/RELIANCE/');
         expect(screen.getByText('INE002A01018')).toBeDefined();
     });
+
+    it('renders copy button with correct aria-label', () => {
+        render(
+            <table>
+                <tbody>
+                    <tr>
+                        <TickerCell ticker="RELIANCE" isin="INE002A01018" />
+                    </tr>
+                </tbody>
+            </table>
+        );
+
+        const copyButton = screen.getByLabelText('Copy ticker RELIANCE');
+        expect(copyButton).toBeDefined();
+    });
 });
