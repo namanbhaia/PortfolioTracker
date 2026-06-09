@@ -22,7 +22,7 @@ export async function getStockSuggestions(
         return [];
     }
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const model = "gemini-3.5-flash";
+    const model = "gemini-flash-latest";
 
     const activeHoldings = positions.filter(p => {
         const qty = p.balance_qty !== undefined ? Number(p.balance_qty) : Number(p.quantity || 0);

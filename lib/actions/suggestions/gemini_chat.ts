@@ -15,11 +15,11 @@ export async function sendRecommendationChat(
     suggestions: Suggestion[]
 ) {
     if (!process.env.GEMINI_API_KEY) {
-        throw new Error("GEMINI_API_KEY is not defined.");
+        throw new Error("GEMINI_API_KEY is not defined");
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const model = "gemini-3.5-flash";
+    const model = "gemini-flash-latest";
 
     const activeHoldings = positions.filter(p => {
         const qty = p.balance_qty !== undefined ? Number(p.balance_qty) : Number(p.quantity || 0);
