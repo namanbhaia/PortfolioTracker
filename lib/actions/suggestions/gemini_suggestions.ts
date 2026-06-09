@@ -22,9 +22,12 @@ export async function getStockSuggestions(
         return [];
     }
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const model = "gemini-2.5-flash";
+    const model = "gemini-3.5-flash";
 
-    const activeHoldings = positions.filter(p => Number(p.balance_qty) > 0);
+    const activeHoldings = positions.filter(p => {
+        const qty = p.balance_qty !== undefined ? Number(p.balance_qty) : Number(p.quantity || 0);
+        return qty > 0;
+    });
 
     let totalCost = 0;
     let totalValue = 0;
@@ -34,7 +37,7 @@ export async function getStockSuggestions(
     let totalStLossUnrealized = 0;
 
     const formattedPositions = activeHoldings.map(h => {
-        const qty = Number(h.balance_qty || h.quantity || 0);
+        const qty = h.balance_qty !== undefined ? Number(h.balance_qty) : Number(h.quantity || 0);
         const buyRate = Number(h.rate || h.averagePrice || 0);
         const currentRate = Number(h.market_rate || h.currentPrice || 0);
         const costBasis = qty * buyRate;
@@ -126,12 +129,12 @@ export async function getStockSuggestions(
                     type: Type.OBJECT,
                     properties: {
                         symbol: { type: Type.STRING },
-                        action: { type: Type.STRING, description: "Exactly 'BUY', 'SELL', or 'HOLD'" },
+                        action: { type: Type.STRING, enum: ["BUY", "SELL", "HOLD"], description: "Exactly 'BUY', 'SELL', or 'HOLD'" },
                         confidence: { type: Type.NUMBER, description: "A float between 0.0 and 1.0 representing conviction" },
                         reasoning: { type: Type.STRING, description: "Detailed, professional 2-3 sentence explanation with specific metrics." },
                         targetPrice: { type: Type.NUMBER, description: "Optional realistic target price" },
                         timeframe: { type: Type.STRING, description: "'Short Term' (1-3 mos), 'Medium Term' (3-12 mos), or 'Long Term' (1yr+)" },
-                        riskLevel: { type: Type.STRING, description: "Risk level of this action: 'Low', 'Medium', or 'High'" }
+                        riskLevel: { type: Type.STRING, enum: ["Low", "Medium", "High"], description: "Risk level of this action: 'Low', 'Medium', or 'High'" }
                     },
                     required: ["symbol", "action", "confidence", "reasoning", "riskLevel", "timeframe"]
                 }
@@ -140,9 +143,11 @@ export async function getStockSuggestions(
     });
 
     try {
-        return JSON.parse(response.text || "[]");
+        const text = response.text || "[]";
+        const cleanedText = text.replace(/^\s*```json\s*/i, "").replace(/\s*```\s*$/, "").trim();
+        return JSON.parse(cleanedText);
     } catch (e) {
-        console.error("Failed to parse Gemini response", e);
+        console.error("Failed to parse Gemini response:", response.text, e);
         return [];
     }
 }

@@ -34,7 +34,10 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
             }));
 
             const cleanedHoldings = (holdings || [])
-                .filter(h => Number(h.balance_qty || h.quantity || 0) > 0)
+                .filter(h => {
+                    const qty = h.balance_qty !== undefined ? Number(h.balance_qty) : Number(h.quantity || 0);
+                    return qty > 0;
+                })
                 .map(h => ({
                     ticker: h.ticker,
                     stock_name: h.stock_name,
@@ -86,7 +89,10 @@ export default function GeminiTab({ holdings, transactions, clients }: { holding
             }));
 
             const cleanedHoldings = (holdings || [])
-                .filter(h => Number(h.balance_qty || h.quantity || 0) > 0)
+                .filter(h => {
+                    const qty = h.balance_qty !== undefined ? Number(h.balance_qty) : Number(h.quantity || 0);
+                    return qty > 0;
+                })
                 .map(h => ({
                     ticker: h.ticker,
                     stock_name: h.stock_name,

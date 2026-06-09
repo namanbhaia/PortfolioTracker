@@ -19,9 +19,12 @@ export async function sendRecommendationChat(
     }
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const model = "gemini-2.5-flash";
+    const model = "gemini-3.5-flash";
 
-    const activeHoldings = positions.filter(p => Number(p.balance_qty) > 0);
+    const activeHoldings = positions.filter(p => {
+        const qty = p.balance_qty !== undefined ? Number(p.balance_qty) : Number(p.quantity || 0);
+        return qty > 0;
+    });
     
     let totalCost = 0;
     let totalValue = 0;
@@ -31,7 +34,7 @@ export async function sendRecommendationChat(
     let totalStLossUnrealized = 0;
 
     const formattedPositions = activeHoldings.map(h => {
-        const qty = Number(h.balance_qty || h.quantity || 0);
+        const qty = h.balance_qty !== undefined ? Number(h.balance_qty) : Number(h.quantity || 0);
         const buyRate = Number(h.rate || h.averagePrice || 0);
         const currentRate = Number(h.market_rate || h.currentPrice || 0);
         const costBasis = qty * buyRate;
