@@ -25,7 +25,7 @@ export async function sendRecommendationChat(
         const qty = p.balance_qty !== undefined ? Number(p.balance_qty) : Number(p.quantity || 0);
         return qty > 0;
     });
-    
+
     let totalCost = 0;
     let totalValue = 0;
     let totalLtcgUnrealized = 0;
@@ -75,7 +75,7 @@ export async function sendRecommendationChat(
     const netPl = totalValue - totalCost;
     const netPlPercent = totalCost > 0 ? (netPl / totalCost) * 100 : 0;
 
-    const systemPrompt = `You are an expert SEBI-registered portfolio manager and financial advisor in the Indian Stock Market.
+    const systemPrompt = `You are an expert portfolio manager and financial advisor in the Indian Stock Market.
     You generated 5 specific recommendations for the user based on their portfolio.
     The user is now discussing these recommendations, or their portfolio in general, with you.
     Answer their questions professionally, concisely, and with specific references to their portfolio metrics. Format your answers in markdown.
@@ -106,7 +106,7 @@ export async function sendRecommendationChat(
             role: h.role,
             parts: h.parts
         }));
-        
+
         contents.push({
             role: "user",
             parts: [{ text: newMessage }]
