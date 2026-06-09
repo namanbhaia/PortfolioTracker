@@ -14,6 +14,9 @@ export interface TaxLossSuggestion {
     balance_qty: number;
     purchase_date: string;
     trx_id: string;
+    purchase_price: number;
+    market_rate: number;
+    current_value: number;
 }
 
 export interface TaxGainSuggestion {
@@ -24,6 +27,9 @@ export interface TaxGainSuggestion {
     balance_qty: number;
     purchase_date: string;
     trx_id: string;
+    purchase_price: number;
+    market_rate: number;
+    current_value: number;
 }
 
 /**
@@ -73,7 +79,10 @@ export async function getTaxLossHarvestingSuggestions(
                 is_long_term: oldestLot.long_term,
                 balance_qty: Number(oldestLot.balance_qty),
                 purchase_date: oldestLot.date,
-                trx_id: oldestLot.trx_id
+                trx_id: oldestLot.trx_id,
+                purchase_price: Number(oldestLot.rate) || 0,
+                market_rate: Number(oldestLot.market_rate) || 0,
+                current_value: Number(oldestLot.market_value) || (Number(oldestLot.balance_qty) * (Number(oldestLot.market_rate) || 0)),
             });
         } else if (oldestLot.long_term && Number(oldestLot.pl) > 0) {
             // Oldest lot is long-term and has unrealized profit -> Tax Gain Harvesting opportunity
@@ -84,7 +93,10 @@ export async function getTaxLossHarvestingSuggestions(
                 gain_percent: Number(oldestLot.pl_percent),
                 balance_qty: Number(oldestLot.balance_qty),
                 purchase_date: oldestLot.date,
-                trx_id: oldestLot.trx_id
+                trx_id: oldestLot.trx_id,
+                purchase_price: Number(oldestLot.rate) || 0,
+                market_rate: Number(oldestLot.market_rate) || 0,
+                current_value: Number(oldestLot.market_value) || (Number(oldestLot.balance_qty) * (Number(oldestLot.market_rate) || 0)),
             });
         }
     }

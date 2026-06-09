@@ -31,7 +31,6 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
             <div className="space-y-3 mt-6">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-white transition-colors">{title}</h3>
-                    <span className="text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md transition-colors">{description}</span>
                 </div>
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
                     <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
@@ -40,9 +39,11 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                                 <th scope="col" className="px-6 py-3">Asset</th>
                                 <th scope="col" className="px-6 py-3 text-right">Purchase Date</th>
                                 <th scope="col" className="px-6 py-3 text-right">Qty</th>
+                                <th scope="col" className="px-6 py-3 text-right">Purchase Price (₹)</th>
+                                <th scope="col" className="px-6 py-3 text-right">Market Rate (₹)</th>
+                                <th scope="col" className="px-6 py-3 text-right">Current Value (₹)</th>
                                 <th scope="col" className="px-6 py-3 text-right">Loss Amount (₹)</th>
                                 <th scope="col" className="px-6 py-3 text-right">Loss %</th>
-                                <th scope="col" className="px-6 py-3 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -58,17 +59,21 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                                         {new Date(item.purchase_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                                     </td>
                                     <td className="px-6 py-4 text-right">{item.balance_qty}</td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {item.purchase_price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {item.market_rate.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {item.current_value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </td>
                                     <td className="px-6 py-4 text-right text-rose-500 dark:text-rose-400 font-semibold flex items-center justify-end gap-1">
                                         <ArrowDownRight className="w-4 h-4" />
                                         {item.loss_amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-6 py-4 text-right text-rose-500/80 dark:text-rose-400/80">
                                         {item.loss_percent.toFixed(2)}%
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 transition-colors">
-                                            Info Only
-                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -86,7 +91,6 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
             <div className="space-y-3 mt-6">
                 <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-white transition-colors">{title}</h3>
-                    <span className="text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md transition-colors">{description}</span>
                 </div>
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
                     <table className="w-full text-sm text-left text-slate-600 dark:text-slate-400">
@@ -95,9 +99,11 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                                 <th scope="col" className="px-6 py-3">Asset</th>
                                 <th scope="col" className="px-6 py-3 text-right">Purchase Date</th>
                                 <th scope="col" className="px-6 py-3 text-right">Qty</th>
+                                <th scope="col" className="px-6 py-3 text-right">Purchase Price (₹)</th>
+                                <th scope="col" className="px-6 py-3 text-right">Market Rate (₹)</th>
+                                <th scope="col" className="px-6 py-3 text-right">Current Value (₹)</th>
                                 <th scope="col" className="px-6 py-3 text-right">Gain Amount (₹)</th>
                                 <th scope="col" className="px-6 py-3 text-right">Gain %</th>
-                                <th scope="col" className="px-6 py-3 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -113,17 +119,21 @@ export default function TaxLossTab({ holdings, transactions, clients }: { holdin
                                         {new Date(item.purchase_date).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                                     </td>
                                     <td className="px-6 py-4 text-right">{item.balance_qty}</td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {item.purchase_price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {item.market_rate.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-slate-500 dark:text-slate-400">
+                                        {item.current_value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                    </td>
                                     <td className="px-6 py-4 text-right text-emerald-500 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
                                         <ArrowUpRight className="w-4 h-4" />
                                         {item.gain_amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-6 py-4 text-right text-emerald-500/80 dark:text-emerald-400/80">
                                         +{item.gain_percent.toFixed(2)}%
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="inline-flex items-center px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50 transition-colors">
-                                            Book & Rebuy
-                                        </div>
                                     </td>
                                 </tr>
                             ))}

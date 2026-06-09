@@ -39,7 +39,10 @@ describe('tax_loss_harvesting_suggestions', () => {
                 pl_percent: -8.5,
                 long_term: false,
                 date: '2025-06-01',
-                trx_id: 't1'
+                trx_id: 't1',
+                rate: 1500,
+                market_rate: 1350,
+                market_value: 13500
             },
             {
                 ticker: 'TCS',
@@ -49,7 +52,10 @@ describe('tax_loss_harvesting_suggestions', () => {
                 pl_percent: -15,
                 long_term: true,
                 date: '2024-01-01',
-                trx_id: 't2'
+                trx_id: 't2',
+                rate: 4000,
+                market_rate: 3400,
+                market_value: 17000
             }
         ];
 
@@ -58,11 +64,17 @@ describe('tax_loss_harvesting_suggestions', () => {
         expect(result.shortTerm[0].ticker).toBe('INFY');
         expect(result.shortTerm[0].loss_amount).toBe(1500);
         expect(result.shortTerm[0].is_long_term).toBe(false);
+        expect(result.shortTerm[0].purchase_price).toBe(1500);
+        expect(result.shortTerm[0].market_rate).toBe(1350);
+        expect(result.shortTerm[0].current_value).toBe(13500);
 
         expect(result.longTerm.length).toBe(1);
         expect(result.longTerm[0].ticker).toBe('TCS');
         expect(result.longTerm[0].loss_amount).toBe(3000);
         expect(result.longTerm[0].is_long_term).toBe(true);
+        expect(result.longTerm[0].purchase_price).toBe(4000);
+        expect(result.longTerm[0].market_rate).toBe(3400);
+        expect(result.longTerm[0].current_value).toBe(17000);
 
         expect(result.totalLossVal).toBe(4500);
         expect(result.longTermGains).toEqual([]);
@@ -79,7 +91,10 @@ describe('tax_loss_harvesting_suggestions', () => {
                 pl_percent: 25,
                 long_term: true,
                 date: '2023-05-01',
-                trx_id: 't3'
+                trx_id: 't3',
+                rate: 1200,
+                market_rate: 1500,
+                market_value: 30000
             },
             {
                 ticker: 'SBIN',
@@ -89,7 +104,10 @@ describe('tax_loss_harvesting_suggestions', () => {
                 pl_percent: 15,
                 long_term: false, // Short term profitable oldest lot -> should NOT be in longTermGains
                 date: '2025-02-01',
-                trx_id: 't4'
+                trx_id: 't4',
+                rate: 600,
+                market_rate: 700,
+                market_value: 35000
             }
         ];
 
@@ -101,6 +119,9 @@ describe('tax_loss_harvesting_suggestions', () => {
         expect(result.longTermGains.length).toBe(1);
         expect(result.longTermGains[0].ticker).toBe('HDFCBANK');
         expect(result.longTermGains[0].gain_amount).toBe(12000);
+        expect(result.longTermGains[0].purchase_price).toBe(1200);
+        expect(result.longTermGains[0].market_rate).toBe(1500);
+        expect(result.longTermGains[0].current_value).toBe(30000);
         expect(result.totalGainVal).toBe(12000);
     });
 
@@ -119,7 +140,10 @@ describe('tax_loss_harvesting_suggestions', () => {
                 pl_percent: 10,
                 long_term: true,
                 date: '2023-06-01',
-                trx_id: 't_new'
+                trx_id: 't_new',
+                rate: 1400,
+                market_rate: 1540,
+                market_value: 15400
             },
             {
                 ticker: 'INFY',
@@ -129,7 +153,10 @@ describe('tax_loss_harvesting_suggestions', () => {
                 pl_percent: -5,
                 long_term: true,
                 date: '2023-01-01',
-                trx_id: 't_old'
+                trx_id: 't_old',
+                rate: 1400,
+                market_rate: 1330,
+                market_value: 6650
             }
         ];
 
@@ -140,6 +167,9 @@ describe('tax_loss_harvesting_suggestions', () => {
         expect(result.longTerm.length).toBe(1);
         expect(result.longTerm[0].trx_id).toBe('t_old');
         expect(result.longTerm[0].loss_amount).toBe(1000);
+        expect(result.longTerm[0].purchase_price).toBe(1400);
+        expect(result.longTerm[0].market_rate).toBe(1330);
+        expect(result.longTerm[0].current_value).toBe(6650);
         expect(result.longTermGains).toEqual([]);
     });
 });

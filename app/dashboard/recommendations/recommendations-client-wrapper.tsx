@@ -31,10 +31,8 @@ export default function RecommendationsClientWrapper({
     transactions: any[],
     initialPledges?: any[]
 }) {
-    // 1. Client Selection State - default to all
-    const [selectedClientIds, setSelectedClientIds] = useState<string[]>(
-        availableClients.map(c => c.client_id)
-    );
+    // 1. Client Selection State - default to none
+    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
 
     // 2. Tab Visibility State
     const [enabledTabs, setEnabledTabs] = useState({
@@ -120,13 +118,33 @@ export default function RecommendationsClientWrapper({
                 </div>
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="w-full md:w-64">
-                        <ClientMultiSelect
-                            clients={availableClients}
-                            selectedKeys={selectedClientIds}
-                            onChange={handleClientToggle}
-                            identifier="client_id"
-                        />
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+                        <div className="w-full md:w-64">
+                            <ClientMultiSelect
+                                clients={availableClients}
+                                selectedKeys={selectedClientIds}
+                                onChange={handleClientToggle}
+                                identifier="client_id"
+                            />
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedClientIds(availableClients.map(c => c.client_id))}
+                                className="h-10 px-3 border-slate-200 dark:border-slate-800 dark:bg-slate-900 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                Select All
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedClientIds([])}
+                                className="h-10 px-3 border-slate-200 dark:border-slate-800 dark:bg-slate-900 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                Clear
+                            </Button>
+                        </div>
                     </div>
 
                     <DropdownMenu>
