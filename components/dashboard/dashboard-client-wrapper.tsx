@@ -43,7 +43,19 @@ export default function DashboardClientWrapper({
     const [pledgedOnly, setPledgedOnly] = useState(false);
 
     // 2. Client-side Aggregation and Metrics Logic
-    const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {
+
+    // Memoize client name mapping separately to avoid redundant object creation
+    const clientNameMap = useMemo(() => {
+        return availableClients.reduce((acc, c) => {
+            acc[c.client_id] = c.client_name;
+            return acc;
+        }, {} as Record<string, string>);
+    }, [availableClients]);
+
+    // Stage 1 - Aggregate raw holdings into ticker-level data.
+    // This is an O(N) operation where N is the total number of holdings.
+    // It only re-runs when the data or client selection changes, not on text filtering.
+    const aggregatedRowsBase = useMemo(() => {
         // Filter holdings and pledges by selected client IDs/Names
         const filteredHoldings = selectedClientIds.length > 0
             ? initialHoldings.filter(h => selectedClientIds.includes(h.client_id))
@@ -97,6 +109,7 @@ export default function DashboardClientWrapper({
                     today_low: Number(curr.today_low || 0),
                     today_open: Number(curr.today_open || 0),
                     eps: Number(curr.eps || 0),
+                    client_breakdown: {} as Record<string, number>,
                 };
             }
 
@@ -107,6 +120,9 @@ export default function DashboardClientWrapper({
             acc[key].total_qty += safeQty;
             acc[key].total_purchase_value += safeQty * safePurchaseRate;
             acc[key].total_market_value += safeQty * safeMarketRate;
+
+            const clientName = clientNameMap[curr.client_id] || curr.client_id;
+            acc[key].client_breakdown[clientName] = (acc[key].client_breakdown[clientName] || 0) + safeQty;
 
             return acc;
         }, {});
@@ -128,7 +144,7 @@ export default function DashboardClientWrapper({
         });
 
         // Convert to array and calculate P/L
-        const rows = Object.values(aggregatedMap)
+        return Object.values(aggregatedMap)
             .map((item: any) => {
                 const avg_purchase_price = item.total_qty > 0 ? item.total_purchase_value / item.total_qty : 0;
                 const pl = item.total_market_value - item.total_purchase_value;
@@ -139,8 +155,15 @@ export default function DashboardClientWrapper({
                     pl,
                     pl_percent,
                 };
-            })
-            // APPLY NEW FILTERS HERE
+            });
+    }, [initialHoldings, initialPledges, selectedClientIds, availableClients, clientNameMap]);
+
+    // Stage 2 - Filter and Sort the aggregated results.
+    // This is an O(M) operation where M is the number of unique tickers (much smaller than N).
+    // This re-runs on every keystroke but is extremely fast because it operates on a reduced dataset.
+    const { consolidatedRows, totalInvested, currentTotalValue, totalPL, plPercentage } = useMemo(() => {
+        const rows = aggregatedRowsBase
+            // APPLY FILTERS HERE
             .filter((row: any) => {
                 const matchesTicker = ticker ? row.ticker.toLowerCase().includes(ticker.toLowerCase()) : true;
                 const matchesStock = shareName ? row.stock_name.toLowerCase().includes(shareName.toLowerCase()) : true;
@@ -149,7 +172,7 @@ export default function DashboardClientWrapper({
             })
             .sort((a, b) => a.ticker.localeCompare(b.ticker));
 
-        // Global Metrics
+        // Global Metrics - based on filtered view
         const invested = rows.reduce((acc, row) => acc + row.total_purchase_value, 0);
         const currentVal = rows.reduce((acc, row) => acc + row.total_market_value, 0);
         const pl = currentVal - invested;
@@ -162,7 +185,7 @@ export default function DashboardClientWrapper({
             totalPL: pl,
             plPercentage: plPct
         };
-    }, [initialHoldings, initialPledges, selectedClientIds, ticker, shareName, pledgedOnly, availableClients]);
+    }, [aggregatedRowsBase, ticker, shareName, pledgedOnly]);
 
     return (
         <div className="p-6 space-y-6 max-w-[1400px] mx-auto transition-colors">

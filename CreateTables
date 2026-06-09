@@ -1,4 +1,4 @@
-/* * PORTFOLIO TRACKER DATABASE SCHEMA
+/* * MLB PORTFOLIO TRACKER DATABASE SCHEMA
  * ---------------------------------------------------------
  * This script sets up the core tables, views, functions, and 
  * triggers required for the Portfolio Tracker application.

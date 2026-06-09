@@ -42,8 +42,10 @@ export default function SalesClientWrapper({
     });
 
     // 2. Client-side Filtering and Sorting logic via useMemo
-    const processedSales = useMemo(() => {
-        let result = [...initialSales];
+
+    // Stage 1 - Filter sales.
+    const filteredSales = useMemo(() => {
+        let result = initialSales;
 
         // Apply filters
         if (selectedClientIds.length > 0) {
@@ -71,15 +73,16 @@ export default function SalesClientWrapper({
             if (longTerm === 'square_off') {
                 result = result.filter(h => h.is_square_off === true);
             } else {
-                // If filtering by Long Term (true) or Short Term (false)
-                // We typically exclude square-off from regular LT/ST if user wants to be specific,
-                // BUT in this schema long_term=true excludes square_off=true by definition of time.
-                // However, ST (false) includes square_off=true.
-                // If user clicks "Short Term", they might want ONLY non-square-off ST?
-                // For tax purposes, ST and Square Off are different.
                 result = result.filter(h => h.long_term === longTerm && (longTerm === true || h.is_square_off !== true));
             }
         }
+
+        return result;
+    }, [initialSales, ticker, shareName, startDate, endDate, longTerm, selectedClientIds]);
+
+    // Stage 2 - Sort the filtered sales.
+    const processedSales = useMemo(() => {
+        const result = [...filteredSales];
 
         // Apply sort
         result.sort((a, b) => {
@@ -116,7 +119,7 @@ export default function SalesClientWrapper({
         });
 
         return result;
-    }, [initialSales, ticker, shareName, startDate, endDate, longTerm, selectedClientIds, sortConfig]);
+    }, [filteredSales, sortConfig]);
 
     const handleSort = (key: SortFieldSales) => {
         setSortConfig(prev => ({
