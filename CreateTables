@@ -22,27 +22,27 @@ CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
 -- 1. PROFILES (The Managers)
 -- Links directly to Supabase Auth Users
-CREATE TABLE profiles (
+CREATE TABLE public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
     email TEXT UNIQUE NOT NULL,
-    client_ids UUID[] DEFAULT '{}', -- List of clients owned by this profile
+    client_ids UUID[] DEFAULT '{}', -- List of public.clients owned by this profile
     screensaver_click_only BOOLEAN DEFAULT FALSE,
     admin_level INTEGER DEFAULT 0 CHECK (admin_level IN (0, 1, 2)), -- 0: No Admin, 1: Intermediate, 2: Superadmin
     auto_fold_sidebar BOOLEAN DEFAULT FALSE,
     theme_preference TEXT DEFAULT 'system',
     created_at TIMESTAMPTZ DEFAULT now()
 );
-COMMENT ON COLUMN profiles.admin_level IS 'Will the user get advanced controls. Manually set';
+COMMENT ON COLUMN public.profiles.admin_level IS 'Will the user get advanced controls. Manually set';
 
 -- 2. CLIENTS (The Accounts)
 -- Represents distinct portfolios or family members
-CREATE TABLE clients (
+CREATE TABLE public.clients (
     client_name TEXT PRIMARY KEY, -- Using name as PK as requested
     trading_id TEXT UNIQUE NOT NULL,
     client_id UUID UNIQUE DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     dp_id TEXT UNIQUE, -- Added DP ID for reporting
     last_verified TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -50,7 +50,7 @@ CREATE TABLE clients (
 
 -- 3. ASSETS (The Master Catalog)
 -- Stores market data and instrument details
-CREATE TABLE assets (
+CREATE TABLE public.assets (
     ticker TEXT PRIMARY KEY,
     stock_name TEXT NOT NULL,
     isin TEXT, -- Removed UNIQUE as requested
@@ -73,29 +73,29 @@ CREATE TABLE assets (
 -- 4. PURCHASES (The "In" Ledger)
 -- Log of all buy transactions
 -- Date is expected in yyyy-mm-dd format
-CREATE TABLE purchases (
+CREATE TABLE public.purchases (
     trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) NOT NULL,
-    client_name TEXT REFERENCES clients(client_name) ON DELETE CASCADE,
-    client_id UUID REFERENCES clients(client_id), -- Linked UUID for faster joins
-    ticker TEXT REFERENCES assets(ticker),
+    user_id UUID REFERENCES public.profiles(id) NOT NULL,
+    client_name TEXT REFERENCES public.clients(client_name) ON DELETE CASCADE,
+    client_id UUID REFERENCES public.clients(client_id), -- Linked UUID for faster joins
+    ticker TEXT REFERENCES public.assets(ticker),
     date DATE NOT NULL,
     rate NUMERIC NOT NULL,
     purchase_qty NUMERIC NOT NULL CHECK (purchase_qty > 0),
     balance_qty NUMERIC DEFAULT 0, -- Current quantity held
     comments TEXT,
-    sale_ids UUID[] DEFAULT '{}', -- Array to track partial sales linked to this purchase
+    sale_ids UUID[] DEFAULT '{}', -- Array to track partial public.sales linked to this purchase
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- 5. SALES (The "Out" Ledger)
 -- Log of all sell transactions
-CREATE TABLE sales (
+CREATE TABLE public.sales (
     trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-    purchase_trx_id UUID REFERENCES purchases(trx_id) ON DELETE CASCADE,
-    client_id UUID NOT NULL REFERENCES clients(client_id),
-    client_name TEXT NOT NULL REFERENCES clients(client_name),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    purchase_trx_id UUID REFERENCES public.purchases(trx_id) ON DELETE CASCADE,
+    client_id UUID NOT NULL REFERENCES public.clients(client_id),
+    client_name TEXT NOT NULL REFERENCES public.clients(client_name),
     date DATE NOT NULL,
     rate NUMERIC(20, 2) NOT NULL,
     sale_qty NUMERIC(20, 8) NOT NULL CHECK (sale_qty > 0),
@@ -110,9 +110,9 @@ CREATE TABLE sales (
 
 -- 6. PLEDGES (The Pledge Ledger)
 -- Ledger for Pledging/Unpledging Transactions
-CREATE TABLE pledges (
-    client_name TEXT REFERENCES clients(client_name) ON DELETE CASCADE,
-    ticker TEXT REFERENCES assets(ticker),
+CREATE TABLE public.pledges (
+    client_name TEXT REFERENCES public.clients(client_name) ON DELETE CASCADE,
+    ticker TEXT REFERENCES public.assets(ticker),
     pledged_qty NUMERIC NOT NULL CHECK (pledged_qty >= 0),
     created_at TIMESTAMPTZ DEFAULT now(),
     PRIMARY KEY (client_name, ticker) 
@@ -122,10 +122,10 @@ CREATE TABLE pledges (
 -- User configured alerts to be triggered dynamically based on price or volume spikes
 CREATE TYPE alert_condition AS ENUM ('greater_than', 'less_than', 'crossing_up', 'crossing_down', 'volume_spike', 'percentage_change_up', 'percentage_change_down');
 
-CREATE TABLE price_alerts (
+CREATE TABLE public.price_alerts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    ticker TEXT REFERENCES assets(ticker) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    ticker TEXT REFERENCES public.assets(ticker) ON DELETE CASCADE,
     
     condition alert_condition NOT NULL,
     target_type TEXT NOT NULL, 
@@ -146,11 +146,11 @@ CREATE TABLE price_alerts (
 -- 3. INDEXES & SEQUENCES
 -- =========================================================
 
--- Performance index for querying purchases by specific sale IDs (GIN index for Arrays)
-CREATE INDEX IF NOT EXISTS idx_purchases_sale_ids ON purchases USING GIN (sale_ids);
+-- Performance index for querying public.purchases by specific sale IDs (GIN index for Arrays)
+CREATE INDEX IF NOT EXISTS idx_purchases_sale_ids ON public.purchases USING GIN (sale_ids);
 
--- Performance index for client lookup in profiles (GIN index for Arrays)
-CREATE INDEX IF NOT EXISTS idx_profiles_client_ids ON profiles USING GIN (client_ids);
+-- Performance index for client lookup in public.profiles (GIN index for Arrays)
+CREATE INDEX IF NOT EXISTS idx_profiles_client_ids ON public.profiles USING GIN (client_ids);
 
 -- Sequence for generating custom readable IDs if needed
 CREATE SEQUENCE IF NOT EXISTS sale_group_seq START 1;
@@ -209,12 +209,12 @@ SELECT
         WHEN p.rate > 0 THEN ((a.current_price - p.rate) / p.rate) * 100 
         ELSE 0 
     END AS pl_percent
-FROM purchases p
-JOIN assets a ON p.ticker = a.ticker
-JOIN clients c ON p.client_name = c.client_name;
+FROM public.purchases p
+JOIN public.assets a ON p.ticker = a.ticker
+JOIN public.clients c ON p.client_name = c.client_name;
 
 -- View: SALES VIEW
--- Denormalized view of sales with linked purchase info
+-- Denormalized view of public.sales with linked purchase info
 CREATE OR REPLACE VIEW sales_view AS
 SELECT 
     s.trx_id,
@@ -242,10 +242,10 @@ SELECT
     s.comments,
     s.user_id,
     s.custom_id
-FROM sales s
-JOIN purchases p ON s.purchase_trx_id = p.trx_id
-JOIN clients c ON p.client_name = c.client_name
-JOIN assets a ON p.ticker = a.ticker;
+FROM public.sales s
+JOIN public.purchases p ON s.purchase_trx_id = p.trx_id
+JOIN public.clients c ON p.client_name = c.client_name
+JOIN public.assets a ON p.ticker = a.ticker;
 
 
 -- =========================================================
@@ -254,14 +254,14 @@ JOIN assets a ON p.ticker = a.ticker;
 
 -- Function: Append Sale ID to Purchase
 -- Updates the purchase record when a portion is sold
-CREATE OR REPLACE FUNCTION append_sale_id_to_purchase(
+CREATE OR REPLACE FUNCTION public.append_sale_id_to_purchase(
     p_purchase_id UUID, 
     p_sale_id UUID, 
     p_new_balance NUMERIC
 )
-RETURNS void AS $$
+RETURNS void SET search_path = '' AS $$
 BEGIN
-    UPDATE purchases
+    UPDATE public.purchases
     SET 
         balance_qty = p_new_balance,
         sale_ids = array_append(COALESCE(sale_ids, '{}'), p_sale_id)
@@ -271,24 +271,24 @@ $$ LANGUAGE plpgsql;
 
 -- Function: Get Next Sale ID
 -- Returns next value from sequence
-CREATE OR REPLACE FUNCTION get_next_sale_id()
-RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION public.get_next_sale_id()
+RETURNS BIGINT SET search_path = '' AS $$
 BEGIN
   RETURN nextval('sale_group_seq');
 END;
 $$ LANGUAGE plpgsql;
 
 -- Function: Bulk Asset Update
--- Purpose: Atomic upsert for assets. If ISIN exists but ticker changed, 
---          it cascades the update to purchases and pledges.
-CREATE OR REPLACE FUNCTION bulk_asset_update(payload JSONB)
-RETURNS VOID AS $$
+-- Purpose: Atomic upsert for public.assets. If ISIN exists but ticker changed,
+--          it cascades the update to public.purchases and public.pledges.
+CREATE OR REPLACE FUNCTION public.bulk_asset_update(payload JSONB)
+RETURNS VOID SET search_path = '' AS $$
 DECLARE
     a_record JSONB;
 BEGIN
     FOR a_record IN SELECT * FROM jsonb_array_elements(payload -> 'assets_to_upsert')
     LOOP
-        INSERT INTO assets (
+        INSERT INTO public.assets (
             ticker, stock_name, isin, current_price, beta, trailing_pe, 
             eps, today_open, today_high, today_low, market_cap, last_updated
         )
@@ -310,7 +310,7 @@ BEGIN
         DO UPDATE SET 
             isin = EXCLUDED.isin,
             stock_name = EXCLUDED.stock_name,
-            current_price = CASE WHEN EXCLUDED.current_price > 0 THEN EXCLUDED.current_price ELSE assets.current_price END,
+            current_price = CASE WHEN EXCLUDED.current_price > 0 THEN EXCLUDED.current_price ELSE public.assets.current_price END,
             beta = EXCLUDED.beta,
             trailing_pe = EXCLUDED.trailing_pe,
             eps = EXCLUDED.eps,
@@ -325,13 +325,13 @@ $$ LANGUAGE plpgsql;
 
 -- Function: Atomic Ledger Update
 -- Purpose: Handles complex transaction edits in a single transaction.
---          1. Deletes old sales (splits) if re-processing is needed.
+--          1. Deletes old public.sales (splits) if re-processing is needed.
 --          2. Updates purchase records (balance, linkage, and core details).
 --          3. Inserts new recalculated sale records.
 -- Input:   JSONB object with optional keys: 'sales_to_delete', 'purchases_to_update', 'sales_to_insert'.
 
-CREATE OR REPLACE FUNCTION atomic_ledger_update(payload JSONB)
-RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION public.atomic_ledger_update(payload JSONB)
+RETURNS VOID SET search_path = '' AS $$
 DECLARE
     p_record JSONB;
     s_record JSONB;
@@ -341,7 +341,7 @@ BEGIN
     -- 0. INSERT New Purchases
     -- This handles bulk importing purchase transactions.
     IF payload ? 'purchases_to_insert' THEN
-            INSERT INTO purchases (
+            INSERT INTO public.purchases (
             user_id,
             client_name,
             ticker,
@@ -368,7 +368,7 @@ BEGIN
     IF payload ? 'sales_to_delete' THEN
         FOR id_to_delete IN SELECT jsonb_array_elements_text(payload -> 'sales_to_delete')
         LOOP
-            DELETE FROM sales WHERE trx_id = id_to_delete::UUID;
+            DELETE FROM public.sales WHERE trx_id = id_to_delete::UUID;
         END LOOP;
     END IF;
 
@@ -377,7 +377,7 @@ BEGIN
     IF payload ? 'purchases_to_update' THEN
         FOR p_record IN SELECT * FROM jsonb_array_elements(payload -> 'purchases_to_update')
         LOOP
-            UPDATE purchases 
+            UPDATE public.purchases
             SET 
                 -- Inventory Management
                 balance_qty = (p_record ->> 'balance_qty')::NUMERIC,
@@ -395,7 +395,7 @@ BEGIN
     -- 3. INSERT New Sales
     -- Inserts re-calculated sale splits.
     IF payload ? 'sales_to_insert' THEN
-        INSERT INTO sales (
+        INSERT INTO public.sales (
             trx_id, 
             custom_id, 
             purchase_trx_id, 
@@ -430,11 +430,11 @@ BEGIN
     END IF;
 
     -- 4. UPDATE Existing Sales
-    -- This handles re-calculating profit or updating details for specific sales
+    -- This handles re-calculating profit or updating details for specific public.sales
     IF payload ? 'sales_to_update' THEN
         FOR s_record IN SELECT * FROM jsonb_array_elements(payload -> 'sales_to_update')
         LOOP
-            UPDATE sales 
+            UPDATE public.sales
             SET 
                 profit_stored          = (s_record ->> 'profit_stored')::NUMERIC,
                 adjusted_profit_stored = (s_record ->> 'adjusted_profit_stored')::NUMERIC,
@@ -453,10 +453,10 @@ $$ LANGUAGE plpgsql;
 -- Purpose: Automatically replaces BSE tickers (numeric) with NSE equivalents (alphanumeric) 
 --          based on ISIN matching for all currently held positions.
 -- Logic:   1. Identifies unique BSE tickers in current holdings.
---          2. Finds NSE ticker with same ISIN in assets table.
---          3. Updates purchases and merges pledges.
-CREATE OR REPLACE FUNCTION migrate_bse_to_nse()
-RETURNS void AS $$
+--          2. Finds NSE ticker with same ISIN in public.assets table.
+--          3. Updates public.purchases and merges public.pledges.
+CREATE OR REPLACE FUNCTION public.migrate_bse_to_nse()
+RETURNS void SET search_path = '' AS $$
 DECLARE
     r RECORD;
     v_nse_ticker TEXT;
@@ -467,24 +467,24 @@ BEGIN
         WHERE ticker ~ '^[0-9]+$'
     ) LOOP
         SELECT ticker INTO v_nse_ticker
-        FROM assets
+        FROM public.assets
         WHERE isin = r.isin
           AND ticker ~ '[A-Za-z]'
         LIMIT 1;
 
         IF v_nse_ticker IS NOT NULL THEN
-            UPDATE purchases 
+            UPDATE public.purchases
             SET ticker = v_nse_ticker 
             WHERE ticker = r.ticker;
 
-            INSERT INTO pledges (client_name, ticker, pledged_qty, created_at)
+            INSERT INTO public.pledges (client_name, ticker, pledged_qty, created_at)
             SELECT client_name, v_nse_ticker, pledged_qty, now()
-            FROM pledges
+            FROM public.pledges
             WHERE ticker = r.ticker
             ON CONFLICT (client_name, ticker)
-            DO UPDATE SET pledged_qty = pledges.pledged_qty + EXCLUDED.pledged_qty;
+            DO UPDATE SET pledged_qty = public.pledges.pledged_qty + EXCLUDED.pledged_qty;
 
-            DELETE FROM pledges WHERE ticker = r.ticker;
+            DELETE FROM public.pledges WHERE ticker = r.ticker;
         END IF;
     END LOOP;
 END;
@@ -492,20 +492,20 @@ $$ LANGUAGE plpgsql;
 
 
 -- Function: Reset Client Ledger
--- Purpose: Resets the entire trading ledger for a specific client by clearing all sales and resetting purchase balances.
--- Logic:   1. Updates the purchases table to set balance_qty back to original purchase_qty and clears sale_ids.
---          2. Deletes all records from the sales table for that client.
-CREATE OR REPLACE FUNCTION reset_client_ledger(p_client_name TEXT) 
-RETURNS VOID AS $$
+-- Purpose: Resets the entire trading ledger for a specific client by clearing all public.sales and resetting purchase balances.
+-- Logic:   1. Updates the public.purchases table to set balance_qty back to original purchase_qty and clears sale_ids.
+--          2. Deletes all records from the public.sales table for that client.
+CREATE OR REPLACE FUNCTION public.reset_client_ledger(p_client_name TEXT)
+RETURNS VOID SET search_path = '' AS $$
 BEGIN
-    -- 1. Reset balances and clear sale links in the purchases table for the client
-    UPDATE purchases 
+    -- 1. Reset balances and clear sale links in the public.purchases table for the client
+    UPDATE public.purchases
     SET 
         balance_qty = purchase_qty,
         sale_ids = '{}'
     WHERE client_name = p_client_name;
-    -- 2. Delete the actual sales records for the client
-    DELETE FROM sales 
+    -- 2. Delete the actual public.sales records for the client
+    DELETE FROM public.sales
     WHERE client_name = p_client_name;
     RAISE NOTICE 'Ledger reset successfully for client: %', p_client_name;
 END;
@@ -515,15 +515,15 @@ $$ LANGUAGE plpgsql;
 -- Function: Update Assets from Google Sheet
 -- Purpose: Bulk updates market data from a JSON payload while ignoring identity fields (#N/A or blanks).
 -- Input:   JSONB array of asset objects.
-CREATE OR REPLACE FUNCTION update_assets_from_sheet(payload JSONB)
-RETURNS VOID AS $$
+CREATE OR REPLACE FUNCTION public.update_assets_from_sheet(payload JSONB)
+RETURNS VOID SET search_path = '' AS $$
 DECLARE
     a_record JSONB;
 BEGIN
     FOR a_record IN SELECT * FROM jsonb_array_elements(payload)
     LOOP
         -- Update only if ticker exists
-        UPDATE assets
+        UPDATE public.assets
         SET 
             current_price = CASE 
                 WHEN (a_record ->> 'current_price') IS NULL 
@@ -623,7 +623,7 @@ $$ LANGUAGE plpgsql;
 -- Function & Trigger: Check Price Alerts
 -- Evaluates all active alerts for a given ticker when market data updates
 CREATE OR REPLACE FUNCTION public.check_price_alerts()
-RETURNS trigger AS $$
+RETURNS trigger SET search_path = ''
 DECLARE
     alert_record RECORD;
     is_met BOOLEAN;
@@ -715,7 +715,7 @@ CREATE TRIGGER on_asset_updated_check_alerts
 -- Function & Trigger: Handle New User (Auth Hook)
 -- Automatically creates Profile and Default Client entries on Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
+RETURNS trigger SET search_path = ''
 DECLARE
   generated_client_id UUID := gen_random_uuid();
 BEGIN
@@ -761,7 +761,7 @@ CREATE TRIGGER on_auth_user_created
 SELECT cron.schedule(
   'sync-sheet-market-hours', 
   '*/5 3-10 * * 1-5',                  
-  $$ SELECT net.http_post(url:='https://[PROJECT].functions.supabase.co/sync-assets-sheet', headers:='{"Authorization": "Bearer [ANON_KEY]"}'::jsonb); $$
+  $$ SELECT net.http_post(url:='https://[PROJECT].functions.supabase.co/sync-public.assets-sheet', headers:='{"Authorization": "Bearer [ANON_KEY]"}'::jsonb); $$
 );
 
 -- Schedule: Migrate BSE to NSE Tickers
@@ -788,24 +788,28 @@ WITH deduplicated_csv AS (
   FROM temp_updates
   ORDER BY ticker, current_price DESC -- If duplicates exist, it picks the highest price
 )
-UPDATE assets
+UPDATE public.assets
 SET 
   current_price = deduplicated_csv.current_price,
   last_updated = NOW()
 FROM deduplicated_csv
-WHERE assets.ticker = deduplicated_csv.ticker;
+WHERE public.assets.ticker = deduplicated_csv.ticker;
+-- =========================================================
+
 -- =========================================================
 -- 8. SECURITY HARDENING & POLICIES
 -- =========================================================
 
 -- Revoke direct execution of sensitive functions from public roles
+-- These are intended to be triggered by the system or internal logic only.
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM public, anon, authenticated;
 REVOKE ALL ON FUNCTION public.check_price_alerts() FROM public, anon, authenticated;
+REVOKE ALL ON FUNCTION public.reset_all_clients() FROM public, anon, authenticated;
 
 -- Re-apply optimized and hardened RLS policies
--- wrapping auth.uid() in (SELECT auth.uid()) prevents re-evaluation per row
+-- Note: Wrapping auth.uid() in (SELECT auth.uid()) improves performance and stability.
 
--- Profiles
+-- Profiles: Users manage their own data
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile" ON public.profiles
@@ -816,19 +820,19 @@ CREATE POLICY "Users can update own profile" ON public.profiles
     FOR UPDATE USING (id = (SELECT auth.uid()))
     WITH CHECK (id = (SELECT auth.uid()));
 
--- Clients
+-- Clients: Access based on ownership or family authorization
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Access via profile array" ON public.clients;
 CREATE POLICY "Access via profile array" ON public.clients
     FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles p
-            WHERE p.id = (SELECT auth.uid())
-            AND public.clients.client_id = ANY (p.client_ids)
+        user_id = (SELECT auth.uid()) OR
+        client_id IN (
+            SELECT unnest(client_ids) FROM public.profiles
+            WHERE id = (SELECT auth.uid())
         )
     );
 
--- Purchases
+-- Purchases: Access based on family authorization
 ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view authorized family purchases" ON public.purchases;
 CREATE POLICY "Users can view authorized family purchases" ON public.purchases
@@ -839,7 +843,7 @@ CREATE POLICY "Users can view authorized family purchases" ON public.purchases
         )
     );
 
--- Sales
+-- Sales: Access based on family authorization
 ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage authorized family sales" ON public.sales;
 CREATE POLICY "Users can manage authorized family sales" ON public.sales
