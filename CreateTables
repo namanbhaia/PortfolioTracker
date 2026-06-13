@@ -165,7 +165,7 @@ ALTER SEQUENCE sale_group_seq RESTART WITH 2;
 
 -- View: CLIENT HOLDINGS
 -- Calculates live balance, market value, and unrealized P&L
-CREATE OR REPLACE VIEW client_holdings AS
+CREATE OR REPLACE VIEW public.client_holdings AS
 SELECT 
     -- IDs and Identifiers
     p.trx_id,
@@ -215,7 +215,7 @@ JOIN public.clients c ON p.client_name = c.client_name;
 
 -- View: SALES VIEW
 -- Denormalized view of public.sales with linked purchase info
-CREATE OR REPLACE VIEW sales_view AS
+CREATE OR REPLACE VIEW public.sales_view AS
 SELECT 
     s.trx_id,
     c.client_id,
