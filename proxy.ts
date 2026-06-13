@@ -11,7 +11,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * This pattern is crucial for protecting routes in Next.js applications using Supabase.
  */
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
 	// Initialize a response object that will be passed through the middleware chain.
 	let response = NextResponse.next({
 		request: {
