@@ -43,6 +43,7 @@
     "@tailwindcss/vite": "^4.0.0-alpha.33",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "csv-parse": "^6.1.0",
     "exceljs": "^3.4.0",
@@ -60,7 +61,6 @@
     "react-markdown": "^10.1.0",
     "react-medium-image-zoom": "^5.4.0",
     "recharts": "^2.15.1",
-    "shadcdn": "^0.0.8",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "yahoo-finance2": "^3.13.2"
