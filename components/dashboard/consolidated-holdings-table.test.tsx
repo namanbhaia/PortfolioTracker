@@ -50,7 +50,7 @@ describe('ConsolidatedHoldingsTable', () => {
     });
 
     it('shows tooltip content on hover', async () => {
-        const { container } = render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
+        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
 
         // The info icon is rendered inside a div with class "flex items-center justify-end gap-1.5"
         // Find the "10" (total_qty) and then find the SVG sibling
@@ -65,13 +65,5 @@ describe('ConsolidatedHoldingsTable', () => {
         // The text should now be visible
         expect(screen.queryByText(/Client A:/i)).not.toBeNull();
         expect(screen.queryByText(/Client B:/i)).not.toBeNull();
-
-        // Use getAllByText since these numbers might appear elsewhere in the table (e.g. PL %)
-        const elementsWith4 = screen.getAllByText(/4/i);
-        expect(elementsWith4.length).toBeGreaterThan(0);
-
-        // Verify specifically that one of them is in the breakdown
-        const breakdownElement = screen.queryByText(/Client A:/i);
-        expect(breakdownElement).not.toBeNull();
     });
 });

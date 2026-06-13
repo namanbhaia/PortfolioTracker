@@ -7,6 +7,7 @@ import { getTodayDate } from '../helper/utility';
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from '@/components/shared/submit-button';
 import { upsertInAsset } from '@/lib/actions/assets/update-assets-table';
+import { getStockSuggestion as getStockInformation } from '@/lib/actions/yahoo/find-ticker';
 import { revalidateDashboard } from '@/lib/actions/admin/cache-revalidate';
 import { AlertCircle } from 'lucide-react';
 
@@ -16,7 +17,7 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
     const [loading, setLoading] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
 
-    // This holds the data for the new asset before it's saved to the DB
+    // This holds the data fetched from Yahoo Finance before it's saved to the DB
     const [pendingAsset, setPendingAsset] = useState<{
         ticker: string;
         name: string;
@@ -86,12 +87,22 @@ export function PurchaseForm({ clients, setSuccess }: { clients: any[], setSucce
             .maybeSingle();
 
         if (!existingAsset) {
-            // Open the modal to capture missing asset details
+            // const res = await getStockInformation(data.ticker);
+
+            // if (res.success && res.suggestion) {
+            //     setPendingAsset({
+            //         ticker: res.suggestion.ticker,
+            //         name: String(res.suggestion.name || ""),
+            //         price: Number(res.suggestion.price || 0)
+            //     });
+            // } else {
+            // Fallback: If YF fails, we still open the modal but with empty fields
             setPendingAsset({
                 ticker: data.ticker.toUpperCase(),
                 name: "", // User will fill this in
                 price: 0  // User will fill this in
             });
+            // }
             setShowAssetModal(true);
             setLoading(false);
             return;

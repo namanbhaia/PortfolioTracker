@@ -204,7 +204,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2"><span className="text-green-400">✓</span> Long Term</div>
                                                             <div className="flex items-center gap-2"><span className="text-red-400">✕</span> Short Term</div>
-                                                            <div className="flex items-center gap-2"><span className="text-amber-400">⚡</span> Square-Off</div>
+                                                            <div className="flex items-center gap-2"><span className="text-amber-400">⚡</span> Intraday Square-Off Netting</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -242,7 +242,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                         {row.long_term ? (
                                                             <span className="text-green-600 font-bold" title="Long Term">✓</span>
                                                         ) : row.is_square_off ? (
-                                                            <span className="text-amber-500 font-bold" title="Intraday Square-Off Netting">⚡</span>
+                                                            <span className="text-amber-500 font-bold" title="Square-off">⚡</span>
                                                         ) : (
                                                             <span className="text-red-500 font-bold" title="Short Term">✕</span>
                                                         )}
