@@ -204,7 +204,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2"><span className="text-green-400">✓</span> Long Term</div>
                                                             <div className="flex items-center gap-2"><span className="text-red-400">✕</span> Short Term</div>
-                                                            <div className="flex items-center gap-2"><span className="text-amber-400">⚡</span> Intraday Square-Off Netting</div>
+                                                            <div className="flex items-center gap-2"><span className="text-amber-400">⚡</span> Square-Off</div>
                                                         </div>
                                                     </div>
                                                 </div>
