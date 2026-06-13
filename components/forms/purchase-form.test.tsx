@@ -17,9 +17,7 @@ vi.mock('@/lib/supabase/client', () => ({
     }),
 }));
 
-vi.mock('@/lib/actions/yahoo/find-ticker', () => ({
-    getStockSuggestion: vi.fn(),
-}));
+
 
 vi.mock('@/lib/actions/admin/cache-revalidate', () => ({
     revalidateDashboard: vi.fn(),

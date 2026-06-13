@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { UploadCloud, FileCheck, Download } from 'lucide-react';
-import { getTickerDetailsFromYahoo } from '@/lib/actions/yahoo/find-ticker';
 import {
     CsvRow,
     VerificationResult,
@@ -19,65 +18,15 @@ export default function VerificationPage() {
     const supabase = createClient();
     const [viewState, setViewState] = useState({
         loading: false,
-        isSyncingAssets: false,
         verificationResults: {} as Record<string, VerificationResult>
     });
     const [selectedClientKey, setSelectedClientKey] = useState<string>("");
     const [fileKey, setFileKey] = useState(Date.now());
 
     const handleReset = () => {
-        setViewState({ loading: false, isSyncingAssets: false, verificationResults: {} });
         setSelectedClientKey("");
         setFileKey(Date.now());
     };
-
-    const handleMissingAssetsBatch = async (discrepancies: DiscrepancyRow[]) => {
-        const uniqueMissing = discrepancies.filter((v, i, a) =>
-            v.web_balance === 0 && a.findIndex(t => t.isin === v.isin) === i
-        );
-
-        if (uniqueMissing.length === 0) return [];
-
-        const assetsToSync: any[] = [];
-        const chunkSize = 15;
-
-        for (let i = 0; i < uniqueMissing.length; i += chunkSize) {
-            const chunk = uniqueMissing.slice(i, i + chunkSize);
-            const chunkIsins = chunk.map(item => item.isin);
-
-            try {
-                // SINGLE server call for the entire chunk
-                const bulkResults = await getTickerDetailsFromYahoo(chunkIsins);
-
-                if (bulkResults) {
-                    bulkResults.forEach(res => {
-                        const originalItem = chunk.find(c => c.isin === res.isin);
-                        assetsToSync.push({
-                            ticker: res.symbol.split('.')[0].toUpperCase(),
-                            stock_name: originalItem?.stock_name || res.symbol,
-                            isin: res.isin,
-                            current_price: res.price,
-                            last_updated: new Date().toISOString()
-                        });
-                    });
-                }
-            } catch (err) {
-                console.error("Bulk sync chunk failed:", err);
-            }
-
-            // Keep the small pause to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 200));
-        }
-
-        return assetsToSync;
-    };
-
-    const performBulkSync = async (data: any[]) => {
-        if (!data || data.length === 0) return;
-        const { error } = await supabase.from('assets').upsert(data, { onConflict: 'ticker' });
-        if (error) console.error("Database Sync Error:", error.message);
-    };
-
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -194,56 +143,8 @@ export default function VerificationPage() {
                 ...prev,
                 loading: false,
                 verificationResults: results,
-                isSyncingAssets: false // missingAssets.length > 0
             }));
 
-            /* Commenting out Yahoo Finance Sync for now 
-            if (missingAssets.length > 0) {
-                try {
-                    // 1. Get the list of ISINs you are curious about
-                    const missingIsins = missingAssets.map(d => d.isin);
-
-                    // 2. Ask Supabase: "Which of these do you already have?"
-                    const { data: foundAssets } = await supabase
-                        .from('assets')
-                        .select('isin')
-                        .in('isin', missingIsins); // Only fetches rows that match your missing list
-
-                    const foundIsinSet = new Set(foundAssets?.map(a => a.isin) || []);
-
-                    // 3. These are the ones truly missing from the 'assets' table
-                    const trulyNewAssets = missingAssets.filter(d => !foundIsinSet.has(d.isin));
-                    if (trulyNewAssets.length > 0) {
-                        setViewState(prev => ({ ...prev, isSyncingAssets: true }));
-
-                        // Call your optimized batch function for only the new ones
-                        const assetsToSync = await handleMissingAssetsBatch(trulyNewAssets);
-
-                        if (assetsToSync.length > 0) {
-                            await performBulkSync(assetsToSync);
-                            setViewState(prev => {
-                                const updated = { ...prev.verificationResults };
-                                assetsToSync.forEach(s => {
-                                    Object.values(updated).forEach(res => {
-                                        (res as VerificationResult).discrepancies.forEach(d => {
-                                            if (d.isin === s.isin) d.ticker = s.ticker;
-                                        });
-                                    });
-                                });
-                                return { ...prev, verificationResults: updated, isSyncingAssets: false };
-                            });
-                        } else {
-                            setViewState(prev => ({ ...prev, isSyncingAssets: false }));
-                        }
-                    }
-
-                    setViewState(prev => ({ ...prev, isSyncingAssets: false }));
-                } catch (e) {
-                    console.error("Asset check failed:", e);
-                    setViewState(prev => ({ ...prev, isSyncingAssets: false }));
-                }
-            }
-            */
 
             // Trigger revalidation if any client was processed
             if (Object.keys(results).length > 0) {
@@ -376,18 +277,6 @@ export default function VerificationPage() {
                             <VerificationDisplay selectedResult={selectedResult} />
                         </div>
                     )}
-                </div>
-            )}
-            {viewState.isSyncingAssets && (
-                <div className="fixed bottom-6 right-6 flex items-center gap-3 bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/50 shadow-xl p-4 rounded-2xl animate-in slide-in-from-right-8 transition-colors">
-                    <div className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-600 dark:bg-indigo-500"></span>
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white">Syncing Market Data</span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Fetching tickers & live prices...</span>
-                    </div>
                 </div>
             )}
         </div>
