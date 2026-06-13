@@ -809,12 +809,12 @@ ALTER TABLE public.price_alerts ENABLE ROW LEVEL SECURITY;
 -- 1. PROFILES POLICIES
 CREATE POLICY "Users can view own profile"
 ON public.profiles FOR SELECT
-USING (auth.uid() = id);
+USING (id = auth.uid());
 
 CREATE POLICY "Users can update own profile"
 ON public.profiles FOR UPDATE
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
+USING (id = auth.uid())
+WITH CHECK (id = auth.uid());
 
 CREATE POLICY "Allow public username lookup"
 ON public.profiles FOR SELECT
@@ -827,7 +827,7 @@ USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE prof
 
 CREATE POLICY "Access via profile array"
 ON public.clients FOR ALL
-USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND clients.client_id = ANY (p.client_ids)));
+USING ((user_id = auth.uid()) OR (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid())));
 
 -- 3. ASSETS POLICIES
 CREATE POLICY "Allow anyone to read assets"
@@ -843,7 +843,7 @@ WITH CHECK ((SELECT profiles.admin_level FROM profiles WHERE profiles.id = auth.
 -- 4. PURCHASES POLICIES
 CREATE POLICY "Users can view authorized family purchases"
 ON public.purchases FOR SELECT
-USING (client_name IN (SELECT c.client_name FROM clients c JOIN profiles p ON c.client_id = ANY (p.client_ids) WHERE p.id = auth.uid()));
+USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));
 
 CREATE POLICY "Users can insert purchases for authorized family"
 ON public.purchases FOR INSERT
@@ -851,8 +851,8 @@ WITH CHECK (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE
 
 CREATE POLICY "Users can update authorized purchases"
 ON public.purchases FOR UPDATE
-USING ((auth.uid() = user_id) AND (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid())))
-WITH CHECK (auth.uid() = user_id);
+USING ((user_id = auth.uid()) AND (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid())))
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can manage authorized family purchases"
 ON public.purchases FOR ALL

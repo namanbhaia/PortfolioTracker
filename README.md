@@ -57,7 +57,7 @@ The project is structured by domain and purpose to ensure scalability and mainta
 - **`components/forms/`**: Complex forms and data-entry sheets (e.g., transaction editing).
 - **`components/dashboard/`**: High-level dashboard layouts, metrics, and visualization wrappers.
 - **`components/shared/`**: Widgets and utilities shared across multiple domains (e.g., theme toggles, sync buttons).
-- **`lib/actions/`**: Server actions categorized by feature domain (`admin`, `assets`, `export`, `profile`, `transactions`).
+- **`lib/actions/`**: Next.js Server Actions categorized by feature domain (`admin`, `assets`, `export`, `profile`, `transactions`).
 
 ---
 

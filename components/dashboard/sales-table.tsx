@@ -187,7 +187,7 @@ export default function SalesTable({ sales, sortConfig, onSort, isVisible }: Sal
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2 font-normal"><span className="text-green-400">✓</span> Long Term (&gt;365 days)</div>
                                                         <div className="flex items-center gap-2 font-normal"><span className="text-red-400">✕</span> Short Term (&lt;365 days)</div>
-                                                        <div className="flex items-center gap-2 font-normal"><span className="text-amber-400">⚡</span> Intraday Square-Off Netting (Same Day)</div>
+                                                        <div className="flex items-center gap-2 font-normal"><span className="text-amber-400">⚡</span> Square Off (Same Day)</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -254,7 +254,7 @@ export default function SalesTable({ sales, sortConfig, onSort, isVisible }: Sal
                                                 {row.long_term ? (
                                                     <span className="text-green-600 dark:text-green-400 font-bold" title="Long Term">✓</span>
                                                 ) : row.is_square_off ? (
-                                                    <span className="text-amber-500 dark:text-amber-400 font-bold" title="Intraday Square-Off Netting">⚡</span>
+                                                    <span className="text-amber-500 dark:text-amber-400 font-bold" title="Square Off">⚡</span>
                                                 ) : (
                                                     <span className="text-red-500 dark:text-red-400 font-bold" title="Short Term">✕</span>
                                                 )}
