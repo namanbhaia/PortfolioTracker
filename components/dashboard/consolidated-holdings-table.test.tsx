@@ -50,9 +50,14 @@ describe('ConsolidatedHoldingsTable', () => {
     });
 
     it('shows tooltip content on hover', async () => {
-        render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
+        const { container } = render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
 
-        // The info icon is rendered inside the qty cell
+        // Find the Info icon and trigger mouse enter to show the tooltip
+        const infoIcon = container.querySelector('svg.lucide-info');
+        if (infoIcon) {
+            fireEvent.mouseEnter(infoIcon);
+        }
+
         // We look for the text "Client A" which should be in the tooltip
         // Note: queryByText returns null if not found. toBeDefined() on null is true in some environments but usually we want to be explicit.
         expect(screen.queryByText(/Client A:/i)).not.toBeNull();
