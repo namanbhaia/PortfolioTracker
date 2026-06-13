@@ -125,8 +125,8 @@ describe('tax_loss_harvesting_suggestions', () => {
         expect(result.totalGainVal).toBe(12000);
     });
 
-    it('should respect FIFO order and evaluate the oldest lot first', async () => {
-        // Under FIFO, we sort by date. 
+    it('should respect Temporal First-In-First-Out (FIFO) cost basis allocation order and evaluate the oldest lot first', async () => {
+        // Under Temporal First-In-First-Out (FIFO) cost basis allocation, we sort by date.
         // If we have two lots for INFY:
         // Lot A (oldest, date '2023-01-01'): pl = -1000 (loss)
         // Lot B (newer, date '2023-06-01'): pl = +2000 (gain)

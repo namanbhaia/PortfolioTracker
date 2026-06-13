@@ -54,7 +54,7 @@ CREATE TABLE assets (
     stock_name TEXT NOT NULL,
     isin TEXT, -- Removed UNIQUE as requested
     current_price NUMERIC DEFAULT 0,
-    cutoff DOUBLE PRECISION, -- Grandfathering rate/price
+    cutoff DOUBLE PRECISION, -- Section 112A Baseline FMV Grandfathered Rate
     beta NUMERIC,
     trailing_pe NUMERIC,
     eps NUMERIC,
@@ -793,3 +793,95 @@ SET
   last_updated = NOW()
 FROM deduplicated_csv
 WHERE assets.ticker = deduplicated_csv.ticker;
+-- =========================================================
+-- 8. ROW LEVEL SECURITY (RLS) POLICIES
+-- =========================================================
+
+-- Enable Row Level Security (RLS) on all tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pledges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.price_alerts ENABLE ROW LEVEL SECURITY;
+
+-- 1. PROFILES POLICIES
+CREATE POLICY "Users can view own profile"
+ON public.profiles FOR SELECT
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+ON public.profiles FOR UPDATE
+USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Allow public username lookup"
+ON public.profiles FOR SELECT
+USING (true);
+
+-- 2. CLIENTS POLICIES
+CREATE POLICY "Users can view authorized family clients"
+ON public.clients FOR SELECT
+USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));
+
+CREATE POLICY "Access via profile array"
+ON public.clients FOR ALL
+USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND clients.client_id = ANY (p.client_ids)));
+
+-- 3. ASSETS POLICIES
+CREATE POLICY "Allow anyone to read assets"
+ON public.assets FOR SELECT
+USING (true);
+
+CREATE POLICY "Admins can manage asset catalog"
+ON public.assets FOR ALL
+TO authenticated
+USING ((SELECT profiles.admin_level FROM profiles WHERE profiles.id = auth.uid()) >= 1)
+WITH CHECK ((SELECT profiles.admin_level FROM profiles WHERE profiles.id = auth.uid()) >= 1);
+
+-- 4. PURCHASES POLICIES
+CREATE POLICY "Users can view authorized family purchases"
+ON public.purchases FOR SELECT
+USING (client_name IN (SELECT c.client_name FROM clients c JOIN profiles p ON c.client_id = ANY (p.client_ids) WHERE p.id = auth.uid()));
+
+CREATE POLICY "Users can insert purchases for authorized family"
+ON public.purchases FOR INSERT
+WITH CHECK (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));
+
+CREATE POLICY "Users can update authorized purchases"
+ON public.purchases FOR UPDATE
+USING ((auth.uid() = user_id) AND (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid())))
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage authorized family purchases"
+ON public.purchases FOR ALL
+USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));
+
+-- 5. SALES POLICIES (Temporal First-In-First-Out (FIFO) cost basis allocation)
+CREATE POLICY "Users can manage authorized family sales"
+ON public.sales FOR ALL
+USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));
+
+-- 6. PLEDGES POLICIES
+CREATE POLICY "Users can manage authorized family pledges"
+ON public.pledges FOR ALL
+USING (client_name IN (SELECT clients.client_name FROM clients WHERE clients.client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid())));
+
+-- 7. PRICE ALERTS POLICIES
+CREATE POLICY "Users can view their own alerts"
+ON public.price_alerts FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own alerts"
+ON public.price_alerts FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own alerts"
+ON public.price_alerts FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own alerts"
+ON public.price_alerts FOR DELETE
+USING (auth.uid() = user_id);

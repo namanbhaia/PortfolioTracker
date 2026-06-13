@@ -137,8 +137,8 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
                 .eq('client_name', clientName)
                 .eq('ticker', tickerName)
                 .gt('balance_qty', 0)
-                .order('date', { ascending: true })       // FIFO Primary
-                .order('created_at', { ascending: true }); // FIFO Tie-breaker
+                .order('date', { ascending: true })       // Temporal First-In-First-Out (FIFO) cost basis allocation Primary
+                .order('created_at', { ascending: true }); // Temporal First-In-First-Out (FIFO) cost basis allocation Tie-breaker
 
             if (fetchError) throw fetchError;
 
@@ -171,7 +171,7 @@ export function SaleForm({ clients, setSuccess }: { clients: any[], setSuccess: 
             const { data: nextId } = await supabase.rpc('get_next_sale_id');
             const sharedCustomId = `SALE-${nextId.toString().padStart(4, '0')}`;
 
-            // 7. FIFO Processing Loop
+            // 7. Temporal First-In-First-Out (FIFO) cost basis allocation Processing Loop
             for (const lot of lots) {
                 if (remainingQty <= 0) break;
 

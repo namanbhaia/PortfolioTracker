@@ -61,7 +61,7 @@ describe('Utility Functions', () => {
             expect(result.adjusted_profit).toBe(500);
         });
 
-        it('should apply grandfathering logic correctly (purchase before 2018-02-01)', () => {
+        it('should apply Section 112A Baseline FMV Grandfathering logic correctly (purchase before 2018-02-01)', () => {
             // Case: bought at 100, cutoff is 150, sold at 200
             // Adjusted profit should be (200 - 150) * 10 = 500 since sale > cutoff
             const result = calculateProfitMetrics(100, '2017-01-01', 200, 150, 10);
@@ -69,7 +69,7 @@ describe('Utility Functions', () => {
             expect(result.adjusted_profit).toBe(500);
         });
 
-        it('should apply grandfathering logic correctly (sale between purchase and cutoff)', () => {
+        it('should apply Section 112A Baseline FMV Grandfathering logic correctly (sale between purchase and cutoff)', () => {
             // Case: bought at 100, cutoff is 150, sold at 130
             // Cost basis = Max(100, Min(130, 150)) = Max(100, 130) = 130
             // Adjusted profit should be (130 - 130) * 10 = 0
@@ -87,7 +87,16 @@ describe('Utility Functions', () => {
             expect(result.adjusted_profit).toBe(-1000);
         });
 
-        it('should not apply grandfathering if purchased after 2018-02-01', () => {
+        it('should handle loss with grandfathering correctly', () => {
+            // Case: bought at 200, cutoff is 150, sold at 100
+            // Cost basis = Max(200, Min(100, 150)) = Max(200, 100) = 200
+            // Adjusted profit = (100 - 200) * 10 = -1000
+            const result = calculateProfitMetrics(200, '2017-01-01', 100, 150, 10);
+            expect(result.profit).toBe(-1000);
+            expect(result.adjusted_profit).toBe(-1000);
+        });
+
+        it('should not apply Section 112A Baseline FMV Grandfathering if purchased after 2018-02-01', () => {
             // Even if cutoff is provided, it should ignore it
             const result = calculateProfitMetrics(100, '2019-01-01', 130, 150, 10);
             expect(result.profit).toBe(300);

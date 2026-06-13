@@ -178,7 +178,7 @@ export default function HoldingsFilter({
                                 : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
-                            Square Off
+                            Intraday Square-Off Netting
                         </button>
                     )}
                     <button

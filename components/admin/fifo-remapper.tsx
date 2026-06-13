@@ -18,8 +18,8 @@ export default function FifoRemapper() {
                         <RefreshCw size={24} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Reprocess Ledger FIFO</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Remaps historical sales to align with global Same-Day vs FIFO execution logic.</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Reprocess Ledger Temporal First-In-First-Out (FIFO) cost basis allocation</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Remaps historical sales to align with global Same-Day vs Temporal First-In-First-Out (FIFO) cost basis allocation execution logic.</p>
                     </div>
                 </div>
 

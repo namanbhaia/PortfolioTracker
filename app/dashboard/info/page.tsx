@@ -43,12 +43,12 @@ const SECTIONS = [
     },
     {
         id: 'fifo',
-        label: 'FIFO Engine',
+        label: 'Temporal First-In-First-Out (FIFO) cost basis allocation Engine',
         icon: <ArrowRightLeft size={18} />,
         color: 'bg-blue-500',
         content: {
             title: "Surgical Lot-Level Tracking",
-            subtitle: "We don't just track 'holdings'; we track every unique purchase batch to handle First-In-First-Out liquidations flawlessly.",
+            subtitle: "We don't just track 'holdings'; we track every unique purchase batch to handle Temporal First-In-First-Out (FIFO) cost basis allocation liquidations flawlessly.",
             details: [
                 "Lot Autonomy: Every buy gets a unique UUID. When you sell, the system automatically 'eats' from the oldest lot first.",
                 "Partial Splits: Selling 50 shares of a 100-share lot? The system generates a split ledger entry instantly.",
@@ -65,7 +65,7 @@ const SECTIONS = [
             title: "Beyond Simple Gains",
             subtitle: "Advanced metrics to help you understand your portfolio's regulatory and performance health.",
             details: [
-                "Adjusted Profit: Automated calculation using 'Grandfathered Rates' (Buy price vs. Cutoff price) for accurate historical reporting.",
+                "Adjusted Profit: Automated calculation using 'Section 112A Baseline FMV Grandfathered Rates' (Buy price vs. Cutoff price) for accurate historical reporting.",
                 "LT/ST Classification: Real-time classification based on holding periods (Short Term vs Long Term).",
                 "Asset Valuation: Live market valuation joined with Yahoo Finance price updates."
             ]
@@ -140,7 +140,7 @@ const SECTIONS = [
             title: "Audit & Compliance Ready",
             subtitle: "Aggregated capital gains and one-click data exports for seamless tax filing.",
             details: [
-                "Tax Overview: Compute realized capital gains over any specific period, structured by STCG, LTCG, and Square Offs.",
+                "Tax Overview: Compute realized capital gains over any specific period, structured by STCG, LTCG, and Intraday Square-Off Nettings.",
                 "Excel Exports: Download combined historical and active ledgers into formatted spreadsheets.",
                 "Transaction Audit: Comprehensive lookup tool with direct UUID search to trace the exact lineage of any buy/sell event."
             ]
@@ -345,7 +345,7 @@ export default function InfoPage() {
             {/* --- WORKFLOW TILES --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                    { label: "Ledger", icon: <Download size={20} />, text: "Automated FIFO logging", color: "text-blue-500" },
+                    { label: "Ledger", icon: <Download size={20} />, text: "Automated Temporal First-In-First-Out (FIFO) cost basis allocation logging", color: "text-blue-500" },
                     { label: "Privacy", icon: <Lock size={20} />, text: "Click-to-Wake security", color: "text-indigo-500" },
                     { label: "Tax-Ready", icon: <FileCheck size={20} />, text: "LT/ST classification", color: "text-emerald-500" },
                     { label: "Verified", icon: <RefreshCw size={20} />, text: "CDSL/NSDL reconciliation", color: "text-purple-500" },
@@ -441,7 +441,7 @@ export default function InfoPage() {
                                     <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {[
                                             { t: "Purchases", d: "Batched inventory (Lots)" },
-                                            { t: "Sales", d: "FIFO liquidation records" },
+                                            { t: "Sales", d: "Temporal First-In-First-Out (FIFO) cost basis allocation liquidation records" },
                                             { t: "Assets", d: "Market reference data" }
                                         ].map((info, i) => (
                                             <div key={i} className="bg-white/60 dark:bg-slate-800/60 p-4 rounded-2xl border border-white/60 dark:border-slate-700/60 text-center">

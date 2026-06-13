@@ -14,7 +14,7 @@ export default async function TaxReportOverviewPage({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    // 1. Fetch Profile to get authorized client IDs (Required for database-level RLS filtering)
+    // 1. Fetch Profile to get authorized client IDs (Required for database-level Row Level Security (RLS) filtering)
     const { data: profile } = await supabase
         .from('profiles')
         .select('client_ids')

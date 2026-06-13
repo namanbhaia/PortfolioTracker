@@ -49,7 +49,7 @@ describe('SalesTable', () => {
         expect(screen.getByText('RELIANCE')).toBeDefined();
         expect(screen.getByText(/Reliance Industries/i)).toBeDefined();
         expect(screen.getByText(/2600.00/)).toBeDefined();
-        expect(screen.getAllByText(/1,000.00/)).toHaveLength(4); // 2 in row (Total P/L & Grandfathered P/L), 2 in footer
+        expect(screen.getAllByText(/1,000.00/)).toHaveLength(4); // 2 in row (Total P/L & Section 112A Baseline FMV Grandfathered P/L), 2 in footer
     });
 
     it('calculates and renders footer sums correctly', async () => {
@@ -102,13 +102,13 @@ describe('SalesTable', () => {
         // Sale Qty: 15
         // Sale Value: 40000
         // Total PL: 0.00
-        // Grandfathered PL: 300.00
+        // Section 112A Baseline FMV Grandfathered PL: 300.00
 
         expect(screen.getAllByText('Total')).toBeDefined();
         expect(screen.getAllByText('15')).toHaveLength(2); // Purchase Qty (15) and Sale Qty (15)
         expect(screen.getAllByText('₹40,000')).toHaveLength(2); // Purchase Value (₹40,000) and Sale Value (₹40,000)
         expect(screen.getByText('₹0.00')).toBeDefined(); // Total P/L
-        expect(screen.getByText('₹300.00')).toBeDefined(); // Grandfathered P/L
+        expect(screen.getByText('₹300.00')).toBeDefined(); // Section 112A Baseline FMV Grandfathered P/L
     });
 
     it('calls onSort when header is clicked', async () => {

@@ -28,7 +28,7 @@ export const isLongTerm = (purchaseDate: string | Date, saleDate: string | Date 
 
 /**
  * @function isSquareOff
- * @description Checks if a trade is a "Square Off" (bought and sold on the same day).
+ * @description Checks if a trade is a "Intraday Square-Off Netting" (bought and sold on the same day).
  * @param {Date | string} purchaseDate 
  * @param {Date | string} saleDate 
  * @returns {boolean}
@@ -40,7 +40,7 @@ export const isSquareOff = (purchaseDate: string | Date, saleDate: string | Date
 };
 
 /**
- * Fetches the Grandfathered (Cutoff) Rate for a Ticker from the Assets table.
+ * Fetches the Section 112A Baseline FMV Grandfathered (Cutoff) Rate for a Ticker from the Assets table.
  * @param supabase - The Supabase client instance
  * @param ticker - The stock symbol
  * @returns The cutoff price or null if not found/set
@@ -63,12 +63,12 @@ export async function getGrandfatheredRate(
  * Calculates Standard and Adjusted Profit.
  * * Logic:
  * - Standard Profit: (Sale Rate - Purchase Rate) * Qty
- * - Adjusted Profit: Applies Grandfathering if purchase date < Feb 1, 2018.
+ * - Adjusted Profit: Applies Section 112A Baseline FMV Grandfathering if purchase date < Feb 1, 2018.
  * New Cost Basis = Max(Purchase Rate, Min(Sale Rate, Cutoff Rate))
  * * @param purchasePrice - Rate at which asset was bought
  * @param purchaseDate - Date of purchase (string or Date object)
  * @param salePrice - Rate at which asset was sold
- * @param cutoffPrice - The grandfathered rate (Jan 31, 2018 price), can be null
+ * @param cutoffPrice - The Section 112A Baseline FMV Grandfathered Rate (Jan 31, 2018 price), can be null
  * @param quantity - Number of units (default 1)
  */
 export function calculateProfitMetrics(
@@ -84,7 +84,7 @@ export function calculateProfitMetrics(
   // 1. Standard Profit
   const standardProfit = (salePrice - purchasePrice) * quantity;
 
-  // 2. Adjusted Profit (Grandfathering Logic)
+  // 2. Adjusted Profit (Section 112A Baseline FMV Grandfathering Logic)
   let adjustedProfit = standardProfit;
 
   // Only apply logic if bought before cutoff and a valid cutoff price exists

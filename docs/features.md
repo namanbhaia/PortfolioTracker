@@ -2,9 +2,9 @@
 
 Portfolio Tracker is more than just a ledger; it's a sophisticated analysis engine for your investments.
 
-## 📊 Investment Ledger (FIFO)
+## 📊 Investment Ledger (Temporal First-In-First-Out (FIFO) cost basis allocation)
 
-The system operates on a **First-In-First-Out (FIFO)** basis for all sales.
+The system operates on a **Temporal First-In-First-Out (FIFO) cost basis allocation** basis for all sales.
 - **Batched Purchases**: Every purchase is logged as a unique "lot" with its own date and cost basis.
 - **Smart Selling**: When you log a sale, the system automatically draws from the oldest available purchase lot for that specific ticker and client.
 - **Partial Liquidations**: If a sale is larger than a single lot, the system splits the sale across multiple lots automatically.
@@ -15,7 +15,7 @@ The system provides three primary metrics to analyze performance:
 
 1. **Short-Term P/L**: Calculated for assets held for less than the long-term threshold (e.g., 1 year for equity).
 2. **Long-Term P/L**: Calculated for assets held beyond the long-term holding period.
-3. **Adjusted Profit**: A critical feature for Indian investors. It uses **grandfathered market prices** (as of Jan 31, 2018, or other regulatory dates) to calculate the "true" taxable gain, ensuring you don't pay tax on gains that occurred before legislation changes.
+3. **Adjusted Profit**: A critical feature for Indian investors. It uses **Section 112A Baseline FMV Grandfathered Rates** (as of Jan 31, 2018, or other regulatory dates) to calculate the "true" taxable gain, ensuring you don't pay tax on gains that occurred before legislation changes.
 
 *Note: While the app provides these numbers, users should consult with a tax professional to decide final tax implications, considering external Faktoren like rollover losses.*
 
@@ -60,5 +60,5 @@ If you are new to Portfolio Tracker, follow these simple steps to get started:
    - Enter the Ticker (e.g., `RELIANCE.NS`). If the asset is new, a modal will appear to capture the name and ISIN.
    - Enter the Quantity, Rate, and Date.
 4. **View Holdings**: Your dashboard and "Purchase History" will now reflect the new assets, with live unrealized gains calculated against current market prices.
-5. **Log a Sale**: When you sell, enter the ticker and quantity. The system automatically finds your oldest purchase lots (FIFO) and calculates your realized P/L.
+5. **Log a Sale**: When you sell, enter the ticker and quantity. The system automatically finds your oldest purchase lots (Temporal First-In-First-Out (FIFO) cost basis allocation) and calculates your realized P/L.
 6. **Privacy First**: Working in a public place? Click the logo in the top-left corner or hit **Ctrl+Space** to mask all sensitive numbers.

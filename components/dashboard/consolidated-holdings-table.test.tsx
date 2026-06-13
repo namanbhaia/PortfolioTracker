@@ -52,14 +52,17 @@ describe('ConsolidatedHoldingsTable', () => {
     it('shows tooltip content on hover', async () => {
         const { container } = render(<ConsolidatedHoldingsTable consolidatedRows={mockData} isVisible={mockIsVisible} />);
 
-        // Find the Info icon and trigger mouse enter to show the tooltip
-        const infoIcon = container.querySelector('svg.lucide-info');
-        if (infoIcon) {
-            fireEvent.mouseEnter(infoIcon);
-        }
+        // The info icon is rendered inside a div with class "flex items-center justify-end gap-1.5"
+        // Find the "10" (total_qty) and then find the SVG sibling
+        const qtyCell = screen.getByText('10');
+        const infoIcon = qtyCell.parentElement?.querySelector('svg');
 
-        // We look for the text "Client A" which should be in the tooltip
-        // Note: queryByText returns null if not found. toBeDefined() on null is true in some environments but usually we want to be explicit.
+        if (!infoIcon) throw new Error("Info icon not found");
+
+        // SimpleTooltip listens for mouseEnter on the wrapper div
+        fireEvent.mouseEnter(infoIcon.closest('.relative')!);
+
+        // The text should now be visible
         expect(screen.queryByText(/Client A:/i)).not.toBeNull();
         expect(screen.queryByText(/Client B:/i)).not.toBeNull();
 

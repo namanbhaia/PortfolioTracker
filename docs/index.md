@@ -4,21 +4,21 @@ Welcome to the official documentation for the Portfolio Tracker project. This do
 
 ## 📖 Sub-Pages
 
-### 1. [Setup & Installation](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/setup.md)
+### 1. [Setup & Installation](./setup.md)
 Learn how to get the project running locally, configure environment variables, and set up your Supabase instance.
 
-### 2. [System Architecture](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/architecture.md)
+### 2. [System Architecture](./architecture.md)
 An overview of the project structure, data flow, and the reasoning behind our tech stack choices.
 
-### 3. [Core Features](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/features.md)
+### 3. [Core Features](./features.md)
 Detailed explanations of:
-- FIFO Investment Ledger
+- Temporal First-In-First-Out (FIFO) cost basis allocation Investment Ledger
 - Profit/Loss metrics (Adjusted P/L, LT/ST)
 - Pledging & Unpledging workflow
 - CSV Verification engine (NSDL exports)
 - Yahoo Finance integration
 
-### 4. [Database Schema](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/database.md)
+### 4. [Database Schema](./database.md)
 A reference for all core tables, relationships, and the powerful PostgreSQL views that drive our financial calculations.
 
 ---

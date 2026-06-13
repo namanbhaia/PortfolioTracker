@@ -10,23 +10,23 @@ Portfolio Tracker (WealthTrack Manager) is designed for individual wealth manage
 
 ## 📂 Documentation
 
-Detailed documentation is available in the [docs/](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/index.md) folder:
+Detailed documentation is available in the [docs/](./docs/index.md) folder:
 
-- [**Quick Start & Setup**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/setup.md): Environment variables, database initialization, and deployment.
-- [**Core Features**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/features.md): FIFO logic, P/L metrics (Adjusted, LT/ST), Pledging, and CSV Verification.
-- [**System Architecture**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/architecture.md): Code structure, data flow, and authentication.
-- [**Database Schema**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/database.md): Table relationships, calculated views, and RLS policies.
-- [**Google Sheets Sync**](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/docs/google-sheets.md): How to configure Sheets API and environment variables.
+- [**Quick Start & Setup**](./docs/setup.md): Environment variables, database initialization, and deployment.
+- [**Core Features**](./docs/features.md): Temporal First-In-First-Out (FIFO) cost basis allocation logic, P/L metrics (Adjusted, LT/ST), Pledging, and CSV Verification.
+- [**System Architecture**](./docs/architecture.md): Code structure, data flow, and authentication.
+- [**Database Schema**](./docs/database.md): Table relationships, calculated views, and Row Level Security (RLS) policies.
+- [**Google Sheets Sync**](./docs/google-sheets.md): How to configure Sheets API and environment variables.
 
 ---
 
 ## ✨ Key Features
 
 -   **Multi-Client Management**: Switch between independent family member accounts seamlessly.
--   **Lot-Level Precision**: Every purchase is tracked as a unique batch for accurate FIFO (First-In-First-Out) execution.
+-   **Lot-Level Precision**: Every purchase is tracked as a unique batch for accurate Temporal First-In-First-Out (FIFO) cost basis allocation  execution.
 -   **Advanced P/L Metrics**:
     - **Long-Term & Short-Term P/L**: Automated classification based on holding periods.
-    - **Adjusted Profit**: Gains calculated using grandfathered market prices for historical accuracy.
+    - **Adjusted Profit**: Gains calculated using Section 112A Baseline FMV Grandfathered Rates for historical accuracy.
 -   **Privacy Mode**:
     - **Screensaver HUD**: Dynamic idle-time screensaver to hide sensitive financial data.
     - **Flexible Dismissal**: Configure "Click-to-Dismiss" vs "Any-Activity-Dismiss" in user settings.

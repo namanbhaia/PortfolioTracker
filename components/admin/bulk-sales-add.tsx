@@ -63,7 +63,7 @@ export default function BulkSalesAdd() {
             ]);
 
             const uniqueTickers = Array.from(new Set(salesToProcess.map((s: any) => s.ticker?.trim())));
-            setStatusText(`Fetching grandfathered rates for ${uniqueTickers.length} assets...`);
+            setStatusText(`Fetching Section 112A Baseline FMV Grandfathered Rates for ${uniqueTickers.length} assets...`);
 
             const rateEntries = await Promise.all(
                 uniqueTickers.filter(Boolean).map(async (ticker) => {
@@ -210,7 +210,7 @@ export default function BulkSalesAdd() {
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bulk Add Sales</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Import historical sales and auto-match with FIFO lots.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Import historical sales and auto-match with Temporal First-In-First-Out (FIFO) cost basis allocation lots.</p>
                     </div>
                 </div>
 

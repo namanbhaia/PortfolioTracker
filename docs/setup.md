@@ -39,7 +39,7 @@ This guide provides step-by-step instructions to set up the Portfolio Tracker pr
 ## 🗄 Database Configuration
 
 1. **Initialize Tables**:
-   Copy the contents of the [CreateTables](file:///c:/Users/naman/source/repos/namanbhaia/PortfolioTracker/CreateTables) file and run them in your Supabase SQL Editor. This will set up:
+   Copy the contents of the [CreateTables](CreateTables) file and run them in your Supabase SQL Editor. This will set up:
    - All core tables (`profiles`, `clients`, `assets`, `purchases`, `sales`, `pledges`).
    - Calculated Views (`client_holdings`, `sales_view`).
    - Necessary stored procedures and triggers (e.g., `handle_new_user`).
@@ -54,6 +54,6 @@ This guide provides step-by-step instructions to set up the Portfolio Tracker pr
    supabase functions deploy update-prices
    ```
 
-## 🔐 Security (RLS)
+## 🔐 Security (Row Level Security (RLS))
 
 Ensure that **Row Level Security (RLS)** is enabled for sensitive tables. Policies should be scoped to `current_setting('request.jwt.claims')::json->>'sub'` (Supabase Auth ID) to ensure users can only see their own family accounts and data.
