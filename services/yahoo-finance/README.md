@@ -4,7 +4,7 @@
 This directory serves as a standalone archival repository for the legacy Yahoo Finance API integration logic.
 
 ## Reason for Archival
-As part of Issue #123, the Portfolio Tracker application has been decoupled from Yahoo Finance to ensure reliability and performance. The primary market data and reconciliation pipelines now rely strictly on institutional Google Sheets API Edge execution infrastructure.
+The Portfolio Tracker application has been decoupled from Yahoo Finance to ensure reliability and performance. The primary market data and reconciliation pipelines now rely strictly on institutional Google Sheets API Edge execution infrastructure.
 
 ## Contents
 - `find-ticker.ts`: Legacy stock metadata and real-time price fetching.
