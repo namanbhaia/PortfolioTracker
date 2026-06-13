@@ -12,7 +12,8 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 -- Enable net for HTTP calls (Edge Functions)
-CREATE EXTENSION IF NOT EXISTS pg_net;
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
 
 -- =========================================================
@@ -91,10 +92,10 @@ CREATE TABLE purchases (
 -- Log of all sell transactions
 CREATE TABLE sales (
     trx_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID,
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     purchase_trx_id UUID REFERENCES purchases(trx_id) ON DELETE CASCADE,
-    client_id UUID,
-    client_name TEXT,
+    client_id UUID NOT NULL REFERENCES clients(client_id),
+    client_name TEXT NOT NULL REFERENCES clients(client_name),
     date DATE NOT NULL,
     rate NUMERIC(20, 2) NOT NULL,
     sale_qty NUMERIC(20, 8) NOT NULL CHECK (sale_qty > 0),
@@ -793,3 +794,58 @@ SET
   last_updated = NOW()
 FROM deduplicated_csv
 WHERE assets.ticker = deduplicated_csv.ticker;
+-- =========================================================
+-- 8. SECURITY HARDENING & POLICIES
+-- =========================================================
+
+-- Revoke direct execution of sensitive functions from public roles
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM public, anon, authenticated;
+REVOKE ALL ON FUNCTION public.check_price_alerts() FROM public, anon, authenticated;
+
+-- Re-apply optimized and hardened RLS policies
+-- wrapping auth.uid() in (SELECT auth.uid()) prevents re-evaluation per row
+
+-- Profiles
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT USING (id = (SELECT auth.uid()));
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (id = (SELECT auth.uid()))
+    WITH CHECK (id = (SELECT auth.uid()));
+
+-- Clients
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Access via profile array" ON public.clients;
+CREATE POLICY "Access via profile array" ON public.clients
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles p
+            WHERE p.id = (SELECT auth.uid())
+            AND public.clients.client_id = ANY (p.client_ids)
+        )
+    );
+
+-- Purchases
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view authorized family purchases" ON public.purchases;
+CREATE POLICY "Users can view authorized family purchases" ON public.purchases
+    FOR SELECT USING (
+        client_id IN (
+            SELECT unnest(client_ids) FROM public.profiles
+            WHERE id = (SELECT auth.uid())
+        )
+    );
+
+-- Sales
+ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage authorized family sales" ON public.sales;
+CREATE POLICY "Users can manage authorized family sales" ON public.sales
+    FOR ALL USING (
+        client_id IN (
+            SELECT unnest(client_ids) FROM public.profiles
+            WHERE id = (SELECT auth.uid())
+        )
+    );
