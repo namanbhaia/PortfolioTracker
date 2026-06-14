@@ -12,8 +12,7 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 -- Enable net for HTTP calls (Edge Functions)
-CREATE SCHEMA IF NOT EXISTS extensions;
-CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pg_net;
 
 
 -- =========================================================
@@ -165,7 +164,7 @@ ALTER SEQUENCE sale_group_seq RESTART WITH 2;
 
 -- View: CLIENT HOLDINGS
 -- Calculates live balance, market value, and unrealized P&L
-CREATE OR REPLACE VIEW public.client_holdings AS
+CREATE OR REPLACE VIEW client_holdings AS
 SELECT 
     -- IDs and Identifiers
     p.trx_id,
@@ -215,7 +214,7 @@ JOIN public.clients c ON p.client_name = c.client_name;
 
 -- View: SALES VIEW
 -- Denormalized view of public.sales with linked purchase info
-CREATE OR REPLACE VIEW public.sales_view AS
+CREATE OR REPLACE VIEW sales_view AS
 SELECT 
     s.trx_id,
     c.client_id,
@@ -254,7 +253,7 @@ JOIN public.assets a ON p.ticker = a.ticker;
 
 -- Function: Append Sale ID to Purchase
 -- Updates the purchase record when a portion is sold
-CREATE OR REPLACE FUNCTION public.append_sale_id_to_purchase(
+CREATE OR REPLACE FUNCTION append_sale_id_to_purchase(
     p_purchase_id UUID, 
     p_sale_id UUID, 
     p_new_balance NUMERIC
@@ -271,7 +270,7 @@ $$ LANGUAGE plpgsql;
 
 -- Function: Get Next Sale ID
 -- Returns next value from sequence
-CREATE OR REPLACE FUNCTION public.get_next_sale_id()
+CREATE OR REPLACE FUNCTION get_next_sale_id()
 RETURNS BIGINT SET search_path = '' AS $$
 BEGIN
   RETURN nextval('sale_group_seq');
@@ -281,7 +280,7 @@ $$ LANGUAGE plpgsql;
 -- Function: Bulk Asset Update
 -- Purpose: Atomic upsert for public.assets. If ISIN exists but ticker changed,
 --          it cascades the update to public.purchases and public.pledges.
-CREATE OR REPLACE FUNCTION public.bulk_asset_update(payload JSONB)
+CREATE OR REPLACE FUNCTION bulk_asset_update(payload JSONB)
 RETURNS VOID SET search_path = '' AS $$
 DECLARE
     a_record JSONB;
@@ -330,7 +329,7 @@ $$ LANGUAGE plpgsql;
 --          3. Inserts new recalculated sale records.
 -- Input:   JSONB object with optional keys: 'sales_to_delete', 'purchases_to_update', 'sales_to_insert'.
 
-CREATE OR REPLACE FUNCTION public.atomic_ledger_update(payload JSONB)
+CREATE OR REPLACE FUNCTION atomic_ledger_update(payload JSONB)
 RETURNS VOID SET search_path = '' AS $$
 DECLARE
     p_record JSONB;
@@ -455,7 +454,7 @@ $$ LANGUAGE plpgsql;
 -- Logic:   1. Identifies unique BSE tickers in current holdings.
 --          2. Finds NSE ticker with same ISIN in public.assets table.
 --          3. Updates public.purchases and merges public.pledges.
-CREATE OR REPLACE FUNCTION public.migrate_bse_to_nse()
+CREATE OR REPLACE FUNCTION migrate_bse_to_nse()
 RETURNS void SET search_path = '' AS $$
 DECLARE
     r RECORD;
@@ -495,7 +494,7 @@ $$ LANGUAGE plpgsql;
 -- Purpose: Resets the entire trading ledger for a specific client by clearing all public.sales and resetting purchase balances.
 -- Logic:   1. Updates the public.purchases table to set balance_qty back to original purchase_qty and clears sale_ids.
 --          2. Deletes all records from the public.sales table for that client.
-CREATE OR REPLACE FUNCTION public.reset_client_ledger(p_client_name TEXT)
+CREATE OR REPLACE FUNCTION reset_client_ledger(p_client_name TEXT)
 RETURNS VOID SET search_path = '' AS $$
 BEGIN
     -- 1. Reset balances and clear sale links in the public.purchases table for the client
@@ -515,7 +514,7 @@ $$ LANGUAGE plpgsql;
 -- Function: Update Assets from Google Sheet
 -- Purpose: Bulk updates market data from a JSON payload while ignoring identity fields (#N/A or blanks).
 -- Input:   JSONB array of asset objects.
-CREATE OR REPLACE FUNCTION public.update_assets_from_sheet(payload JSONB)
+CREATE OR REPLACE FUNCTION update_assets_from_sheet(payload JSONB)
 RETURNS VOID SET search_path = '' AS $$
 DECLARE
     a_record JSONB;
@@ -795,61 +794,11 @@ SET
 FROM deduplicated_csv
 WHERE public.assets.ticker = deduplicated_csv.ticker;
 -- =========================================================
-
--- =========================================================
--- 8. SECURITY HARDENING & POLICIES
+-- 8. SECURITY HARDENING
 -- =========================================================
 
--- Revoke direct execution of sensitive functions from public roles
--- These are intended to be triggered by the system or internal logic only.
+-- Revoke direct execution of sensitive trigger functions from public roles
+-- These are intended to be executed by the system or internal triggers only.
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM public, anon, authenticated;
 REVOKE ALL ON FUNCTION public.check_price_alerts() FROM public, anon, authenticated;
 REVOKE ALL ON FUNCTION public.reset_all_clients() FROM public, anon, authenticated;
-
--- Re-apply optimized and hardened RLS policies
--- Note: Wrapping auth.uid() in (SELECT auth.uid()) improves performance and stability.
-
--- Profiles: Users manage their own data
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
-CREATE POLICY "Users can view own profile" ON public.profiles
-    FOR SELECT USING (id = (SELECT auth.uid()));
-
-DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-CREATE POLICY "Users can update own profile" ON public.profiles
-    FOR UPDATE USING (id = (SELECT auth.uid()))
-    WITH CHECK (id = (SELECT auth.uid()));
-
--- Clients: Access based on ownership or family authorization
-ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Access via profile array" ON public.clients;
-CREATE POLICY "Access via profile array" ON public.clients
-    FOR ALL USING (
-        user_id = (SELECT auth.uid()) OR
-        client_id IN (
-            SELECT unnest(client_ids) FROM public.profiles
-            WHERE id = (SELECT auth.uid())
-        )
-    );
-
--- Purchases: Access based on family authorization
-ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users can view authorized family purchases" ON public.purchases;
-CREATE POLICY "Users can view authorized family purchases" ON public.purchases
-    FOR SELECT USING (
-        client_id IN (
-            SELECT unnest(client_ids) FROM public.profiles
-            WHERE id = (SELECT auth.uid())
-        )
-    );
-
--- Sales: Access based on family authorization
-ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Users can manage authorized family sales" ON public.sales;
-CREATE POLICY "Users can manage authorized family sales" ON public.sales
-    FOR ALL USING (
-        client_id IN (
-            SELECT unnest(client_ids) FROM public.profiles
-            WHERE id = (SELECT auth.uid())
-        )
-    );
