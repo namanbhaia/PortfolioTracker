@@ -70,7 +70,7 @@ describe('TransactionEditor', () => {
         }));
     });
 
-    it('editSaleDate triggers Temporal First-In-First-Out (FIFO) cost basis allocation re-processing (Remapping logic)', async () => {
+    it('editSaleDate triggers FIFO re-processing (Remapping logic)', async () => {
         const mockSplits = [{
             trx_id: 's1',
             custom_id: 'SALE-1',
@@ -115,7 +115,7 @@ describe('TransactionEditor', () => {
             .rejects.toThrow(/Cannot reduce quantity/);
     });
 
-    it('editPurchaseDate triggers Temporal First-In-First-Out (FIFO) cost basis allocation re-processing and remaps sales correctly', async () => {
+    it('editPurchaseDate triggers FIFO re-processing and remaps sales correctly', async () => {
         const mockPurchase = {
             trx_id: 'p1',
             date: '2023-01-01',
@@ -166,7 +166,7 @@ describe('TransactionEditor', () => {
         expect(p1Update.balance_qty).toBe(10);
     });
 
-    it('editSaleQty triggers Temporal First-In-First-Out (FIFO) cost basis allocation re-processing', async () => {
+    it('editSaleQty triggers FIFO re-processing', async () => {
         const mockExistingSale = {
             custom_id: 'SALE-1',
             date: '2023-02-01',
@@ -221,7 +221,7 @@ describe('TransactionEditor', () => {
         expect(payload.purchases_to_update[0].balance_qty).toBe(30);
     });
 
-    it('editPurchaseQty - Increase Valid triggers Temporal First-In-First-Out (FIFO) cost basis allocation to consume newly available balance', async () => {
+    it('editPurchaseQty - Increase Valid triggers FIFO to consume newly available balance', async () => {
         vi.mocked(repo.fetchPurchaseById).mockResolvedValue({
             trx_id: 'p1',
             purchase_qty: 100,
@@ -398,7 +398,7 @@ describe('TransactionEditor', () => {
         expect(payload.sales_to_update[0].profit_stored).toBe(600); // (160 - 100) * 10
     });
 
-    it('Scenario: Same-day purchase takes precedence over older purchase in Temporal First-In-First-Out (FIFO) cost basis allocation processing', async () => {
+    it('Scenario: Same-day purchase takes precedence over older purchase in FIFO processing', async () => {
         const clientName = 'TestClient';
         const ticker = 'RELIANCE';
         const saleId = 'SALE-1';

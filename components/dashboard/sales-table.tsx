@@ -56,7 +56,7 @@ export const sales_columns = [
     { id: 'sale_value', label: 'Sale Value' },
     { id: 'pl_percentage', label: 'P/L %' },
     { id: 'pl', label: 'Total P/L' },
-    { id: 'grandfathered_pl', label: 'Section 112A Baseline FMV Grandfathered P/L' },
+    { id: 'grandfathered_pl', label: 'Grandfathered P/L' },
     { id: 'term', label: 'Term' },
     { id: 'comments', label: 'Comments' },
 ];
@@ -174,7 +174,7 @@ export default function SalesTable({ sales, sortConfig, onSort, isVisible }: Sal
                                         </button>
                                     </th>
                                 )}
-                                {isVisible('grandfathered_pl') && <th className="px-3 py-3 text-right">Section 112A Baseline FMV Grandfathered P/L</th>}
+                                {isVisible('grandfathered_pl') && <th className="px-3 py-3 text-right">Grandfathered P/L</th>}
                                 {isVisible('term') && (
                                     <th className="px-3 py-3 text-center">
                                         <div className="flex items-center justify-center gap-1">

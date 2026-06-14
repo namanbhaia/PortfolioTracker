@@ -28,7 +28,7 @@ export const isLongTerm = (purchaseDate: string | Date, saleDate: string | Date 
 
 /**
  * @function isSquareOff
- * @description Checks if a trade is a "Intraday Square-Off Netting" (bought and sold on the same day).
+ * @description Checks if a trade is a "Square Off" (bought and sold on the same day).
  * @param {Date | string} purchaseDate 
  * @param {Date | string} saleDate 
  * @returns {boolean}

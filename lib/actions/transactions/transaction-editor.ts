@@ -3,7 +3,7 @@ import { calculateProfitMetrics, isLongTerm, isSquareOff } from '@/components/he
 
 /**
  * @file transaction-editor.ts
- * @description Core business logic for atomic ledger updates, Temporal First-In-First-Out (FIFO) cost basis allocation reprocessing, and transaction editing.
+ * @description Core business logic for atomic ledger updates, FIFO reprocessing, and transaction editing.
  */
 
 // ==========================================
@@ -294,7 +294,7 @@ export class TransactionEditor {
     });
 
     // ---------------------------------------------------------
-    // E. REMAP STEP (Temporal First-In-First-Out (FIFO) cost basis allocation Execution)
+    // E. REMAP STEP (FIFO Execution)
     // ---------------------------------------------------------
     const salesToInsert: Sale[] = [];
 
@@ -498,7 +498,7 @@ export class TransactionEditor {
   /**
    * 3. Edit Sale Date
    * Updates the date of a sale event (identified by custom_id).
-   * Since changing the date can affect Temporal First-In-First-Out (FIFO) cost basis allocation order (Long Term/Short Term status)
+   * Since changing the date can affect FIFO order (Long Term/Short Term status)
    * and which purchase lots are consumed, this triggers a full ledger re-process
    * for the impacted period.
    */
@@ -517,7 +517,7 @@ export class TransactionEditor {
     // to calculate how this single intent splits into new database rows based on available purchases.
     const intent: SaleIntent = {
       user_id: existing.user_id,
-      purchase_trx_id: null, // Will be recalculated by Temporal First-In-First-Out (FIFO) cost basis allocation logic
+      purchase_trx_id: null, // Will be recalculated by FIFO logic
       date: newDate,
       rate: existing.rate,
       sale_qty: totalQty,
@@ -566,7 +566,7 @@ export class TransactionEditor {
     purchaseOverrides.set(trx_id, modifiedPurchase);
 
     // 3. Calculate Impact Date: Smaller of (Old Date, New Date)
-    // We need to reprocess from the earlier of the two dates to ensure Temporal First-In-First-Out (FIFO) cost basis allocation integrity.
+    // We need to reprocess from the earlier of the two dates to ensure FIFO integrity.
     const impactDate = new Date(newDate) < new Date(originalDate) ? newDate : originalDate;
 
     // 4. Trigger Reprocess with Overrides

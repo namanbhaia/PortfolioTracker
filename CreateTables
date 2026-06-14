@@ -797,7 +797,7 @@ WHERE assets.ticker = deduplicated_csv.ticker;
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- =========================================================
 
--- Enable Row Level Security (RLS) on all tables
+-- Enable RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
@@ -858,7 +858,7 @@ CREATE POLICY "Users can manage authorized family purchases"
 ON public.purchases FOR ALL
 USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));
 
--- 5. SALES POLICIES (Temporal First-In-First-Out (FIFO) cost basis allocation)
+-- 5. SALES POLICIES (FIFO)
 CREATE POLICY "Users can manage authorized family sales"
 ON public.sales FOR ALL
 USING (client_id IN (SELECT unnest(profiles.client_ids) FROM profiles WHERE profiles.id = auth.uid()));

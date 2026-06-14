@@ -85,7 +85,7 @@ export default function TaxClientWrapper({
 
                                     <div className="flex items-center gap-10">
                                         <div className="text-right">
-                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Intraday Square-Off Netting Profit</p>
+                                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Square Off Profit</p>
                                             <p className={`text-sm font-mono font-bold ${stats.sqoff >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                                 ₹{stats.sqoff.toLocaleString('en-IN')}
                                             </p>

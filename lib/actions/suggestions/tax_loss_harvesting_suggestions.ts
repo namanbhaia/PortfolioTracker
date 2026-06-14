@@ -33,7 +33,7 @@ export interface TaxGainSuggestion {
 }
 
 /**
- * Identifies potential positions for tax-loss and tax-gain harvesting based on Temporal First-In-First-Out (FIFO) cost basis allocation rules.
+ * Identifies potential positions for tax-loss and tax-gain harvesting based on FIFO rules.
  * @param {any[]} holdings - The user's active portfolio holdings.
  * @returns {Promise<{ shortTerm: TaxLossSuggestion[], longTerm: TaxLossSuggestion[], totalLossVal: number, longTermGains: TaxGainSuggestion[], totalGainVal: number }>}
  */
@@ -61,12 +61,12 @@ export async function getTaxLossHarvestingSuggestions(
     const lossSuggestions: TaxLossSuggestion[] = [];
     const gainSuggestions: TaxGainSuggestion[] = [];
 
-    // For each ticker, evaluate Temporal First-In-First-Out (FIFO) cost basis allocation queue
+    // For each ticker, evaluate FIFO queue
     for (const lots of tickerGroups.values()) {
         // Sort lots by date ascending (oldest first)
         lots.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-        // Under Temporal First-In-First-Out (FIFO) cost basis allocation, the oldest lot is sold first.
+        // Under FIFO, the oldest lot is sold first.
         const oldestLot = lots[0];
 
         // If the oldest lot is at a loss, it is a valid harvest opportunity
