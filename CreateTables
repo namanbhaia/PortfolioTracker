@@ -207,7 +207,8 @@ SELECT
     CASE 
         WHEN p.rate > 0 THEN ((a.current_price - p.rate) / p.rate) * 100 
         ELSE 0 
-    END AS pl_percent
+    END AS pl_percent,
+    a.dead
 FROM public.purchases p
 JOIN public.assets a ON p.ticker = a.ticker
 JOIN public.clients c ON p.client_name = c.client_name;
@@ -240,7 +241,8 @@ SELECT
     s.is_square_off,
     s.comments,
     s.user_id,
-    s.custom_id
+    s.custom_id,
+    a.dead
 FROM public.sales s
 JOIN public.purchases p ON s.purchase_trx_id = p.trx_id
 JOIN public.clients c ON p.client_name = c.client_name
@@ -802,3 +804,11 @@ WHERE public.assets.ticker = deduplicated_csv.ticker;
 REVOKE ALL ON FUNCTION public.handle_new_user() FROM public, anon, authenticated;
 REVOKE ALL ON FUNCTION public.check_price_alerts() FROM public, anon, authenticated;
 REVOKE ALL ON FUNCTION public.reset_all_clients() FROM public, anon, authenticated;
+
+-- Row Level Security (RLS) Policies
+ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated users to read assets" 
+ON public.assets FOR SELECT 
+TO authenticated 
+USING (true);

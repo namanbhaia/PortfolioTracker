@@ -23,7 +23,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     let sales: any[] = [];
     let searchError: string | null = null;
 
-    const meaningfulParams = ['trx_id', 'ticker', 'share_name', 'client_ids', 'start_date', 'end_date'];
+    const meaningfulParams = ['trx_id', 'ticker', 'share_name', 'client_ids', 'start_date', 'end_date', 'show_dead'];
     const hasParams = meaningfulParams.some(k => resolvedParams[k] && resolvedParams[k] !== '');
     if (hasParams) {
         const formData = new FormData();
@@ -40,7 +40,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         }
 
         // Pass standard filters directly
-        ['trx_id', 'ticker', 'share_name', 'start_date', 'end_date'].forEach(k => {
+        ['trx_id', 'ticker', 'share_name', 'start_date', 'end_date', 'show_dead'].forEach(k => {
             if (resolvedParams[k]) formData.append(k, resolvedParams[k]);
         });
 
@@ -85,6 +85,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                             availableClients={clients || []}
                             showLongTermToggle={false}
                             showBalanceToggle={false}
+                            showDeadToggle={true}
+                            showDead={resolvedParams.show_dead === 'true'}
                             ticker={resolvedParams.ticker}
                             shareName={resolvedParams.share_name}
                             startDate={resolvedParams.start_date}

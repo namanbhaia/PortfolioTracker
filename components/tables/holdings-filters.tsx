@@ -20,6 +20,7 @@ export default function HoldingsFilter({
     showBalanceToggle = true,
     showPledgedToggle = false,
     showDateFilter = true,
+    showDeadToggle = false,
 
     ticker: controlledTicker, setTicker,
     shareName: controlledShareName, setShareName,
@@ -28,6 +29,7 @@ export default function HoldingsFilter({
     showAll: controlledShowAll, setShowAll,
     longTerm: controlledLongTerm, setLongTerm,
     pledgedOnly: controlledPledgedOnly, setPledgedOnly,
+    showDead: controlledShowDead, setShowDead,
     selectedClientIds: controlledClientIds, setSelectedClientIds,
     onSubmit,
     onClear,
@@ -38,6 +40,7 @@ export default function HoldingsFilter({
     showBalanceToggle?: boolean,
     showPledgedToggle?: boolean,
     showDateFilter?: boolean,
+    showDeadToggle?: boolean,
 
     ticker?: string,
     setTicker?: (val: string) => void,
@@ -53,6 +56,8 @@ export default function HoldingsFilter({
     setLongTerm?: (val: boolean | null | 'square_off') => void,
     pledgedOnly?: boolean,
     setPledgedOnly?: (val: boolean) => void,
+    showDead?: boolean,
+    setShowDead?: (val: boolean) => void,
     selectedClientIds?: string[],
     setSelectedClientIds?: (val: string[]) => void,
     onSubmit?: (e: React.FormEvent) => void,
@@ -68,6 +73,7 @@ export default function HoldingsFilter({
     const [localShowAll, setLocalShowAll] = useState(controlledShowAll || false);
     const [localLongTerm, setLocalLongTerm] = useState<boolean | null | 'square_off'>(controlledLongTerm || null);
     const [localPledgedOnly, setLocalPledgedOnly] = useState(controlledPledgedOnly || false);
+    const [localShowDead, setLocalShowDead] = useState(controlledShowDead || false);
     const [localClientIds, setLocalClientIds] = useState(controlledClientIds || []);
 
     // Sync local state if props change (for controlled usage)
@@ -78,6 +84,7 @@ export default function HoldingsFilter({
     useEffect(() => { if (controlledShowAll !== undefined) setLocalShowAll(controlledShowAll); }, [controlledShowAll]);
     useEffect(() => { if (controlledLongTerm !== undefined) setLocalLongTerm(controlledLongTerm); }, [controlledLongTerm]);
     useEffect(() => { if (controlledPledgedOnly !== undefined) setLocalPledgedOnly(controlledPledgedOnly); }, [controlledPledgedOnly]);
+    useEffect(() => { if (controlledShowDead !== undefined) setLocalShowDead(controlledShowDead); }, [controlledShowDead]);
     useEffect(() => { if (controlledClientIds !== undefined) setLocalClientIds(controlledClientIds); }, [controlledClientIds]);
 
     const handleClientChange = (id: string) => {
@@ -97,6 +104,7 @@ export default function HoldingsFilter({
         setLocalShowAll(false); setShowAll?.(false);
         setLocalLongTerm(null); setLongTerm?.(null);
         setLocalPledgedOnly(false); setPledgedOnly?.(false);
+        setLocalShowDead(false); setShowDead?.(false);
         setLocalClientIds([]); setSelectedClientIds?.([]);
 
         if (resetPath) {
@@ -111,6 +119,7 @@ export default function HoldingsFilter({
             <input type="hidden" name="client_ids" value={localClientIds.join(',')} />
             <input type="hidden" name="long_term" value={localLongTerm === null ? '' : String(localLongTerm)} />
             <input type="hidden" name="show_all" value={String(localShowAll)} />
+            <input type="hidden" name="show_dead" value={String(localShowDead)} />
 
             {/* 1. Client Filter - Fixed Narrow Width */}
             <ClientMultiSelect
@@ -257,6 +266,24 @@ export default function HoldingsFilter({
                     >
                         <Lock size={12} className={localPledgedOnly ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'} />
                         Pledged
+                    </button>
+                )}
+
+                {/* Show Dead Toggle */}
+                {showDeadToggle && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const next = !localShowDead;
+                            setLocalShowDead(next);
+                            setShowDead?.(next);
+                        }}
+                        className={`px-3 py-1.5 text-[10px] font-bold rounded-xl transition-all border shrink-0 ${localShowDead
+                            ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-900/30 text-rose-600 dark:text-rose-400'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                        }`}
+                    >
+                        Show Dead
                     </button>
                 )}
 

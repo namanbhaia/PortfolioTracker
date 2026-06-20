@@ -28,6 +28,7 @@ export default function HoldingsClientWrapper({
     const [endDate, setEndDate] = useState("");
     const [showAll, setShowAll] = useState(false); // Default: Active only
     const [longTerm, setLongTerm] = useState<boolean | null>(null);
+    const [showDead, setShowDead] = useState(false);
     const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
 
     const [sortConfig, setSortConfig] = useState<{ key: SortFieldHoldings, direction: 'asc' | 'desc' }>({
@@ -43,6 +44,10 @@ export default function HoldingsClientWrapper({
         let result = initialHoldings;
 
         // Apply filters
+        if (!showDead) {
+            result = result.filter(h => !h.dead);
+        }
+
         if (selectedClientIds.length > 0) {
             result = result.filter(h => selectedClientIds.includes(h.client_id));
         }
@@ -72,7 +77,7 @@ export default function HoldingsClientWrapper({
         }
 
         return result;
-    }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds]);
+    }, [initialHoldings, ticker, shareName, startDate, endDate, showAll, longTerm, selectedClientIds, showDead]);
 
     // Stage 2 - Sort the filtered holdings.
     // This only re-runs when the filter results change OR when the sort configuration changes.
@@ -146,6 +151,7 @@ export default function HoldingsClientWrapper({
                 availableClients={availableClients}
                 showLongTermToggle={true}
                 showBalanceToggle={true}
+                showDeadToggle={true}
 
                 // Pass down specific values to the filter component
                 ticker={ticker} setTicker={setTicker}
@@ -154,6 +160,7 @@ export default function HoldingsClientWrapper({
                 endDate={endDate} setEndDate={setEndDate}
                 showAll={showAll} setShowAll={setShowAll}
                 longTerm={longTerm} setLongTerm={setLongTerm as any}
+                showDead={showDead} setShowDead={setShowDead}
                 selectedClientIds={selectedClientIds} setSelectedClientIds={setSelectedClientIds}
             />
 

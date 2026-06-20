@@ -34,6 +34,7 @@ export default function SalesClientWrapper({
     const [endDate, setEndDate] = useState(initialFilters?.endDate || "");
     const [showAll, setShowAll] = useState(true);
     const [longTerm, setLongTerm] = useState<boolean | null | 'square_off'>(null);
+    const [showDead, setShowDead] = useState(false);
     const [selectedClientIds, setSelectedClientIds] = useState<string[]>(initialFilters?.clientIds || []);
 
     const [sortConfig, setSortConfig] = useState<{ key: SortFieldSales, direction: 'asc' | 'desc' }>({
@@ -48,6 +49,10 @@ export default function SalesClientWrapper({
         let result = initialSales;
 
         // Apply filters
+        if (!showDead) {
+            result = result.filter(s => !s.dead);
+        }
+
         if (selectedClientIds.length > 0) {
             result = result.filter(h => selectedClientIds.includes(h.client_id));
         }
@@ -78,7 +83,7 @@ export default function SalesClientWrapper({
         }
 
         return result;
-    }, [initialSales, ticker, shareName, startDate, endDate, longTerm, selectedClientIds]);
+    }, [initialSales, ticker, shareName, startDate, endDate, longTerm, selectedClientIds, showDead]);
 
     // Stage 2 - Sort the filtered sales.
     const processedSales = useMemo(() => {
@@ -151,6 +156,7 @@ export default function SalesClientWrapper({
                 availableClients={availableClients}
                 showLongTermToggle={true}
                 showBalanceToggle={false}
+                showDeadToggle={true}
 
                 // Pass down specific values to the filter component
                 ticker={ticker} setTicker={setTicker}
@@ -159,6 +165,7 @@ export default function SalesClientWrapper({
                 endDate={endDate} setEndDate={setEndDate}
                 showAll={showAll} setShowAll={setShowAll}
                 longTerm={longTerm} setLongTerm={setLongTerm}
+                showDead={showDead} setShowDead={setShowDead}
                 selectedClientIds={selectedClientIds} setSelectedClientIds={setSelectedClientIds}
             />
 

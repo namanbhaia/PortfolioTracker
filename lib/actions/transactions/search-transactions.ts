@@ -109,6 +109,12 @@ export async function searchTransactions(formData: FormData) {
     let pQuery = supabase.from('client_holdings').select('*').in('client_name', allowedNames);
     let sQuery = supabase.from('sales_view').select('*').in('client_name', allowedNames);
 
+    const show_dead = formData.get('show_dead') === 'true';
+    if (!show_dead) {
+        pQuery = pQuery.eq('dead', false);
+        sQuery = sQuery.eq('dead', false);
+    }
+
     if (client_name) { pQuery = pQuery.eq('client_name', client_name); sQuery = sQuery.eq('client_name', client_name); }
     if (ticker) { pQuery = pQuery.ilike('ticker', ticker); sQuery = sQuery.ilike('ticker', ticker); }
     if (share_name) { pQuery = pQuery.ilike('stock_name', `%${share_name}%`); sQuery = sQuery.ilike('stock_name', `%${share_name}%`); }

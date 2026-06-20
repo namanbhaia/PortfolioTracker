@@ -80,14 +80,19 @@ export default function RecommendationsClientWrapper({
         });
     };
 
-    // Filter data based on selected clients
+    // Construct the set of dead tickers dynamically
+    const deadTickers = React.useMemo(() => 
+        new Set(initialHoldings.filter(h => h.dead).map(h => h.ticker)),
+        [initialHoldings]);
+
+    // Filter data based on selected clients and dead status
     const filteredHoldings = React.useMemo(() =>
-        initialHoldings.filter(h => selectedClientIds.includes(h.client_id)),
+        initialHoldings.filter(h => selectedClientIds.includes(h.client_id) && !h.dead),
         [initialHoldings, selectedClientIds]);
 
     const filteredTransactions = React.useMemo(() =>
-        transactions.filter(t => selectedClientIds.includes(t.client_id)),
-        [transactions, selectedClientIds]);
+        transactions.filter(t => selectedClientIds.includes(t.client_id) && !deadTickers.has(t.ticker)),
+        [transactions, selectedClientIds, deadTickers]);
 
     // Map selected client IDs to client names for filtering pledges
     const selectedClientNames = React.useMemo(() => {
