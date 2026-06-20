@@ -41,6 +41,7 @@ export default function DashboardClientWrapper({
     const [ticker, setTicker] = useState('');
     const [shareName, setShareName] = useState('');
     const [pledgedOnly, setPledgedOnly] = useState(false);
+    const [showDead, setShowDead] = useState(false);
 
     // 2. Client-side Aggregation and Metrics Logic
 
@@ -98,6 +99,7 @@ export default function DashboardClientWrapper({
                     ticker: curr.ticker,
                     isin: curr.isin || '',
                     stock_name: curr.stock_name || 'Unknown',
+                    dead: !!curr.dead,
                     total_qty: 0,
                     total_purchase_value: 0,
                     market_rate: isNaN(marketRate) ? 0 : marketRate,
@@ -168,7 +170,8 @@ export default function DashboardClientWrapper({
                 const matchesTicker = ticker ? row.ticker.toLowerCase().includes(ticker.toLowerCase()) : true;
                 const matchesStock = shareName ? row.stock_name.toLowerCase().includes(shareName.toLowerCase()) : true;
                 const matchesPledged = pledgedOnly ? row.total_pledged > 0 : true;
-                return matchesTicker && matchesStock && matchesPledged;
+                const matchesDead = showDead ? true : !row.dead;
+                return matchesTicker && matchesStock && matchesPledged && matchesDead;
             })
             .sort((a, b) => a.ticker.localeCompare(b.ticker));
 
@@ -185,7 +188,7 @@ export default function DashboardClientWrapper({
             totalPL: pl,
             plPercentage: plPct
         };
-    }, [aggregatedRowsBase, ticker, shareName, pledgedOnly]);
+    }, [aggregatedRowsBase, ticker, shareName, pledgedOnly, showDead]);
 
     return (
         <div className="p-6 space-y-6 max-w-[1400px] mx-auto transition-colors">
@@ -229,6 +232,9 @@ export default function DashboardClientWrapper({
                 showPledgedToggle={true}
                 pledgedOnly={pledgedOnly}
                 setPledgedOnly={setPledgedOnly}
+                showDeadToggle={true}
+                showDead={showDead}
+                setShowDead={setShowDead}
                 showLongTermToggle={false}
                 showBalanceToggle={false}
                 showDateFilter={false}

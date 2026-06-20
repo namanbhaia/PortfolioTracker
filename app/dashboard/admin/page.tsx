@@ -1,7 +1,8 @@
 "use client"
 
 import React from 'react';
-import { Wrench, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
+import { Wrench, ShieldAlert, Skull, ArrowRight } from 'lucide-react';
 import BulkAssetUpdate from '@/components/admin/bulk-asset-update';
 import BulkPurchaseAdd from '@/components/admin/bulk-purchase-add';
 import BulkSalesAdd from '@/components/admin/bulk-sales-add';
@@ -71,6 +72,25 @@ export default function AdminPage() {
                             <BseToNseMigration />
                             <AssetsExport />
                         </div>
+                    </section>
+
+                    <section>
+                        <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Portfolio Flags</h2>
+                        <Link
+                            href="/dashboard/dead-companies"
+                            className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 dark:hover:bg-rose-900/20 transition-all shadow-sm"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="p-2.5 rounded-xl bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
+                                    <Skull size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Dead Companies</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Manage which tickers are flagged as dead across all client portfolios.</p>
+                                </div>
+                            </div>
+                            <ArrowRight size={18} className="text-rose-400 dark:text-rose-500 group-hover:translate-x-1 transition-transform shrink-0" />
+                        </Link>
                     </section>
                 </div>
 
