@@ -133,4 +133,87 @@ describe('getTechnicalSuggestions', () => {
         expect(result.highPE).toHaveLength(0);
         expect(result.lowPE).toHaveLength(0);
     });
+
+    it('should filter out holdings with negative balance quantity', async () => {
+        const holdings = [
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: -5, current_price: 3000, fifty_two_week_high: 2000 },
+            { ticker: 'INFY', stock_name: 'Infosys', balance_qty: 10, current_price: 1500, fifty_two_week_high: 2000 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        // TCS with negative balance should be filtered; INFY with 1500 < 0.99*2000=1980 should not trigger aboveHigh
+        const tickers = result.aboveHigh.map(h => h.ticker);
+        expect(tickers).not.toContain('TCS');
+    });
+
+    it('should detect P/E = 51 as high (boundary above threshold of 50)', async () => {
+        const holdings = [
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: 10, current_price: 1000, trailing_pe: 51 },
+            { ticker: 'INFY', stock_name: 'Infosys', balance_qty: 10, current_price: 1000, trailing_pe: 50 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        expect(result.highPE).toHaveLength(1);
+        expect(result.highPE[0].ticker).toBe('TCS');
+        expect(result.highPE[0].value).toBe('P/E: 51.0');
+    });
+
+    it('should exclude negative P/E from low P/E signals (value opportunities only)', async () => {
+        const holdings = [
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: 10, current_price: 1000, trailing_pe: 12 },
+            { ticker: 'INFY', stock_name: 'Infosys', balance_qty: 10, current_price: 1000, trailing_pe: -5 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        // Only TCS (pe=12, between 0 and 15) should appear; INFY (pe=-5, negative) should be excluded
+        expect(result.lowPE).toHaveLength(1);
+        expect(result.lowPE[0].ticker).toBe('TCS');
+        expect(result.lowPE[0].value).toBe('P/E: 12.0');
+    });
+
+    it('should detect 52W high at exactly the 99% threshold (price = 0.99 * high)', async () => {
+        const holdings = [
+            // price = 0.99 * 3500 = 3465 => exactly at threshold, should be flagged
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: 10, current_price: 3465, fifty_two_week_high: 3500 },
+            // price = 3400 < 0.99 * 3500 = 3465, should NOT be flagged
+            { ticker: 'INFY', stock_name: 'Infosys', balance_qty: 10, current_price: 3400, fifty_two_week_high: 3500 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        expect(result.aboveHigh).toHaveLength(1);
+        expect(result.aboveHigh[0].ticker).toBe('TCS');
+        expect(result.aboveHigh[0].value).toBe('52W High: 3500.00');
+    });
+
+    it('should detect 52W low at exactly the 101% threshold (price = 1.01 * low)', async () => {
+        const holdings = [
+            // price = 1.01 * 1000 = 1010 => exactly at threshold, should be flagged
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: 10, current_price: 1010, fifty_two_week_low: 1000 },
+            // price = 1050 > 1.01 * 1000 = 1010, should NOT be flagged
+            { ticker: 'INFY', stock_name: 'Infosys', balance_qty: 10, current_price: 1050, fifty_two_week_low: 1000 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        expect(result.belowLow).toHaveLength(1);
+        expect(result.belowLow[0].ticker).toBe('TCS');
+    });
+
+    it('should flag high volume at exactly 1.5x threshold (volume = 1.51 * avg)', async () => {
+        const holdings = [
+            // 151 > 1.5 * 100 = 150 => should be flagged
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: 10, current_price: 1000, market_volume: 151, avg_volume: 100 },
+            // 150 = 1.5 * 100, not strictly greater => should NOT be flagged
+            { ticker: 'INFY', stock_name: 'Infosys', balance_qty: 10, current_price: 1000, market_volume: 140, avg_volume: 100 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        expect(result.highVolume).toHaveLength(1);
+        expect(result.highVolume[0].ticker).toBe('TCS');
+        expect(result.highVolume[0].value).toBe('1.5x Avg');
+    });
+
+    it('should flag low volume at exactly 0.4x threshold (volume = 0.39 * avg)', async () => {
+        const holdings = [
+            // 39 < 0.4 * 100 = 40 => should be flagged
+            { ticker: 'TCS', stock_name: 'TCS', balance_qty: 10, current_price: 1000, market_volume: 39, avg_volume: 100 }
+        ];
+        const result = await getTechnicalSuggestions(holdings);
+        expect(result.lowVolume).toHaveLength(1);
+        expect(result.lowVolume[0].ticker).toBe('TCS');
+        expect(result.lowVolume[0].value).toBe('0.39x Avg');
+    });
 });
