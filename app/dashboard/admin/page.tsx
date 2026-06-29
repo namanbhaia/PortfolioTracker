@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Wrench, ShieldAlert, Skull, ArrowRight } from 'lucide-react';
+import { Wrench, ShieldAlert, Skull, ArrowRight, FileSpreadsheet } from 'lucide-react';
 import BulkAssetUpdate from '@/components/admin/bulk-asset-update';
 import BulkPurchaseAdd from '@/components/admin/bulk-purchase-add';
 import BulkSalesAdd from '@/components/admin/bulk-sales-add';
@@ -100,6 +100,22 @@ export default function AdminPage() {
                         <section>
                             <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Ledger Management</h2>
                             <div className="space-y-6">
+                                {/* Daily Exchange Logging — navigate to dedicated console */}
+                                <Link
+                                    href="/dashboard/admin/daily-exchange-logging"
+                                    className="group flex items-center justify-between w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all shadow-sm"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2.5 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                                            <FileSpreadsheet size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Daily Exchange Logging</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Import broker execution files and run FIFO ledger commits atomically.</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight size={18} className="text-indigo-400 dark:text-indigo-500 group-hover:translate-x-1 transition-transform shrink-0" />
+                                </Link>
                                 <BulkPurchaseAdd />
                                 <BulkSalesAdd />
                                 <FifoRemapper />

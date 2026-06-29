@@ -326,13 +326,14 @@ $$ LANGUAGE plpgsql;
 
 -- Function: Atomic Ledger Update
 -- Purpose: Handles complex transaction edits in a single transaction.
+--          0. Inserts new purchase records (supports optional trx_id injection for exchange imports).
 --          1. Deletes old public.sales (splits) if re-processing is needed.
 --          2. Updates purchase records (balance, linkage, and core details).
 --          3. Inserts new recalculated sale records.
--- Input:   JSONB object with optional keys: 'sales_to_delete', 'purchases_to_update', 'sales_to_insert'.
+-- Input:   JSONB object with optional keys: 'purchases_to_insert', 'sales_to_delete', 'purchases_to_update', 'sales_to_insert'.
 
 CREATE OR REPLACE FUNCTION atomic_ledger_update(payload JSONB)
-RETURNS VOID SET search_path = '' AS $$
+RETURNS VOID AS $$
 DECLARE
     p_record JSONB;
     s_record JSONB;
@@ -341,8 +342,11 @@ DECLARE
 BEGIN
     -- 0. INSERT New Purchases
     -- This handles bulk importing purchase transactions.
+    -- trx_id is optional: if provided (e.g., from exchange import), it is used directly.
+    -- If omitted (e.g., from bulk-purchase-add), gen_random_uuid() is used as fallback.
     IF payload ? 'purchases_to_insert' THEN
-            INSERT INTO public.purchases (
+        INSERT INTO public.purchases (
+            trx_id,
             user_id,
             client_name,
             ticker,
@@ -353,6 +357,7 @@ BEGIN
             comments
         )
         SELECT 
+            COALESCE((value ->> 'trx_id')::UUID, gen_random_uuid()),
             (value ->> 'user_id')::UUID,
             (value ->> 'client_name'),
             (value ->> 'ticker'),
