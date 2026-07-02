@@ -398,7 +398,11 @@ export async function importExchangeTradesAction(formData: FormData, dryRun: boo
                             finalPurchasesToUpdateMap.set(p.trx_id, {
                                 trx_id: p.trx_id,
                                 balance_qty: p.balance_qty,
-                                sale_ids: p.sale_ids
+                                sale_ids: p.sale_ids,
+                                date: p.date,
+                                purchase_qty: p.purchase_qty,
+                                rate: p.rate,
+                                comments: p.comments
                             });
                         }
 
