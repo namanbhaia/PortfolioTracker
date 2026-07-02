@@ -207,7 +207,14 @@ export async function importExchangeTradesAction(formData: FormData, dryRun: boo
         ]);
 
 
-        const clientsMap = new Map(allClients?.map(c => [c.trading_id?.toUpperCase(), c]) || []);
+        const clientsMap = new Map<string, any>();
+        for (const c of allClients || []) {
+            if (!c.trading_id) continue;
+            const ids = c.trading_id.split('/').map((id: string) => id.trim().toUpperCase());
+            for (const id of ids) {
+                clientsMap.set(id, c);
+            }
+        }
         const assetsMapByIsin = new Map(allAssets?.map(a => [a.isin?.toUpperCase(), a]) || []);
         const assetsMapByTicker = new Map(allAssets?.map(a => [a.ticker?.toUpperCase(), a]) || []);
 
